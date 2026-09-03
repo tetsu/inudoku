@@ -229,14 +229,14 @@ class InudokuGame {
       // Check same row
       const sameRowDog = this.findDogInRow(r, c);
       if (sameRowDog) {
-        this.flashDeny(r, c, '同じ横列には1匹しか置けないワン！', sameRowDog);
+        this.flashDeny(r, c, '同じ横列（行）には1匹しか置けないワン！', sameRowDog);
         return;
       }
 
       // Check same column
       const sameColDog = this.findDogInCol(r, c);
       if (sameColDog) {
-        this.flashDeny(r, c, '同じ縦列には1匹しか置けないワン！', sameColDog);
+        this.flashDeny(r, c, '同じ縦列（列）には1匹しか置けないワン！', sameColDog);
         return;
       }
 
@@ -250,7 +250,7 @@ class InudokuGame {
       // Check 8-neighborhood personal space
       const adjacentDog = this.findAdjacentDog(r, c);
       if (adjacentDog) {
-        this.flashDeny(r, c, '柴犬同士が近すぎるワン！（パーソナルスペース）', adjacentDog);
+        this.flashDeny(r, c, '柴犬同士が近すぎるワン！（斜めも含めて8マス接触禁止）', adjacentDog);
         return;
       }
     }
@@ -288,23 +288,24 @@ class InudokuGame {
     this.validateAndCheckWin();
   }
 
-  private findDogInRow(r: number, excludeC: number): Position | null {
+  private findDogInRow(r: number, c: number): Position | null {
     for (let col = 0; col < this.currentPuzzle.size; col++) {
-      if (col !== excludeC && this.grid[r][col].mark === 'dog') {
+      if (col !== c && this.grid[r][col].mark === 'dog') {
         return { r, c: col };
       }
     }
     return null;
   }
 
-  private findDogInCol(c: number, excludeR: number): Position | null {
+  private findDogInCol(r: number, c: number): Position | null {
     for (let row = 0; row < this.currentPuzzle.size; row++) {
-      if (row !== excludeR && this.grid[row][c].mark === 'dog') {
+      if (row !== r && this.grid[row][c].mark === 'dog') {
         return { r: row, c };
       }
     }
     return null;
   }
+
 
   private findDogInRegion(regionId: number, excludeR: number, excludeC: number): Position | null {
     const size = this.currentPuzzle.size;
