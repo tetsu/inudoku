@@ -12,7 +12,7 @@ import { getAutoCrossCells, validateGrid } from './logic/validator';
 import { getNextHint } from './logic/solver';
 import { generateUniquePuzzle } from './logic/generator';
 import { sounds } from './audio/sound';
-import { getPawSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
+import { getCrossSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
 
 class InudokuGame {
   private currentPuzzle: PuzzleDefinition = PRESET_STAGES[0];
@@ -40,7 +40,8 @@ class InudokuGame {
   private gridBoardEl!: HTMLElement;
   private dogCounterEl!: HTMLElement;
   private timerValEl!: HTMLElement;
-  private stageBadgeEl!: HTMLElement;
+  private levelValEl!: HTMLElement;
+  private diffValEl!: HTMLElement;
   private hintBubbleEl!: HTMLElement;
   private hintBubbleTextEl!: HTMLElement;
   private automarkBadgeEl!: HTMLElement;
@@ -56,13 +57,15 @@ class InudokuGame {
     this.gridBoardEl = document.getElementById('grid-board')!;
     this.dogCounterEl = document.getElementById('dog-counter')!;
     this.timerValEl = document.getElementById('timer-val')!;
-    this.stageBadgeEl = document.getElementById('stage-badge')!;
+    this.levelValEl = document.getElementById('level-val')!;
+    this.diffValEl = document.getElementById('difficulty-val')!;
     this.hintBubbleEl = document.getElementById('hint-bubble')!;
     this.hintBubbleTextEl = document.getElementById('hint-bubble-text')!;
     this.automarkBadgeEl = document.getElementById('automark-badge')!;
 
     this.updateAutomarkBadge();
   }
+
 
   private loadSettings() {
     const saved = localStorage.getItem('inudoku_settings');
@@ -115,7 +118,12 @@ class InudokuGame {
       }))
     );
 
-    this.stageBadgeEl.textContent = `${puzzle.size}x${puzzle.size} ${puzzle.name}`;
+    if (this.levelValEl) {
+      this.levelValEl.textContent = String(this.currentStageIndex + 1);
+    }
+    if (this.diffValEl) {
+      this.diffValEl.textContent = this.getDifficultyLabel(puzzle.difficulty);
+    }
     this.renderBoard();
     this.updateStatus();
   }
@@ -135,23 +143,11 @@ class InudokuGame {
         cellEl.dataset.c = String(c);
         cellEl.id = `cell-${r}-${c}`;
 
-        // Region color
+        // Region color (Solid vibrant pastel matching screenshot)
         const color = REGION_COLORS[cell.region % REGION_COLORS.length];
         cellEl.style.setProperty('--cell-bg', color);
 
-        // Region borders
-        if (r === 0 || this.grid[r - 1][c].region !== cell.region) {
-          cellEl.classList.add('border-top-region');
-        }
-        if (r === size - 1 || this.grid[r + 1][c].region !== cell.region) {
-          cellEl.classList.add('border-bottom-region');
-        }
-        if (c === 0 || this.grid[r][c - 1].region !== cell.region) {
-          cellEl.classList.add('border-left-region');
-        }
-        if (c === size - 1 || this.grid[r][c + 1].region !== cell.region) {
-          cellEl.classList.add('border-right-region');
-        }
+        // No black borders! Pure colorful rounded tiles separated by clean white gaps
 
         this.renderCellContent(cellEl, cell);
         this.gridBoardEl.appendChild(cellEl);
@@ -167,7 +163,7 @@ class InudokuGame {
       const state = cell.isConflict ? 'conflict' : 'normal';
       cellEl.innerHTML = `<div class="cell-dog">${getShibaSvg(this.settings.shibaType, state)}</div>`;
     } else if (cell.mark === 'cross') {
-      cellEl.innerHTML = `<div class="cell-paw">${getPawSvg()}</div>`;
+      cellEl.innerHTML = `<div class="cell-cross">${getCrossSvg()}</div>`;
     }
   }
 
@@ -632,17 +628,21 @@ class InudokuGame {
 
   private bindModals() {
     // Open buttons
-    document.getElementById('btn-help')!.addEventListener('click', () => {
-      document.getElementById('modal-help')!.classList.remove('hidden');
-    });
-    document.getElementById('btn-stages')!.addEventListener('click', () => {
+    const openHelp = () => {
+      document.getElementById('modal-help')?.classList.remove('hidden');
+    };
+    document.getElementById('btn-help')?.addEventListener('click', openHelp);
+    document.querySelector('.mini-rules-bar')?.addEventListener('click', openHelp);
+
+    document.getElementById('btn-stages')?.addEventListener('click', () => {
       this.renderStageList();
-      document.getElementById('modal-stages')!.classList.remove('hidden');
+      document.getElementById('modal-stages')?.classList.remove('hidden');
     });
-    document.getElementById('btn-settings')!.addEventListener('click', () => {
+    document.getElementById('btn-settings')?.addEventListener('click', () => {
       this.syncSettingsUI();
-      document.getElementById('modal-settings')!.classList.remove('hidden');
+      document.getElementById('modal-settings')?.classList.remove('hidden');
     });
+
 
     // Close buttons with data-close-modal
     document.querySelectorAll('[data-close-modal]').forEach((btn) => {

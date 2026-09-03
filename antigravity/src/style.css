@@ -1,59 +1,31 @@
 /* ==========================================================================
-   Inudoku Design System & Theme Styles
+   Inudoku - Meowdoku / Zoodoku Faithful UI Styles
    ========================================================================== */
 
 :root {
-  --font-family-base: 'M PLUS Rounded 1c', 'Fredoka', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-family-display: 'Fredoka', 'M PLUS Rounded 1c', cursive, sans-serif;
+  --font-family-base: 'M PLUS Rounded 1c', 'Fredoka', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-display: 'Fredoka', 'M PLUS Rounded 1c', sans-serif;
 
-  /* Theme Palette */
-  --color-bg-main: #FDF8F0;
+  /* Meowdoku Background Palette */
+  --color-bg-main: #F6EFE6;
   --color-bg-card: #FFFFFF;
-  --color-bg-secondary: #F7EFE4;
-  --color-primary: #E78B3F;
-  --color-primary-hover: #D97A2E;
-  --color-primary-light: #FFEDD5;
-  --color-primary-dark: #9A4106;
-  --color-text-main: #33261D;
-  --color-text-muted: #7C6E63;
-  --color-border: #E8DCCF;
-  --color-border-dark: #573E2F;
-
-  /* Status Colors */
-  --color-conflict: #EF4444;
-  --color-conflict-bg: #FEE2E2;
-  --color-success: #10B981;
-  --color-success-bg: #D1FAE5;
-
-  /* Region Pastel Colors */
-  --reg-0: #FDE68A;
-  --reg-1: #A7F3D0;
-  --reg-2: #BAE6FD;
-  --reg-3: #FED7AA;
-  --reg-4: #DDD6FE;
-  --reg-5: #FBCFE8;
-  --reg-6: #C7D2FE;
-  --reg-7: #D9F99D;
-  --reg-8: #F5D0FE;
-  --reg-9: #E2E8F0;
+  --color-bg-pill: #FFFFFF;
+  --color-text-dark: #634735;
+  --color-text-muted: #9E8B7E;
+  --color-accent-red: #E11D48;
+  --color-accent-gold: #F59E0B;
 
   /* Shadows */
-  --shadow-sm: 0 2px 4px rgba(60, 40, 20, 0.06);
-  --shadow-md: 0 4px 12px rgba(60, 40, 20, 0.08), 0 1px 3px rgba(60, 40, 20, 0.05);
-  --shadow-lg: 0 10px 25px -3px rgba(60, 40, 20, 0.12), 0 4px 8px -2px rgba(60, 40, 20, 0.06);
-  --shadow-floating: 0 20px 35px -5px rgba(60, 40, 20, 0.18);
+  --shadow-tile: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-btn: 0 4px 10px rgba(99, 71, 53, 0.12), 0 1px 3px rgba(99, 71, 53, 0.08);
+  --shadow-hero: 0 8px 18px rgba(99, 71, 53, 0.16), 0 2px 4px rgba(99, 71, 53, 0.06);
 
-  /* Radii */
-  --radius-sm: 8px;
+  --radius-sm: 6px;
+  --radius-tile: 8px;
   --radius-md: 14px;
-  --radius-lg: 22px;
   --radius-pill: 9999px;
-
-  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Global Reset & Base */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -66,10 +38,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   background-color: var(--color-bg-main);
-  background-image: 
-    radial-gradient(circle at 15% 15%, rgba(231, 139, 63, 0.06) 0%, transparent 40%),
-    radial-gradient(circle at 85% 85%, rgba(167, 243, 208, 0.08) 0%, transparent 40%);
-  color: var(--color-text-main);
+  color: var(--color-text-dark);
   font-family: var(--font-family-base);
   user-select: none;
   -webkit-user-select: none;
@@ -88,107 +57,170 @@ button {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  max-width: 540px;
+  max-width: 480px;
   margin: 0 auto;
-  padding: 12px 16px 16px;
+  padding: 8px 14px 14px;
 }
 
 /* ==========================================================================
-   Header
+   Top Header Bar
    ========================================================================== */
-.game-header {
+.game-top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding-bottom: 8px;
+  padding: 4px 0 6px;
   flex-shrink: 0;
 }
 
-.header-left, .header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.title-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.logo-text {
-  font-family: var(--font-family-display);
-  font-size: 1.45rem;
-  font-weight: 700;
-  color: var(--color-primary-dark);
-  line-height: 1.1;
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-
-.logo-jp {
-  font-size: 0.85rem;
-  font-weight: 800;
-  color: var(--color-primary);
-  background: var(--color-primary-light);
-  padding: 1px 6px;
-  border-radius: var(--radius-pill);
-}
-
-.stage-badge {
-  font-size: 0.76rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-}
-
-.status-pill {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--color-bg-card);
-  padding: 5px 10px;
-  border-radius: var(--radius-pill);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--color-border);
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--color-text-main);
-}
-
-.status-icon {
-  font-size: 0.95rem;
-}
-
-.icon-btn {
+.circle-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: var(--shadow-btn);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  background: var(--color-bg-card);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-main);
-  transition: transform var(--transition-fast), background-color var(--transition-fast);
+  color: #785A46;
+  transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
-.icon-btn:hover {
-  background: var(--color-primary-light);
-  transform: translateY(-1px);
+.circle-btn:active {
+  transform: scale(0.92);
 }
 
-.icon-btn:active {
-  transform: scale(0.94);
+.header-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
 }
 
-.btn-icon {
-  font-size: 1.15rem;
+.stat-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  line-height: 1.1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.stat-num {
+  font-family: var(--font-family-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-text-dark);
+  line-height: 1.2;
+}
+
+.flame-icon {
+  font-size: 0.85rem;
 }
 
 /* ==========================================================================
-   Main Game Board (Zoodoku Cozy Aesthetic)
+   Sub Header (Shiba Count Pill & Treats)
+   ========================================================================== */
+.game-sub-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 2px 0 8px;
+  flex-shrink: 0;
+}
+
+.pill-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-btn);
+}
+
+.pill-shiba-head {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.pill-text {
+  font-family: var(--font-family-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-text-dark);
+}
+
+.treats-badge {
+  gap: 4px;
+  padding: 6px 14px;
+}
+
+.treat-bone {
+  font-size: 1.15rem;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+}
+
+/* ==========================================================================
+   Mini Rule Cards (Matching Screenshot)
+   ========================================================================== */
+.mini-rules-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 0 0 10px;
+  flex-shrink: 0;
+}
+
+.mini-rule-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  padding: 6px 8px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-tile);
+}
+
+.mini-rule-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  width: 24px;
+  height: 24px;
+  background: #E8DCCF;
+  padding: 1px;
+  border-radius: 4px;
+  font-size: 5.5px;
+  line-height: 1;
+  text-align: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.mini-rule-grid span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-rule-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  line-height: 1.15;
+}
+
+/* ==========================================================================
+   Main Game Board (Meowdoku Style: NO dark borders, clean white gaps)
    ========================================================================== */
 .board-wrapper {
   flex: 1;
@@ -199,21 +231,17 @@ button {
   position: relative;
   width: 100%;
   min-height: 0;
-  padding: 6px 0;
+  padding: 2px 0;
 }
 
 .board-outer-frame {
   width: 100%;
-  max-width: min(92vw, calc(100dvh - 220px), 480px);
+  max-width: min(94vw, calc(100dvh - 275px), 430px);
   aspect-ratio: 1 / 1;
-  background: linear-gradient(145deg, #4A3525 0%, #301E13 100%);
-  padding: 7px;
-  border-radius: 26px;
-  box-shadow: 
-    0 12px 30px -4px rgba(48, 30, 19, 0.35),
-    0 4px 10px rgba(48, 30, 19, 0.2),
-    inset 0 1px 1px rgba(255, 255, 255, 0.25),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+  background: #FFFFFF; /* White-based background between blocks */
+  padding: 5px;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(99, 71, 53, 0.08);
   display: flex;
 }
 
@@ -221,60 +249,51 @@ button {
   display: grid;
   width: 100%;
   height: 100%;
-  border-radius: 20px;
-  overflow: hidden;
-  background-color: #382417;
-  gap: 1.5px;
+  border-radius: 14px;
+  background-color: #FFFFFF; /* White gap between blocks */
+  gap: 3.5px; /* Clean gap separating colorful blocks */
   touch-action: none;
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.25);
 }
 
-/* Cells (Soft pillow / cozy tile effect) */
+/* Cells (Individual rounded colorful solid tiles) */
 .grid-cell {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--cell-bg, #FFFFFF);
+  background-color: var(--cell-bg, #7DCB66);
+  border-radius: var(--radius-tile); /* Rounded corners like screenshot */
   cursor: pointer;
   user-select: none;
-  box-shadow: 
-    inset 0 1px 1px rgba(255, 255, 255, 0.45),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.04);
-  transition: filter 0.15s ease, transform 0.1s ease;
+  box-shadow: inset 0 -1.5px 0 rgba(0, 0, 0, 0.08); /* Subtle tile bevel */
+  transition: transform 0.1s ease, filter 0.1s ease;
+  overflow: hidden;
 }
 
 .grid-cell:hover {
-  filter: brightness(1.04);
+  filter: brightness(1.03);
 }
 
 .grid-cell:active {
-  filter: brightness(0.96);
-  transform: scale(0.985);
+  transform: scale(0.96);
 }
 
-/* Crisp & Cozy Region Boundaries */
-.border-top-region {
-  border-top: 3.5px solid #382417 !important;
-}
-.border-bottom-region {
-  border-bottom: 3.5px solid #382417 !important;
-}
-.border-left-region {
-  border-left: 3.5px solid #382417 !important;
-}
+/* NO BLACK BORDERS AT ALL (Overridden and removed per user request) */
+.border-top-region,
+.border-bottom-region,
+.border-left-region,
 .border-right-region {
-  border-right: 3.5px solid #382417 !important;
+  border: none !important;
 }
 
-/* Dog Element (Squash & Stretch pop-in + breathing idle) */
+/* Shiba Inu Mascot in Tile */
 .cell-dog {
-  width: 86%;
-  height: 86%;
+  width: 88%;
+  height: 88%;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: dogSquashPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: dogSquashPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   pointer-events: none;
 }
 
@@ -285,35 +304,40 @@ button {
 }
 
 @keyframes dogSquashPop {
-  0% {
-    transform: scale(0.2) translateY(12px);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.22, 0.82) translateY(-4px);
-    opacity: 1;
-  }
-  75% {
-    transform: scale(0.94, 1.06) translateY(2px);
-  }
-  90% {
-    transform: scale(1.03, 0.98);
-  }
-  100% {
-    transform: scale(1, 1) translateY(0);
-    opacity: 1;
-  }
+  0% { transform: scale(0.2) translateY(8px); opacity: 0; }
+  55% { transform: scale(1.18, 0.84) translateY(-3px); opacity: 1; }
+  75% { transform: scale(0.95, 1.05) translateY(1px); }
+  100% { transform: scale(1, 1) translateY(0); opacity: 1; }
 }
 
 @keyframes shibaGentleBreathe {
-  0% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(1.025, 0.985);
-  }
+  0% { transform: scale(1); }
+  100% { transform: scale(1.02, 0.985); }
 }
 
+/* White Rounded Cross (❌) on Colorful Tiles */
+.cell-paw,
+.cell-cross {
+  width: 58%;
+  height: 58%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: crossPop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  pointer-events: none;
+}
+
+.cell-paw svg,
+.cell-cross svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes crossPop {
+  0% { transform: scale(0.3) rotate(-15deg); opacity: 0; }
+  60% { transform: scale(1.15) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
 
 /* Conflict / Deny State */
 .grid-cell.cell-deny {
@@ -329,16 +353,16 @@ button {
 }
 
 .grid-cell.cell-conflict {
-  background-color: var(--color-conflict-bg) !important;
+  filter: brightness(0.85) contrast(1.15);
   animation: conflictShake 0.4s ease-in-out;
 }
-
 
 .grid-cell.cell-conflict::after {
   content: '';
   position: absolute;
   inset: 0;
-  border: 2px solid var(--color-conflict);
+  border: 2.5px solid #EF4444;
+  border-radius: var(--radius-tile);
   pointer-events: none;
   animation: pulseConflict 1s infinite alternate;
 }
@@ -354,57 +378,20 @@ button {
   100% { opacity: 1; }
 }
 
-/* Cross / Paw Mark (Cute tactile stamp effect) */
-.cell-paw {
-  width: 50%;
-  height: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: pawStamp 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  pointer-events: none;
-}
-
-.cell-paw svg {
-  width: 100%;
-  height: 100%;
-}
-
-@keyframes pawStamp {
-  0% {
-    transform: scale(0.2) rotate(-15deg);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.15) rotate(4deg);
-    opacity: 0.9;
-  }
-  100% {
-    transform: scale(1) rotate(0deg);
-    opacity: 1;
-  }
-}
-
-
-/* Global Hidden Utility */
-.hidden {
-  display: none !important;
-}
-
-/* Hint Bubble (Toast style, non-intrusive) */
+/* Hint Bubble (Toast style) */
 .hint-bubble {
   position: absolute;
-  top: 12px;
-  left: 16px;
-  right: 16px;
-  background: var(--color-bg-card);
-  border: 2px solid var(--color-primary);
+  top: 10px;
+  left: 14px;
+  right: 14px;
+  background: #FFFFFF;
+  border: 2px solid #F59E0B;
   border-radius: var(--radius-md);
   padding: 10px 14px;
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: var(--shadow-floating);
+  box-shadow: var(--shadow-hero);
   z-index: 50;
   animation: bubblePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: auto;
@@ -421,14 +408,14 @@ button {
 .hint-text {
   flex: 1;
   font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text-main);
+  font-weight: 700;
+  color: var(--color-text-dark);
   line-height: 1.35;
 }
 
 .hint-close {
   color: var(--color-text-muted);
-  font-size: 0.95rem;
+  font-size: 1rem;
   padding: 4px;
   cursor: pointer;
 }
@@ -439,110 +426,125 @@ button {
 }
 
 /* ==========================================================================
-   Footer Controls
+   Bottom Hero Control Buttons (Matching Meowdoku Screenshot)
    ========================================================================== */
 .game-footer {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
-  padding-top: 6px;
+  padding-top: 4px;
 }
 
-/* Mode Switcher */
-.mode-toggle-group {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  background: var(--color-bg-secondary);
-  padding: 4px;
-  border-radius: var(--radius-pill);
-  box-shadow: inset 0 2px 4px rgba(60, 40, 20, 0.06);
-  border: 1px solid var(--color-border);
-}
-
-.mode-btn {
+.hero-actions-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: var(--radius-pill);
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--color-text-muted);
-  transition: all var(--transition-fast);
+  gap: 28px;
+  padding: 6px 0 2px;
 }
 
-.mode-btn .mode-icon {
-  font-size: 1.25rem;
-  transition: transform var(--transition-bounce);
-}
-
-.mode-btn.active {
-  background: var(--color-primary);
-  color: #FFFFFF;
-  box-shadow: 0 4px 10px rgba(231, 139, 63, 0.35);
-}
-
-.mode-btn.active .mode-icon {
-  transform: scale(1.15);
-}
-
-/* Action Buttons */
-.action-buttons-group {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-
-.action-btn {
-  position: relative;
+.hero-action-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
-  background: var(--color-bg-card);
-  padding: 8px 4px;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--color-border);
-  transition: transform var(--transition-fast), background-color var(--transition-fast);
+  gap: 4px;
 }
 
-.action-btn:hover {
-  background: var(--color-primary-light);
+.hero-round-btn {
+  position: relative;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: var(--shadow-hero);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  border: 3px solid transparent;
+}
+
+.hero-round-btn:hover {
+  transform: translateY(-2px);
+}
+
+.hero-round-btn:active {
+  transform: scale(0.92);
+}
+
+.hero-round-btn.active {
+  border-color: #E78B3F;
+  box-shadow: 0 8px 20px rgba(231, 139, 63, 0.35);
+}
+
+.hero-btn-avatar {
+  font-size: 2rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12));
+}
+
+.hero-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: #EF4444;
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.35);
+}
+
+.hero-badge.off {
+  background: #9CA3AF;
+}
+
+.hero-btn-caption {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--color-text-dark);
+}
+
+/* Utility Bar */
+.utility-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.utility-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #FFFFFF;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-tile);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-dark);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.utility-btn:hover {
+  background: #FFF7ED;
   transform: translateY(-1px);
 }
 
-.action-btn:active {
-  transform: scale(0.95);
+.utility-btn:active {
+  transform: scale(0.94);
 }
 
-.action-icon {
-  font-size: 1.15rem;
-}
-
-.action-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--color-text-muted);
-}
-
-.action-badge {
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  font-size: 0.58rem;
-  font-weight: 800;
-  padding: 1px 4px;
-  border-radius: var(--radius-pill);
-  background: var(--color-success);
-  color: white;
-}
-
-.action-badge.off {
-  background: var(--color-text-muted);
+.utility-icon {
+  font-size: 0.9rem;
 }
 
 /* ==========================================================================
@@ -562,17 +564,17 @@ button {
   animation: fadeIn 0.2s ease-out;
 }
 
-.modal-backdrop.hidden {
-  display: none;
+.hidden {
+  display: none !important;
 }
 
 .modal-card {
   width: 100%;
   max-width: 440px;
   max-height: 88vh;
-  background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-floating);
+  background: #FFFFFF;
+  border-radius: 20px;
+  box-shadow: var(--shadow-hero);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -588,13 +590,13 @@ button {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid #F3E8DC;
 }
 
 .modal-header h2 {
   font-size: 1.25rem;
   font-weight: 800;
-  color: var(--color-primary-dark);
+  color: var(--color-text-dark);
 }
 
 .modal-close {
@@ -606,11 +608,10 @@ button {
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-pill);
-  transition: background var(--transition-fast);
 }
 
 .modal-close:hover {
-  background: var(--color-border);
+  background: #F3E8DC;
 }
 
 .modal-body {
@@ -623,52 +624,40 @@ button {
 
 .modal-footer {
   padding: 16px 20px;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid #F3E8DC;
   display: flex;
   justify-content: flex-end;
 }
 
-/* Buttons */
 .primary-btn {
-  background: var(--color-primary);
+  background: #E78B3F;
   color: #FFFFFF;
   font-weight: 700;
   font-size: 0.95rem;
   padding: 10px 22px;
   border-radius: var(--radius-pill);
   box-shadow: 0 4px 10px rgba(231, 139, 63, 0.35);
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .primary-btn:hover {
-  background: var(--color-primary-hover);
+  background: #D97706;
   transform: translateY(-1px);
 }
 
-.primary-btn:active {
-  transform: scale(0.96);
-}
-
 .secondary-btn {
-  background: var(--color-bg-secondary);
-  color: var(--color-text-main);
+  background: #F6EFE6;
+  color: var(--color-text-dark);
   font-weight: 700;
   font-size: 0.95rem;
   padding: 10px 20px;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--color-border);
-  transition: all var(--transition-fast);
-}
-
-.secondary-btn:hover {
-  background: var(--color-border);
 }
 
 /* Rule Card */
 .help-lead {
   font-size: 0.95rem;
   line-height: 1.5;
-  color: var(--color-text-main);
 }
 
 .rule-card {
@@ -676,13 +665,12 @@ button {
   align-items: flex-start;
   gap: 12px;
   padding: 12px;
-  background: var(--color-bg-secondary);
+  background: #FAF6EE;
   border-radius: var(--radius-md);
 }
 
 .rule-card.rule-highlight {
   background: #FFF1F2;
-  border: 1px solid #FECDD3;
 }
 
 .rule-icon {
@@ -693,7 +681,6 @@ button {
 .rule-text strong {
   display: block;
   font-size: 0.95rem;
-  color: var(--color-text-main);
   margin-bottom: 2px;
 }
 
@@ -703,27 +690,7 @@ button {
   line-height: 1.4;
 }
 
-.help-tips {
-  background: #EFF6FF;
-  border: 1px solid #BFDBFE;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-}
-
-.help-tips h4 {
-  font-size: 0.9rem;
-  color: #1E40AF;
-  margin-bottom: 6px;
-}
-
-.help-tips ul {
-  padding-left: 18px;
-  font-size: 0.82rem;
-  color: #1E3A8A;
-  line-height: 1.5;
-}
-
-/* Stage Select */
+/* Stage Select Tabs & Cards */
 .stage-tabs {
   display: flex;
   gap: 6px;
@@ -736,15 +703,14 @@ button {
   border-radius: var(--radius-pill);
   font-size: 0.82rem;
   font-weight: 700;
-  background: var(--color-bg-secondary);
+  background: #FAF6EE;
   color: var(--color-text-muted);
   white-space: nowrap;
-  transition: all var(--transition-fast);
 }
 
 .stage-tab.active {
-  background: var(--color-primary);
-  color: white;
+  background: #E78B3F;
+  color: #FFFFFF;
 }
 
 .stages-grid {
@@ -755,31 +721,23 @@ button {
 
 .stage-card {
   padding: 12px;
-  background: var(--color-bg-secondary);
+  background: #FAF6EE;
   border-radius: var(--radius-md);
   border: 2px solid transparent;
   cursor: pointer;
-  transition: all var(--transition-fast);
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.stage-card:hover {
-  border-color: var(--color-primary);
-  background: #FFF7ED;
-  transform: translateY(-2px);
-}
-
-.stage-card.active-stage {
-  border-color: var(--color-primary);
+.stage-card:hover, .stage-card.active-stage {
+  border-color: #E78B3F;
   background: #FFF7ED;
 }
 
 .stage-card-title {
   font-size: 0.92rem;
   font-weight: 700;
-  color: var(--color-text-main);
 }
 
 .stage-card-meta {
@@ -790,23 +748,13 @@ button {
 }
 
 .random-generator-card {
-  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  background: #FEF3C7;
   border: 2px dashed #F59E0B;
   border-radius: var(--radius-md);
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.random-info h3 {
-  font-size: 0.98rem;
-  color: #92400E;
-}
-
-.random-info p {
-  font-size: 0.8rem;
-  color: #B45309;
 }
 
 .random-actions {
@@ -825,7 +773,7 @@ button {
   color: #92400E;
 }
 
-/* Settings */
+/* Settings List */
 .settings-list {
   gap: 20px;
 }
@@ -837,16 +785,9 @@ button {
   gap: 12px;
 }
 
-.setting-label-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
 .setting-name {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--color-text-main);
 }
 
 .setting-desc {
@@ -867,16 +808,13 @@ button {
   border-radius: var(--radius-pill);
   font-size: 0.82rem;
   font-weight: 700;
-  background: var(--color-bg-secondary);
+  background: #FAF6EE;
   border: 2px solid transparent;
-  color: var(--color-text-main);
-  transition: all var(--transition-fast);
 }
 
 .shiba-choice-btn.active {
-  border-color: var(--color-primary);
+  border-color: #E78B3F;
   background: #FFF7ED;
-  color: var(--color-primary-dark);
 }
 
 /* Toggle Switch */
@@ -913,11 +851,10 @@ button {
   background-color: white;
   transition: 0.25s;
   border-radius: 50%;
-  box-shadow: var(--shadow-sm);
 }
 
 input:checked + .slider {
-  background-color: var(--color-primary);
+  background-color: #E78B3F;
 }
 
 input:checked + .slider:before {
@@ -946,7 +883,7 @@ input:checked + .slider:before {
 .victory-title {
   font-family: var(--font-family-display);
   font-size: 1.55rem;
-  color: var(--color-primary-dark);
+  color: #78350F;
 }
 
 .victory-subtitle {
@@ -963,7 +900,7 @@ input:checked + .slider:before {
 }
 
 .stat-box {
-  background: var(--color-bg-secondary);
+  background: #FAF6EE;
   padding: 12px;
   border-radius: var(--radius-md);
   display: flex;
@@ -980,7 +917,7 @@ input:checked + .slider:before {
 .stat-val {
   font-size: 1.25rem;
   font-weight: 800;
-  color: var(--color-primary-dark);
+  color: #78350F;
 }
 
 .victory-actions {
