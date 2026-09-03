@@ -1306,3 +1306,74 @@ input:checked + .slider:before {
   font-size: 0.78rem;
 }
 
+/* ==========================================================================
+   Treat Bones (Lives System) Styles
+   ========================================================================== */
+.treat-bone {
+  display: inline-block;
+  font-size: 1.15rem;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, filter 0.3s ease;
+}
+
+.treat-bone.lost {
+  opacity: 0.22;
+  filter: grayscale(1);
+  transform: scale(0.8);
+}
+
+.treat-bone.break {
+  animation: boneBreakShake 0.45s ease-in-out;
+}
+
+@keyframes boneBreakShake {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.45) rotate(20deg); filter: hue-rotate(90deg); }
+  50% { transform: scale(1.2) rotate(-20deg); }
+  75% { transform: scale(0.85) rotate(10deg); opacity: 0.5; }
+  100% { transform: scale(0.8); opacity: 0.22; filter: grayscale(1); }
+}
+
+/* Game Over Modal */
+.gameover-card {
+  align-items: center;
+  text-align: center;
+  padding: 28px 24px;
+  gap: 12px;
+}
+
+.gameover-shiba {
+  width: 95px;
+  height: 95px;
+  animation: shibaSadSigh 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes shibaSadSigh {
+  0% { transform: translateY(0) rotate(-2deg); }
+  100% { transform: translateY(6px) rotate(2deg); }
+}
+
+.gameover-title {
+  font-family: var(--font-family-display);
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #991B1B;
+}
+
+.gameover-subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.gameover-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.gameover-actions button {
+  flex: 1;
+}
+
+

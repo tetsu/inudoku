@@ -114,12 +114,13 @@
             <span class="pill-shiba-head">🐕</span>
             <span id="dog-counter" class="pill-text">0 / 5</span>
           </div>
-          <div class="pill-badge treats-badge">
-            <span class="treat-bone">🦴</span>
-            <span class="treat-bone">🦴</span>
-            <span class="treat-bone">🦴</span>
+          <div class="pill-badge treats-badge" id="treats-container">
+            <span class="treat-bone" id="bone-0">🦴</span>
+            <span class="treat-bone" id="bone-1">🦴</span>
+            <span class="treat-bone" id="bone-2">🦴</span>
           </div>
         </section>
+
 
         <!-- Mini Rule Guide Cards -->
         <section class="mini-rules-bar" title="ルールを見る">
@@ -413,6 +414,20 @@
       </div>
     </div>
 
+    <!-- Game Over Modal (3 Mistakes) -->
+    <div id="modal-gameover" class="modal-backdrop hidden">
+      <div class="modal-card gameover-card">
+        <div class="gameover-shiba" id="gameover-shiba-container"></div>
+        <h2 class="gameover-title">🦴 骨がなくなっちゃったワン...</h2>
+        <p class="gameover-subtitle">3回間違えてしまいました。最初からやり直してもう一度挑戦しよう！</p>
+        <div class="gameover-actions">
+          <button id="btn-gameover-home" class="secondary-btn">タイトルへ</button>
+          <button id="btn-gameover-retry" class="primary-btn">もう一度やり直す 🐾</button>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="./src/main.ts"></script>
+
   </body>
 </html>

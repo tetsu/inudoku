@@ -29,6 +29,7 @@ class InudokuGame {
   private completedLevels: Record<number, { timeSecs: number; score: number }> = {};
   private dailyBestScore: number = 0;
   private dailyBestTimeSecs: number = 0;
+  private lives: number = 3;
 
   // Settings
   private settings: GameSettings = {
@@ -108,12 +109,12 @@ class InudokuGame {
   private saveActiveGame() {
     if (this.isFinished) return;
     const marks: CellMark[][] = this.grid.map((row) => row.map((cell) => cell.mark));
-
     const state = {
       stageIndex: this.currentStageIndex,
       elapsedSeconds: this.elapsedSeconds,
       marks,
       puzzleId: this.currentPuzzle.id,
+      lives: this.lives,
       timestamp: Date.now(),
     };
     try {
@@ -122,6 +123,7 @@ class InudokuGame {
       console.warn('Failed to cache active game', e);
     }
   }
+
 
   private clearActiveGame() {
     localStorage.removeItem('inudoku_active_game');
@@ -232,17 +234,25 @@ class InudokuGame {
     const freshActive = this.getActiveGame();
     if (freshActive && freshActive.stageIndex === targetIndex && freshActive.marks) {
       // Resume from saved cached board state!
-      this.resumePuzzle(PRESET_STAGES[targetIndex], freshActive.marks, freshActive.elapsedSeconds);
+      this.resumePuzzle(
+        PRESET_STAGES[targetIndex],
+        freshActive.marks,
+        freshActive.elapsedSeconds,
+        freshActive.lives
+      );
     } else {
       this.initPuzzle(PRESET_STAGES[targetIndex]);
     }
   }
 
-  public resumePuzzle(puzzle: PuzzleDefinition, savedMarks: CellMark[][], elapsedSecs: number) {
+
+  public resumePuzzle(puzzle: PuzzleDefinition, savedMarks: CellMark[][], elapsedSecs: number, savedLives?: number) {
     this.currentPuzzle = puzzle;
     this.undoStack = [];
     this.isFinished = false;
     this.elapsedSeconds = elapsedSecs || 0;
+    this.lives = savedLives !== undefined ? savedLives : 3;
+    this.updateLivesView();
     this.timerValEl.textContent = this.formatTime(this.elapsedSeconds);
     this.startTimer();
     this.hideHint();
@@ -268,11 +278,12 @@ class InudokuGame {
     this.validateAndCheckWin();
   }
 
-
   public initPuzzle(puzzle: PuzzleDefinition) {
     this.currentPuzzle = puzzle;
     this.undoStack = [];
     this.isFinished = false;
+    this.lives = 3;
+    this.updateLivesView();
     this.resetTimer();
     this.startTimer();
     this.hideHint();
@@ -289,6 +300,7 @@ class InudokuGame {
     );
 
     if (this.levelValEl) {
+
       this.levelValEl.textContent = String(this.currentStageIndex + 1);
     }
     if (this.diffValEl) {
@@ -524,7 +536,56 @@ class InudokuGame {
     this.hintBubbleEl.classList.remove('hidden');
     if (this.hintTimeout !== null) clearTimeout(this.hintTimeout);
     this.hintTimeout = window.setTimeout(() => this.hideHint(), 3000);
+
+    // Lose a bone (life) on mistake!
+    this.loseLife();
   }
+
+  private updateLivesView(brokenIndex?: number) {
+    for (let i = 0; i < 3; i++) {
+      const boneEl = document.getElementById(`bone-${i}`);
+      if (!boneEl) continue;
+      if (i < this.lives) {
+        boneEl.classList.remove('lost', 'break');
+      } else {
+        boneEl.classList.add('lost');
+        if (i === brokenIndex) {
+          boneEl.classList.add('break');
+          setTimeout(() => boneEl.classList.remove('break'), 500);
+        }
+      }
+    }
+  }
+
+  private loseLife() {
+    if (this.isFinished) return;
+    this.lives = Math.max(0, this.lives - 1);
+    this.updateLivesView(this.lives);
+    this.saveActiveGame();
+
+    if (this.lives <= 0) {
+      // 3 mistakes -> Game Over
+      this.handleGameOver();
+    }
+  }
+
+  private handleGameOver() {
+    this.isFinished = true;
+    this.stopTimer();
+    this.clearActiveGame();
+    sounds.playConflict();
+
+    const gameoverModal = document.getElementById('modal-gameover')!;
+    const shibaContainer = document.getElementById('gameover-shiba-container');
+    if (shibaContainer) {
+      shibaContainer.innerHTML = getShibaSvg(this.settings.shibaType, 'conflict');
+    }
+
+    setTimeout(() => {
+      gameoverModal.classList.remove('hidden');
+    }, 400);
+  }
+
 
   private validateAndCheckWin() {
     const validation = validateGrid(this.grid, this.currentPuzzle);
@@ -887,7 +948,19 @@ class InudokuGame {
       const nextIndex = Math.min(this.currentStageIndex + 1, PRESET_STAGES.length - 1);
       this.startGame(nextIndex);
     });
+
+    // Game Over actions
+    document.getElementById('btn-gameover-home')?.addEventListener('click', () => {
+      document.getElementById('modal-gameover')?.classList.add('hidden');
+      this.showTitleScreen();
+    });
+
+    document.getElementById('btn-gameover-retry')?.addEventListener('click', () => {
+      document.getElementById('modal-gameover')?.classList.add('hidden');
+      this.initPuzzle(this.currentPuzzle);
+    });
   }
+
 
   private bindModals() {
     const openHelp = () => {
