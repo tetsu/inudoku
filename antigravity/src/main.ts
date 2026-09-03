@@ -105,6 +105,38 @@ class InudokuGame {
     }
   }
 
+  private saveActiveGame() {
+    if (this.isFinished) return;
+    const marks: CellMark[][] = this.grid.map((row) => row.map((cell) => cell.mark));
+
+    const state = {
+      stageIndex: this.currentStageIndex,
+      elapsedSeconds: this.elapsedSeconds,
+      marks,
+      puzzleId: this.currentPuzzle.id,
+      timestamp: Date.now(),
+    };
+    try {
+      localStorage.setItem('inudoku_active_game', JSON.stringify(state));
+    } catch (e) {
+      console.warn('Failed to cache active game', e);
+    }
+  }
+
+  private clearActiveGame() {
+    localStorage.removeItem('inudoku_active_game');
+  }
+
+  private getActiveGame() {
+    const raw = localStorage.getItem('inudoku_active_game');
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
   private saveSettings() {
     localStorage.setItem('inudoku_settings', JSON.stringify(this.settings));
     sounds.setEnabled(this.settings.soundEnabled);
@@ -145,9 +177,16 @@ class InudokuGame {
   }
 
   private renderTitleScreen() {
-    const currentLvlEl = document.getElementById('title-current-level');
-    if (currentLvlEl) {
-      currentLvlEl.textContent = String(this.unlockedLevel);
+    const activeGame = this.getActiveGame();
+    const playBtnText = document.querySelector('#btn-title-play .play-text');
+    const targetLvl = activeGame ? activeGame.stageIndex + 1 : this.unlockedLevel;
+
+    if (playBtnText) {
+      if (activeGame) {
+        playBtnText.innerHTML = `つづきから (レベル ${targetLvl}) 🐾`;
+      } else {
+        playBtnText.innerHTML = `あそぶ (レベル ${targetLvl})`;
+      }
     }
 
     const todayDateEl = document.getElementById('title-today-date');
@@ -165,19 +204,70 @@ class InudokuGame {
 
   public showTitleScreen() {
     this.stopTimer();
+    this.saveActiveGame();
     this.screenGameEl.classList.add('hidden');
     this.screenTitleEl.classList.remove('hidden');
     this.renderTitleScreen();
     this.setupTitleMascot();
   }
 
-  public startGame(levelIndex: number = this.unlockedLevel - 1) {
-    const safeIndex = Math.min(Math.max(0, levelIndex), PRESET_STAGES.length - 1);
-    this.currentStageIndex = safeIndex;
+  public startGame(levelIndex?: number) {
+    const activeGame = this.getActiveGame();
+    let targetIndex: number;
+
+    if (levelIndex !== undefined) {
+      targetIndex = Math.min(Math.max(0, levelIndex), PRESET_STAGES.length - 1);
+      // If choosing a different stage than cached active game, start fresh
+      if (activeGame && activeGame.stageIndex !== targetIndex) {
+        this.clearActiveGame();
+      }
+    } else {
+      targetIndex = activeGame ? activeGame.stageIndex : Math.min(this.unlockedLevel - 1, PRESET_STAGES.length - 1);
+    }
+
+    this.currentStageIndex = targetIndex;
     this.screenTitleEl.classList.add('hidden');
     this.screenGameEl.classList.remove('hidden');
-    this.initPuzzle(PRESET_STAGES[safeIndex]);
+
+    const freshActive = this.getActiveGame();
+    if (freshActive && freshActive.stageIndex === targetIndex && freshActive.marks) {
+      // Resume from saved cached board state!
+      this.resumePuzzle(PRESET_STAGES[targetIndex], freshActive.marks, freshActive.elapsedSeconds);
+    } else {
+      this.initPuzzle(PRESET_STAGES[targetIndex]);
+    }
   }
+
+  public resumePuzzle(puzzle: PuzzleDefinition, savedMarks: CellMark[][], elapsedSecs: number) {
+    this.currentPuzzle = puzzle;
+    this.undoStack = [];
+    this.isFinished = false;
+    this.elapsedSeconds = elapsedSecs || 0;
+    this.timerValEl.textContent = this.formatTime(this.elapsedSeconds);
+    this.startTimer();
+    this.hideHint();
+
+    const size = puzzle.size;
+    this.grid = Array.from({ length: size }, (_, r) =>
+      Array.from({ length: size }, (_, c) => ({
+        r,
+        c,
+        region: puzzle.regions[r][c],
+        mark: savedMarks[r]?.[c] || 'empty',
+        isConflict: false,
+      }))
+    );
+
+    if (this.levelValEl) {
+      this.levelValEl.textContent = String(this.currentStageIndex + 1);
+    }
+    if (this.diffValEl) {
+      this.diffValEl.textContent = this.getDifficultyLabel(puzzle.difficulty);
+    }
+    this.renderBoard();
+    this.validateAndCheckWin();
+  }
+
 
   public initPuzzle(puzzle: PuzzleDefinition) {
     this.currentPuzzle = puzzle;
@@ -342,6 +432,7 @@ class InudokuGame {
       this.undoStack.push(moveGroup);
       sounds.playBark();
       this.updateCellView(r, c);
+      this.saveActiveGame();
       this.validateAndCheckWin();
     } else {
       // Mark mode (cross)
@@ -357,8 +448,10 @@ class InudokuGame {
       }
 
       this.updateCellView(r, c);
+      this.saveActiveGame();
       this.validateAndCheckWin();
     }
+
 
   }
 
@@ -470,6 +563,7 @@ class InudokuGame {
       this.dailyBestTimeSecs = this.elapsedSeconds;
     }
 
+    this.clearActiveGame();
     this.saveProgression();
 
     // Confetti celebration
@@ -518,6 +612,7 @@ class InudokuGame {
     }
 
     sounds.playErase();
+    this.saveActiveGame();
     this.validateAndCheckWin();
   }
 
@@ -576,8 +671,12 @@ class InudokuGame {
     this.timerInterval = window.setInterval(() => {
       this.elapsedSeconds++;
       this.timerValEl.textContent = this.formatTime(this.elapsedSeconds);
+      if (this.elapsedSeconds % 4 === 0) {
+        this.saveActiveGame();
+      }
     }, 1000);
   }
+
 
   private stopTimer() {
     if (this.timerInterval !== null) {
@@ -746,10 +845,20 @@ class InudokuGame {
     document.getElementById('btn-hint')!.addEventListener('click', () => this.showHint());
     document.getElementById('btn-reset')!.addEventListener('click', () => {
       if (confirm('盤面をリセットして最初からやり直しますか？')) {
+        this.clearActiveGame();
         this.initPuzzle(this.currentPuzzle);
       }
     });
     document.getElementById('btn-close-hint')!.addEventListener('click', () => this.hideHint());
+
+    // Auto-save on window blur or unload
+    window.addEventListener('beforeunload', () => {
+      this.saveActiveGame();
+    });
+    window.addEventListener('pagehide', () => {
+      this.saveActiveGame();
+    });
+
 
     // Auto-mark button toggle
     document.getElementById('btn-automark')!.addEventListener('click', () => {
@@ -898,7 +1007,22 @@ class InudokuGame {
       this.settings.autoMark = autoMarkToggle.checked;
       this.saveSettings();
     });
+
+    const resetProgressBtn = document.getElementById('btn-reset-progress');
+    resetProgressBtn?.addEventListener('click', () => {
+      if (confirm('すべてのクリア進捗とセーブデータを初期化しますか？')) {
+        localStorage.removeItem('inudoku_unlocked_level');
+        localStorage.removeItem('inudoku_completed_levels');
+        localStorage.removeItem('inudoku_active_game');
+        this.unlockedLevel = 1;
+        this.completedLevels = {};
+        document.getElementById('modal-settings')?.classList.add('hidden');
+        this.showTitleScreen();
+        alert('進捗データを初期化しましたワン！');
+      }
+    });
   }
+
 
   private syncSettingsUI() {
     const shibaBtns = document.querySelectorAll('.shiba-choice-btn');
