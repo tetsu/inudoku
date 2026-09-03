@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Inudoku (イヌドク / 柴独) - 柴犬たちのロジックパズル</title>
+    <meta
+      name="description"
+      content="Zoodoku/Meowdokuスタイルの柴犬ロジックパズルゲーム。各行・各列・各エリアに柴犬を1匹ずつ配置して、パーソナルスペースを守ろう！ブラウザですぐに遊べます。"
+    />
+    <!-- Google Fonts: M PLUS Rounded 1c & Fredoka -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app" class="app-container">
+      <!-- Header -->
+      <header class="game-header">
+        <div class="header-left">
+          <button id="btn-stages" class="icon-btn" title="ステージ選択" aria-label="ステージ選択">
+            <span class="btn-icon">📋</span>
+          </button>
+          <div class="title-group">
+            <h1 class="logo-text">Inudoku <span class="logo-jp">柴独</span></h1>
+            <div id="stage-badge" class="stage-badge">5x5 こいぬのお庭</div>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="status-pill">
+            <span class="status-icon">🐶</span>
+            <span id="dog-counter" class="status-val">0 / 5</span>
+          </div>
+          <div class="status-pill timer-pill">
+            <span class="status-icon">⏱️</span>
+            <span id="timer-val" class="status-val">00:00</span>
+          </div>
+          <button id="btn-help" class="icon-btn" title="ルールを見る" aria-label="ルールを見る">
+            <span class="btn-icon">❓</span>
+          </button>
+          <button id="btn-settings" class="icon-btn" title="設定" aria-label="設定">
+            <span class="btn-icon">⚙️</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Game Board Container -->
+      <main class="board-wrapper">
+        <div class="board-outer-frame">
+          <div id="grid-board" class="grid-board" role="grid" aria-label="パズル盤面">
+            <!-- Grid cells generated dynamically -->
+          </div>
+        </div>
+        <div id="hint-bubble" class="hint-bubble hidden">
+          <span class="hint-shiba-icon">🐕</span>
+          <span id="hint-bubble-text" class="hint-text"></span>
+          <button id="btn-close-hint" class="hint-close">✕</button>
+        </div>
+      </main>
+
+      <!-- Bottom Control Bar -->
+      <footer class="game-footer">
+        <!-- Input Mode Switcher (Dog vs Paw) -->
+        <div class="mode-toggle-group">
+          <button id="mode-dog" class="mode-btn active" title="柴犬を配置">
+            <span class="mode-icon">🐶</span>
+            <span class="mode-label">柴犬</span>
+          </button>
+          <button id="mode-mark" class="mode-btn" title="足跡マーク（ここにはいない）">
+            <span class="mode-icon">🐾</span>
+            <span class="mode-label">足跡</span>
+          </button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons-group">
+          <button id="btn-undo" class="action-btn" title="元に戻す">
+            <span class="action-icon">↩️</span>
+            <span class="action-label">戻す</span>
+          </button>
+          <button id="btn-hint" class="action-btn" title="ヒント">
+            <span class="action-icon">💡</span>
+            <span class="action-label">ヒント</span>
+          </button>
+          <button id="btn-reset" class="action-btn" title="最初からやり直す">
+            <span class="action-icon">🔄</span>
+            <span class="action-label">リセット</span>
+          </button>
+          <button id="btn-automark" class="action-btn" title="オートマーク切替">
+            <span class="action-icon">⚡</span>
+            <span id="automark-badge" class="action-badge">ON</span>
+            <span class="action-label">自動🐾</span>
+          </button>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Rule / Help Modal -->
+    <div id="modal-help" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>🐕 Inudoku の遊び方</h2>
+          <button class="modal-close" data-close-modal="modal-help">✕</button>
+        </div>
+        <div class="modal-body help-content">
+          <p class="help-lead">
+            <strong>「柴犬たちのパーソナルスペースを守ろう！」</strong><br />
+            数独のように論理で解く、癒やしのパズルゲームです。
+          </p>
+
+          <div class="rule-card">
+            <div class="rule-icon">1️⃣</div>
+            <div class="rule-text">
+              <strong>各エリアに1匹</strong>
+              <p>色で分かれた各ドッグラン（エリア）に、柴犬（🐶）を<strong>ちょうど1匹</strong>配置します。</p>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-icon">2️⃣</div>
+            <div class="rule-text">
+              <strong>行と列に1匹ずつ</strong>
+              <p>タテ1列、ヨコ1列につき、柴犬（🐶）は<strong>1匹だけ</strong>入ることができます。</p>
+            </div>
+          </div>
+
+          <div class="rule-card rule-highlight">
+            <div class="rule-icon">🚫</div>
+            <div class="rule-text">
+              <strong>触れ合いNG！（パーソナルスペース）</strong>
+              <p>柴犬同士は、<strong>縦・横・斜めの8方向すべてで隣り合ってはいけません</strong>。近すぎるとケンカしちゃうワン！</p>
+            </div>
+          </div>
+
+          <div class="help-tips">
+            <h4>💡 ルール徹底 & 操作のコツ</h4>
+            <ul>
+              <li><strong>ルール違反の自動防止</strong>: すでに柴犬がいる同じ行・同じ列・同じ色のエリアや、隣接8マスには2匹目の柴犬を置くことはできません（自動で首振りブロックされます）。</li>
+              <li><strong>配置換え</strong>: 別のマスに置き直したいときは、まず元の柴犬をタップして解除するか、↩️「戻す」ボタンを押してください。</li>
+              <li><strong>自動🐾機能</strong>: 柴犬を置くと、周囲や同列・同エリアの置けないマスを自動でマークしてくれます！</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="primary-btn" data-close-modal="modal-help">わかったワン！</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stage Select Modal -->
+    <div id="modal-stages" class="modal-backdrop hidden">
+      <div class="modal-card modal-wide">
+        <div class="modal-header">
+          <h2>📋 ステージ選択</h2>
+          <button class="modal-close" data-close-modal="modal-stages">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="stage-tabs">
+            <button class="stage-tab active" data-filter="all">すべて</button>
+            <button class="stage-tab" data-filter="beginner">入門 5x5</button>
+            <button class="stage-tab" data-filter="easy">初級 6x6</button>
+            <button class="stage-tab" data-filter="medium">中級 7x7</button>
+            <button class="stage-tab" data-filter="hard">上級 8x8</button>
+            <button class="stage-tab" data-filter="expert">名人 9x9</button>
+          </div>
+          <div id="stages-list" class="stages-grid">
+            <!-- Stage cards generated dynamically -->
+          </div>
+          <div class="random-generator-card">
+            <div class="random-info">
+              <h3>🎲 無限ランダム生成</h3>
+              <p>毎回異なる唯一解パズルを自動生成してプレイできます！</p>
+            </div>
+            <div class="random-actions">
+              <select id="select-random-size" class="select-styled">
+                <option value="5">5x5 (入門)</option>
+                <option value="6" selected>6x6 (初級)</option>
+                <option value="7">7x7 (中級)</option>
+                <option value="8">8x8 (上級)</option>
+                <option value="9">9x9 (名人)</option>
+              </select>
+              <button id="btn-generate-puzzle" class="primary-btn">新しく生成して遊ぶ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="modal-settings" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>⚙️ ゲーム設定</h2>
+          <button class="modal-close" data-close-modal="modal-settings">✕</button>
+        </div>
+        <div class="modal-body settings-list">
+          <div class="setting-item">
+            <div class="setting-label-group">
+              <span class="setting-name">🐕 柴犬の種類</span>
+              <span class="setting-desc">盤面に登場する柴犬の毛色を選べます</span>
+            </div>
+            <div class="shiba-picker">
+              <button class="shiba-choice-btn active" data-shiba="aka">
+                <span class="shiba-avatar-preview">🐕</span>
+                赤柴
+              </button>
+              <button class="shiba-choice-btn" data-shiba="kuro">
+                <span class="shiba-avatar-preview">🐕‍🦺</span>
+                黒柴
+              </button>
+              <button class="shiba-choice-btn" data-shiba="shiro">
+                <span class="shiba-avatar-preview">🤍</span>
+                白柴
+              </button>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-label-group">
+              <span class="setting-name">🔊 効果音 (Sound)</span>
+              <span class="setting-desc">柴犬の鳴き声やタップ音を再生</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="setting-sound" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-label-group">
+              <span class="setting-name">⚡ 自動マーク (Auto-Mark)</span>
+              <span class="setting-desc">柴犬配置時に置けないマスを自動で🐾マーク</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="setting-automark" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="primary-btn" data-close-modal="modal-settings">設定を保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Victory / Stage Clear Modal -->
+    <div id="modal-win" class="modal-backdrop hidden">
+      <div class="modal-card victory-card">
+        <div class="victory-shiba" id="victory-shiba-container">
+          <!-- Animated Shiba in happy state -->
+        </div>
+        <h2 class="victory-title">🎉 ステージクリア！ 🎉</h2>
+        <p class="victory-subtitle">すべての柴犬が仲良く過ごせる場所が見つかったワン！</p>
+        <div class="victory-stats">
+          <div class="stat-box">
+            <span class="stat-label">クリアタイム</span>
+            <span id="win-time" class="stat-val">01:23</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">配置した柴犬</span>
+            <span id="win-dogs" class="stat-val">7 匹</span>
+          </div>
+        </div>
+        <div class="victory-actions">
+          <button id="btn-win-replay" class="secondary-btn">もう一度遊ぶ</button>
+          <button id="btn-win-next" class="primary-btn">次のステージへ 🐾</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
