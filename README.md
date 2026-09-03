@@ -3,6 +3,10 @@
 > **「ワンコにもパーソナルスペースが必要です！」**  
 > Zoodoku & Meowdoku にインスパイアされた、柴犬たちが主役のブラウザ向けロジックパズルゲーム。
 
+👉 **[🌐 オンラインで今すぐ遊ぶ (GitHub Pages)](https://tetsu.github.io/inudoku/)**  
+*(※GitHubの Settings > Pages で GitHub Actions を有効にすると自動公開されます)*
+
+
 ---
 
 ## 📖 ゲーム概要
@@ -180,4 +184,4 @@ npm run dev
 - [ ] デイリーパズル（日替わり問題）
 - [ ] 柴犬図鑑 / スキンコレクション機能
 - [ ] PWA（Progressive Web App）対応によるオフラインプレイ & アプリ化
-- [ ] GitHub Pages 等へのデプロイ
+- [x] GitHub Pages への自動デプロイ対応
