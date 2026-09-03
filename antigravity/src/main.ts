@@ -432,11 +432,28 @@ class InudokuGame {
         return;
       }
 
+      // Check if (r, c) is the correct placement for the puzzle
+      if (this.currentPuzzle.solution && this.currentPuzzle.solution.length > 0) {
+        const isSolutionPosition = this.currentPuzzle.solution.some(
+          (s) => s.r === r && s.c === c
+        );
+        if (!isSolutionPosition) {
+          this.flashDeny(r, c, 'そこは柴犬の居場所じゃないワン！（間違ったマスです）');
+          sounds.playConflict();
+          cell.mark = 'cross';
+          this.updateCellView(r, c);
+          this.saveActiveGame();
+          return;
+        }
+      }
+
       // Valid placement!
+
       const moveGroup: MoveAction[] = [];
       const prevMark = cell.mark;
       cell.mark = 'dog';
       moveGroup.push({ r, c, prevMark, newMark: 'dog' });
+
 
       // Auto-Mark crosses if enabled
       if (this.settings.autoMark) {
