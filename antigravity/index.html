@@ -19,140 +19,263 @@
   </head>
   <body>
     <div id="app" class="app-container">
-      <!-- Top Bar (Zoodoku Header) -->
-      <header class="game-top-bar">
-        <button id="btn-stages" class="circle-btn" title="ステージ選択" aria-label="ステージ選択">
-          <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-        </button>
 
-        <div class="header-stats">
-          <div class="stat-col">
-            <span class="stat-title">レベル</span>
-            <span id="level-val" class="stat-num">5</span>
-          </div>
-          <div class="stat-col">
-            <span class="stat-title">タイム</span>
-            <span id="timer-val" class="stat-num">00:00</span>
-          </div>
-          <div class="stat-col">
-            <span class="stat-title"><span class="flame-icon">🔥</span> 難易度</span>
-            <span id="difficulty-val" class="stat-num">ノーマル</span>
+      <!-- ================================================================
+           Screen 1: Title Screen (Home Screen)
+           ================================================================ -->
+      <section id="screen-title" class="screen-title">
+        <div class="title-shiba-hero">
+          <div id="title-shiba-mascot" class="title-mascot"></div>
+          <div class="title-sparkles">✨</div>
+        </div>
+
+        <div class="title-brand">
+          <h1 class="title-logo">Inudoku</h1>
+          <span class="title-sublogo">柴独</span>
+          <p class="title-tagline">柴犬たちのパーソナルスペース・ロジックパズル</p>
+        </div>
+
+        <div class="title-menu-group">
+          <button id="btn-title-play" class="hero-play-btn">
+            <span class="play-icon">▶</span>
+            <span class="play-text">あそぶ（レベル <span id="title-current-level">1</span>）</span>
+          </button>
+
+          <div class="title-sub-buttons">
+            <button id="btn-title-stages" class="menu-pill-btn">
+              <span class="menu-icon">📋</span>
+              <span>ステージ</span>
+            </button>
+            <button id="btn-title-ranking" class="menu-pill-btn">
+              <span class="menu-icon">🏆</span>
+              <span>ランキング</span>
+            </button>
+            <button id="btn-title-help" class="menu-pill-btn">
+              <span class="menu-icon">❓</span>
+              <span>ルール</span>
+            </button>
+            <button id="btn-title-settings" class="menu-pill-btn">
+              <span class="menu-icon">⚙️</span>
+              <span>設定</span>
+            </button>
           </div>
         </div>
 
-        <button id="btn-settings" class="circle-btn" title="設定" aria-label="設定">
-          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-        </button>
-      </header>
-
-      <!-- Sub Header (Shiba Count Pill & Treat Bones) -->
-      <section class="game-sub-bar">
-        <div class="pill-badge">
-          <span class="pill-shiba-head">🐕</span>
-          <span id="dog-counter" class="pill-text">0 / 5</span>
-        </div>
-        <div class="pill-badge treats-badge">
-          <span class="treat-bone">🦴</span>
-          <span class="treat-bone">🦴</span>
-          <span class="treat-bone">🦴</span>
+        <div class="title-footer-stats">
+          <span class="daily-today-badge">📅 <span id="title-today-date">2026/09/04</span></span>
+          <span class="progress-badge">クリア達成: <span id="title-progress-text">0 / 15</span></span>
         </div>
       </section>
 
-      <!-- Mini Rule Guide Cards (Matching Meowdoku Screenshot) -->
-      <section class="mini-rules-bar">
-        <div class="mini-rule-card">
-          <div class="mini-rule-grid">
-            <span>❌</span><span>❌</span><span>❌</span>
-            <span>❌</span><span>🐶</span><span>❌</span>
-            <span>❌</span><span>❌</span><span>❌</span>
+      <!-- ================================================================
+           Screen 2: Gameplay Screen (Matching Meowdoku Screenshot)
+           ================================================================ -->
+      <section id="screen-game" class="screen-game hidden">
+        <!-- Top Bar (Zoodoku Header) -->
+        <header class="game-top-bar">
+          <button id="btn-back-home" class="circle-btn" title="タイトルへ戻る" aria-label="タイトルへ戻る">
+            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+
+          <div class="header-stats">
+            <div class="stat-col">
+              <span class="stat-title">レベル</span>
+              <span id="level-val" class="stat-num">1</span>
+            </div>
+            <div class="stat-col">
+              <span class="stat-title">タイム</span>
+              <span id="timer-val" class="stat-num">00:00</span>
+            </div>
+            <div class="stat-col">
+              <span class="stat-title"><span class="flame-icon">🔥</span> 難易度</span>
+              <span id="difficulty-val" class="stat-num">入門</span>
+            </div>
           </div>
-          <span class="mini-rule-label">1色に1匹</span>
-        </div>
-        <div class="mini-rule-card">
-          <div class="mini-rule-grid">
-            <span>❌</span><span>🐶</span><span>❌</span>
-            <span>❌</span><span>❌</span><span>❌</span>
-            <span>❌</span><span>❌</span><span>❌</span>
+
+          <div class="header-right-btns">
+            <button id="btn-game-ranking" class="circle-btn" title="ランキング" aria-label="ランキング">
+              <span style="font-size: 1.15rem;">🏆</span>
+            </button>
+            <button id="btn-settings" class="circle-btn" title="設定" aria-label="設定">
+              <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </button>
           </div>
-          <span class="mini-rule-label">行と列に1匹ずつ</span>
-        </div>
-        <div class="mini-rule-card">
-          <div class="mini-rule-grid">
-            <span>❌</span><span>❌</span><span>❌</span>
-            <span>❌</span><span>🐶</span><span>❌</span>
-            <span>❌</span><span>❌</span><span>❌</span>
+        </header>
+
+        <!-- Sub Header (Shiba Count Pill & Treats) -->
+        <section class="game-sub-bar">
+          <div class="pill-badge">
+            <span class="pill-shiba-head">🐕</span>
+            <span id="dog-counter" class="pill-text">0 / 5</span>
           </div>
-          <span class="mini-rule-label">柴犬同士は隣接不可</span>
-        </div>
+          <div class="pill-badge treats-badge">
+            <span class="treat-bone">🦴</span>
+            <span class="treat-bone">🦴</span>
+            <span class="treat-bone">🦴</span>
+          </div>
+        </section>
+
+        <!-- Mini Rule Guide Cards -->
+        <section class="mini-rules-bar" title="ルールを見る">
+          <div class="mini-rule-card">
+            <div class="mini-rule-grid">
+              <span>❌</span><span>❌</span><span>❌</span>
+              <span>❌</span><span>🐶</span><span>❌</span>
+              <span>❌</span><span>❌</span><span>❌</span>
+            </div>
+            <span class="mini-rule-label">1色に1匹</span>
+          </div>
+          <div class="mini-rule-card">
+            <div class="mini-rule-grid">
+              <span>❌</span><span>🐶</span><span>❌</span>
+              <span>❌</span><span>❌</span><span>❌</span>
+              <span>❌</span><span>❌</span><span>❌</span>
+            </div>
+            <span class="mini-rule-label">行と列に1匹ずつ</span>
+          </div>
+          <div class="mini-rule-card">
+            <div class="mini-rule-grid">
+              <span>❌</span><span>❌</span><span>❌</span>
+              <span>❌</span><span>🐶</span><span>❌</span>
+              <span>❌</span><span>❌</span><span>❌</span>
+            </div>
+            <span class="mini-rule-label">柴犬同士は隣接不可</span>
+          </div>
+        </section>
+
+        <!-- Main Game Board Container -->
+        <main class="board-wrapper">
+          <div class="board-outer-frame">
+            <div id="grid-board" class="grid-board" role="grid" aria-label="パズル盤面">
+              <!-- Grid cells generated dynamically with clean white gaps -->
+            </div>
+          </div>
+          <div id="hint-bubble" class="hint-bubble hidden">
+            <span class="hint-shiba-icon">🐕</span>
+            <span id="hint-bubble-text" class="hint-text"></span>
+            <button id="btn-close-hint" class="hint-close">✕</button>
+          </div>
+        </main>
+
+        <!-- Bottom Control Bar (Hero Round Buttons) -->
+        <footer class="game-footer">
+          <div class="hero-actions-container">
+            <div class="hero-action-wrapper">
+              <button id="mode-dog" class="hero-round-btn active" title="柴犬を配置">
+                <span class="hero-btn-avatar">🐶</span>
+                <span class="hero-badge" id="dog-mode-badge">🐕</span>
+              </button>
+              <span class="hero-btn-caption">柴犬</span>
+            </div>
+
+            <div class="hero-action-wrapper">
+              <button id="mode-mark" class="hero-round-btn" title="✕マーク（ここにはいない）">
+                <span class="hero-btn-avatar">❌</span>
+                <span class="hero-badge off" id="mark-mode-badge">🐾</span>
+              </button>
+              <span class="hero-btn-caption">バツ印</span>
+            </div>
+
+            <div class="hero-action-wrapper">
+              <button id="btn-hint" class="hero-round-btn bulb-btn" title="ヒント">
+                <span class="hero-btn-avatar">💡</span>
+                <span class="hero-badge">∞</span>
+              </button>
+              <span class="hero-btn-caption">ヒント</span>
+            </div>
+          </div>
+
+          <!-- Utility Bar (Undo, Auto-Mark, Reset) -->
+          <div class="utility-actions-bar">
+            <button id="btn-undo" class="utility-btn" title="元に戻す">
+              <span class="utility-icon">↩️</span>
+              <span>戻す</span>
+            </button>
+            <button id="btn-automark" class="utility-btn" title="オートマーク切替">
+              <span class="utility-icon">⚡</span>
+              <span>自動✕: <strong id="automark-badge">ON</strong></span>
+            </button>
+            <button id="btn-reset" class="utility-btn" title="最初からやり直す">
+              <span class="utility-icon">🔄</span>
+              <span>リセット</span>
+            </button>
+          </div>
+        </footer>
       </section>
+    </div>
 
-      <!-- Main Game Board Container -->
-      <main class="board-wrapper">
-        <div class="board-outer-frame">
-          <div id="grid-board" class="grid-board" role="grid" aria-label="パズル盤面">
-            <!-- Grid cells generated dynamically with clean white gaps -->
+    <!-- ================================================================
+         Modals
+         ================================================================ -->
+
+    <!-- Daily Leaderboard Modal -->
+    <div id="modal-leaderboard" class="modal-backdrop hidden">
+      <div class="modal-card modal-wide">
+        <div class="modal-header">
+          <div>
+            <h2>🏆 本日のデイリーランキング</h2>
+            <span id="leaderboard-date" class="leaderboard-date-badge">2026年9月4日</span>
           </div>
+          <button class="modal-close" data-close-modal="modal-leaderboard">✕</button>
         </div>
-        <div id="hint-bubble" class="hint-bubble hidden">
-          <span class="hint-shiba-icon">🐕</span>
-          <span id="hint-bubble-text" class="hint-text"></span>
-          <button id="btn-close-hint" class="hint-close">✕</button>
-        </div>
-      </main>
-
-      <!-- Bottom Control Bar (Big round action buttons like screenshot) -->
-      <footer class="game-footer">
-        <div class="hero-actions-container">
-          <!-- Dog Placement Button -->
-          <div class="hero-action-wrapper">
-            <button id="mode-dog" class="hero-round-btn active" title="柴犬を配置">
-              <span class="hero-btn-avatar">🐶</span>
-              <span class="hero-badge" id="dog-mode-badge">🐕</span>
-            </button>
-            <span class="hero-btn-caption">柴犬</span>
-          </div>
-
-          <!-- Cross / Mark Mode Button -->
-          <div class="hero-action-wrapper">
-            <button id="mode-mark" class="hero-round-btn" title="✕マーク（ここにはいない）">
-              <span class="hero-btn-avatar">❌</span>
-              <span class="hero-badge off" id="mark-mode-badge">🐾</span>
-            </button>
-            <span class="hero-btn-caption">バツ印</span>
+        <div class="modal-body leaderboard-body">
+          <div class="leaderboard-user-banner" id="leaderboard-user-card">
+            <div class="user-card-left">
+              <span class="user-rank-badge" id="my-rank-badge"># -</span>
+              <div class="user-info">
+                <strong>あなた (柴犬マスター)</strong>
+                <span id="my-stats-summary">今日のベストスコア: - 点</span>
+              </div>
+            </div>
+            <button id="btn-leaderboard-play" class="primary-btn btn-sm">挑戦する 🐾</button>
           </div>
 
-          <!-- Lightbulb Hint Button -->
-          <div class="hero-action-wrapper">
-            <button id="btn-hint" class="hero-round-btn bulb-btn" title="ヒント">
-              <span class="hero-btn-avatar">💡</span>
-              <span class="hero-badge">∞</span>
-            </button>
-            <span class="hero-btn-caption">ヒント</span>
+          <div class="leaderboard-list" id="leaderboard-list">
+            <!-- Entries injected dynamically -->
           </div>
         </div>
-
-        <!-- Utility Bar (Undo, Reset, Auto-Mark) -->
-        <div class="utility-actions-bar">
-          <button id="btn-undo" class="utility-btn" title="元に戻す">
-            <span class="utility-icon">↩️</span>
-            <span>戻す</span>
-          </button>
-          <button id="btn-automark" class="utility-btn" title="オートマーク切替">
-            <span class="utility-icon">⚡</span>
-            <span>自動✕: <strong id="automark-badge">ON</strong></span>
-          </button>
-          <button id="btn-reset" class="utility-btn" title="最初からやり直す">
-            <span class="utility-icon">🔄</span>
-            <span>リセット</span>
-          </button>
+        <div class="modal-footer">
+          <button class="secondary-btn" data-close-modal="modal-leaderboard">とじる</button>
         </div>
-      </footer>
+      </div>
+    </div>
+
+    <!-- Stage Select Modal (Levels 1 to 15+) -->
+    <div id="modal-stages" class="modal-backdrop hidden">
+      <div class="modal-card modal-wide">
+        <div class="modal-header">
+          <h2>📋 レベル選択</h2>
+          <button class="modal-close" data-close-modal="modal-stages">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="stages-level-grid" id="stages-level-grid">
+            <!-- Level cards generated dynamically -->
+          </div>
+
+          <div class="random-generator-card">
+            <div class="random-info">
+              <h3>🎲 無限ランダムパズル</h3>
+              <p>決まったレベル以外にも、毎回異なる唯一解パズルを自動生成して遊べます！</p>
+            </div>
+            <div class="random-actions">
+              <select id="select-random-size" class="select-styled">
+                <option value="5">5x5 (入門)</option>
+                <option value="6" selected>6x6 (初級)</option>
+                <option value="7">7x7 (中級)</option>
+                <option value="8">8x8 (上級)</option>
+                <option value="9">9x9 (名人)</option>
+              </select>
+              <button id="btn-generate-puzzle" class="primary-btn">新しく生成</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Rule / Help Modal -->
@@ -194,43 +317,6 @@
         </div>
         <div class="modal-footer">
           <button class="primary-btn" data-close-modal="modal-help">わかったワン！</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stage Select Modal -->
-    <div id="modal-stages" class="modal-backdrop hidden">
-      <div class="modal-card modal-wide">
-        <div class="modal-header">
-          <h2>📋 ステージ選択</h2>
-          <button class="modal-close" data-close-modal="modal-stages">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="stage-tabs">
-            <button class="stage-tab active" data-filter="all">すべて</button>
-            <button class="stage-tab" data-filter="beginner">入門 5x5</button>
-            <button class="stage-tab" data-filter="easy">初級 6x6</button>
-            <button class="stage-tab" data-filter="medium">中級 7x7</button>
-            <button class="stage-tab" data-filter="hard">上級 8x8</button>
-            <button class="stage-tab" data-filter="expert">名人 9x9</button>
-          </div>
-          <div id="stages-list" class="stages-grid"></div>
-          <div class="random-generator-card">
-            <div class="random-info">
-              <h3>🎲 無限ランダム生成</h3>
-              <p>毎回異なる唯一解パズルを自動生成してプレイできます！</p>
-            </div>
-            <div class="random-actions">
-              <select id="select-random-size" class="select-styled">
-                <option value="5">5x5 (入門)</option>
-                <option value="6" selected>6x6 (初級)</option>
-                <option value="7">7x7 (中級)</option>
-                <option value="8">8x8 (上級)</option>
-                <option value="9">9x9 (名人)</option>
-              </select>
-              <button id="btn-generate-puzzle" class="primary-btn">新しく生成して遊ぶ</button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -296,7 +382,7 @@
     <div id="modal-win" class="modal-backdrop hidden">
       <div class="modal-card victory-card">
         <div class="victory-shiba" id="victory-shiba-container"></div>
-        <h2 class="victory-title">🎉 ステージクリア！ 🎉</h2>
+        <h2 class="victory-title">🎉 レベルクリア！ 🎉</h2>
         <p class="victory-subtitle">すべての柴犬が仲良く過ごせる場所が見つかったワン！</p>
         <div class="victory-stats">
           <div class="stat-box">
@@ -304,13 +390,14 @@
             <span id="win-time" class="stat-val">01:23</span>
           </div>
           <div class="stat-box">
-            <span class="stat-label">配置した柴犬</span>
-            <span id="win-dogs" class="stat-val">7 匹</span>
+            <span class="stat-label">スコア</span>
+            <span id="win-score" class="stat-val">2880</span>
           </div>
         </div>
         <div class="victory-actions">
-          <button id="btn-win-replay" class="secondary-btn">もう一度遊ぶ</button>
-          <button id="btn-win-next" class="primary-btn">次のステージへ 🐾</button>
+          <button id="btn-win-replay" class="secondary-btn">もう一度</button>
+          <button id="btn-win-ranking" class="secondary-btn">🏆 順位を見る</button>
+          <button id="btn-win-next" class="primary-btn">次のレベルへ 🐾</button>
         </div>
       </div>
     </div>
