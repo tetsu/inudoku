@@ -1376,4 +1376,396 @@ input:checked + .slider:before {
   flex: 1;
 }
 
+/* ==========================================================================
+   Clear Rank-Up Overlay (Meowdoku Style Tournament Screen)
+   ========================================================================== */
+.rankup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 14, 10, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  user-select: none;
+  cursor: pointer;
+}
+
+.rankup-overlay.hidden {
+  display: none !important;
+  opacity: 0;
+}
+
+.rankup-content {
+  width: 100%;
+  max-width: 375px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  gap: 10px;
+}
+
+/* Header Title: Big pop 3D text */
+.rankup-header-title {
+  font-family: var(--font-family-display);
+  font-size: 2.25rem;
+  font-weight: 900;
+  margin: 0;
+  color: #FFA500;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFCC33 35%, #FF7700 85%, #E65100 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 0 #C2410C) drop-shadow(0 8px 12px rgba(0, 0, 0, 0.5));
+  letter-spacing: 2px;
+  animation: rankupTitlePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rankupTitlePop {
+  0% { transform: scale(0.6) translateY(-20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* Timer Pill */
+.rankup-timer-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(234, 88, 12, 0.7);
+  border: 1.5px solid rgba(254, 215, 170, 0.6);
+  padding: 4px 16px;
+  border-radius: 9999px;
+  color: #FFFFFF;
+  font-family: var(--font-family-display);
+  font-size: 0.95rem;
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================================================
+   3D Podiums Container
+   ========================================================================== */
+.podium-stage {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  width: 100%;
+  gap: 12px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.podium-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+/* Avatar on top of podium */
+.podium-avatar-box {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: -10px;
+  z-index: 5;
+}
+
+.crown-badge {
+  position: absolute;
+  top: -16px;
+  font-size: 1.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  animation: crownBob 2s infinite ease-in-out alternate;
+}
+
+@keyframes crownBob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-4px) rotate(5deg); }
+}
+
+.avatar-ring {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  background: #FFFFFF;
+  border: 3px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+}
+
+.ring-gold {
+  border-color: #FBBF24;
+  background: #FFFBEB;
+  width: 66px;
+  height: 66px;
+}
+
+.avatar-emoji {
+  font-size: 2rem;
+}
+
+.ring-gold .avatar-emoji {
+  font-size: 2.3rem;
+}
+
+/* Cylinders / Pillars */
+.podium-pillar {
+  width: 100%;
+  border-radius: 20px 20px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 14px;
+  padding-bottom: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.pillar-cap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 20px 20px 0 0;
+}
+
+/* 1st Place (Gold) */
+.pillar-gold {
+  height: 135px;
+  background: linear-gradient(180deg, #FCD34D 0%, #F59E0B 45%, #D97706 100%);
+  border-top: 2px solid #FEF08A;
+}
+
+/* 2nd Place (Silver/Lavender) */
+.pillar-silver {
+  height: 110px;
+  background: linear-gradient(180deg, #C7D2FE 0%, #818CF8 50%, #6366F1 100%);
+  border-top: 2px solid #E0E7FF;
+}
+
+/* 3rd Place (Bronze/Peach) */
+.pillar-bronze {
+  height: 96px;
+  background: linear-gradient(180deg, #FDBA74 0%, #FB923C 50%, #EA580C 100%);
+  border-top: 2px solid #FFEDD5;
+}
+
+/* Number Badges on Pillars */
+.podium-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #FFFFFF;
+  font-family: var(--font-family-display);
+  font-size: 0.95rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  margin-bottom: 4px;
+}
+
+.badge-gold {
+  background: #D97706;
+  border: 2px solid #FEF3C7;
+  width: 32px;
+  height: 32px;
+  font-size: 1.1rem;
+}
+
+.badge-silver {
+  background: #4F46E5;
+  border: 2px solid #EEF2FF;
+}
+
+.badge-bronze {
+  background: #C2410C;
+  border: 2px solid #FFF7ED;
+}
+
+.podium-name {
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%;
+  text-align: center;
+}
+
+.podium-score-pill {
+  background: #FFFFFF;
+  border-radius: 9999px;
+  padding: 2px 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.score-bone-icon {
+  font-size: 0.9rem;
+}
+
+.score-num {
+  font-family: var(--font-family-display);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #854D0E;
+}
+
+/* ==========================================================================
+   Rank Up Cards Container & Animation
+   ========================================================================== */
+.rankup-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  position: relative;
+}
+
+.rankup-card {
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border-radius: 14px;
+  padding: 9px 14px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  gap: 12px;
+  position: relative;
+  transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.rankup-card.is-user-card {
+  background: #FFFBEB;
+  border: 2px solid #F59E0B;
+  z-index: 10;
+  box-shadow: 0 8px 22px rgba(245, 158, 11, 0.35);
+}
+
+.card-rank-num {
+  font-family: var(--font-family-display);
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #78350F;
+  width: 34px;
+  text-align: center;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.card-avatar-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  background: #F1F5F9;
+  border: 1.5px solid #CBD5E1;
+  flex-shrink: 0;
+}
+
+.card-user-name {
+  flex: 1;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-score-pill {
+  background: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 9999px;
+  padding: 3px 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.card-score-pill .score-bone-icon {
+  font-size: 1.05rem;
+}
+
+.card-score-pill .score-num {
+  font-family: var(--font-family-display);
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #78350F;
+}
+
+/* Rank Up Slide Animation */
+.rankup-card.slide-up {
+  transform: translateY(-62px);
+}
+
+.rankup-card.slide-down {
+  transform: translateY(62px);
+}
+
+.card-rank-num.bump {
+  animation: numBump 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: #EA580C;
+}
+
+@keyframes numBump {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+/* Flying Bone Particles */
+.flying-bones-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.flying-bone {
+  position: absolute;
+  font-size: 1.6rem;
+  transition: all 0.75s cubic-bezier(0.25, 1, 0.5, 1);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+/* Tap to Continue Guidance */
+.tap-to-continue {
+  margin-top: 10px;
+  color: #FDE68A;
+  font-family: var(--font-family-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  animation: tapBlink 1.4s ease-in-out infinite alternate;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes tapBlink {
+  0% { opacity: 0.35; transform: scale(0.96); }
+  100% { opacity: 1; transform: scale(1.04); }
+}
+
+
 

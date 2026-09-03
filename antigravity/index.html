@@ -427,7 +427,91 @@
       </div>
     </div>
 
+    <!-- Clear Rank-Up Screen (Matching Meowdoku Screenshot) -->
+    <div id="modal-rankup" class="rankup-overlay hidden">
+      <div class="rankup-content">
+        <h1 class="rankup-header-title">ランキング</h1>
+        
+        <div class="rankup-timer-pill">
+          <span class="timer-clock-icon">⏱️</span>
+          <span id="rankup-timer-countdown">23:29:56</span>
+        </div>
+
+        <!-- 3D Podiums Container -->
+        <div class="podium-stage" id="podium-stage">
+          <!-- 2nd Place (Left) -->
+          <div class="podium-column podium-silver">
+            <div class="podium-avatar-box">
+              <div class="avatar-ring">
+                <span class="avatar-emoji">🐶</span>
+              </div>
+            </div>
+            <div class="podium-pillar pillar-silver">
+              <div class="pillar-cap"></div>
+              <div class="podium-badge badge-silver">2</div>
+              <div class="podium-name">VBB7VC</div>
+              <div class="podium-score-pill">
+                <span class="score-bone-icon">🦴</span>
+                <span class="score-num">27</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 1st Place (Center, Tallest) -->
+          <div class="podium-column podium-gold">
+            <div class="podium-avatar-box">
+              <span class="crown-badge">👑</span>
+              <div class="avatar-ring ring-gold">
+                <span class="avatar-emoji">🦁</span>
+              </div>
+            </div>
+            <div class="podium-pillar pillar-gold">
+              <div class="pillar-cap cap-gold"></div>
+              <div class="podium-badge badge-gold">1</div>
+              <div class="podium-name">RJEA3M</div>
+              <div class="podium-score-pill">
+                <span class="score-bone-icon">🦴</span>
+                <span class="score-num">29</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3rd Place (Right) -->
+          <div class="podium-column podium-bronze">
+            <div class="podium-avatar-box">
+              <div class="avatar-ring">
+                <span class="avatar-emoji">🐊</span>
+              </div>
+            </div>
+            <div class="podium-pillar pillar-bronze">
+              <div class="pillar-cap"></div>
+              <div class="podium-badge badge-bronze">3</div>
+              <div class="podium-name">xenW</div>
+              <div class="podium-score-pill">
+                <span class="score-bone-icon">🦴</span>
+                <span class="score-num">26</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rank Up Moving Cards Window -->
+        <div class="rankup-cards-container" id="rankup-cards-container">
+          <!-- Cards will be populated and animated by main.ts -->
+        </div>
+
+        <!-- Flying Bones Animation Container -->
+        <div class="flying-bones-layer" id="flying-bones-layer"></div>
+
+        <!-- Tap to Continue Hint -->
+        <div class="tap-to-continue" id="rankup-tap-continue">
+          <span>タップしてつづける</span>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="./src/main.ts"></script>
+
 
   </body>
 </html>

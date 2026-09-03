@@ -13,7 +13,7 @@ import { getNextHint } from './logic/solver';
 import { generateUniquePuzzle } from './logic/generator';
 import { sounds } from './audio/sound';
 import { getCrossSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
-import { getDailyLeaderboard } from './logic/leaderboard';
+import { calculateRankUp, getDailyLeaderboard } from './logic/leaderboard';
 
 class InudokuGame {
   private currentPuzzle: PuzzleDefinition = PRESET_STAGES[0];
@@ -29,7 +29,9 @@ class InudokuGame {
   private completedLevels: Record<number, { timeSecs: number; score: number }> = {};
   private dailyBestScore: number = 0;
   private dailyBestTimeSecs: number = 0;
+  private tournamentPoints: number = 0;
   private lives: number = 3;
+
 
   // Settings
   private settings: GameSettings = {
@@ -104,7 +106,14 @@ class InudokuGame {
         console.error('Failed to parse daily score', e);
       }
     }
+
+    // Tournament Points
+    const savedPoints = localStorage.getItem('inudoku_tournament_points');
+    if (savedPoints) {
+      this.tournamentPoints = Math.max(0, parseInt(savedPoints, 10));
+    }
   }
+
 
   private saveActiveGame() {
     if (this.isFinished) return;
@@ -123,7 +132,6 @@ class InudokuGame {
       console.warn('Failed to cache active game', e);
     }
   }
-
 
   private clearActiveGame() {
     localStorage.removeItem('inudoku_active_game');
@@ -148,6 +156,7 @@ class InudokuGame {
   private saveProgression() {
     localStorage.setItem('inudoku_unlocked_level', String(this.unlockedLevel));
     localStorage.setItem('inudoku_completed_levels', JSON.stringify(this.completedLevels));
+    localStorage.setItem('inudoku_tournament_points', String(this.tournamentPoints));
 
     const todayKey = `inudoku_score_${new Date().toISOString().slice(0, 10)}`;
     localStorage.setItem(
@@ -155,6 +164,7 @@ class InudokuGame {
       JSON.stringify({ score: this.dailyBestScore, timeSecs: this.dailyBestTimeSecs })
     );
   }
+
 
   private initDOMElements() {
     this.screenTitleEl = document.getElementById('screen-title')!;
@@ -627,6 +637,9 @@ class InudokuGame {
     this.clearActiveGame();
     this.saveProgression();
 
+    // Earn bone points based on puzzle size (3, 4, or 5 points)
+    const earnedPoints = Math.max(3, Math.min(5, size - 3));
+
     // Confetti celebration
     confetti({
       particleCount: 80,
@@ -634,19 +647,149 @@ class InudokuGame {
       origin: { y: 0.6 },
     });
 
-    const winModal = document.getElementById('modal-win')!;
-    const winTimeEl = document.getElementById('win-time')!;
-    const winScoreEl = document.getElementById('win-score')!;
-    const victoryShibaEl = document.getElementById('victory-shiba-container')!;
-
-    winTimeEl.textContent = this.formatTime(this.elapsedSeconds);
-    if (winScoreEl) winScoreEl.textContent = `${score} 点`;
-    victoryShibaEl.innerHTML = getShibaSvg(this.settings.shibaType, 'happy');
-
+    // Show Meowdoku-style Tournament Rank-Up Screen!
     setTimeout(() => {
-      winModal.classList.remove('hidden');
-    }, 600);
+      this.showRankUpScreen(earnedPoints);
+    }, 450);
   }
+
+  private showRankUpScreen(earnedPoints: number) {
+    const prevPoints = this.tournamentPoints;
+    const rankUpData = calculateRankUp(prevPoints, earnedPoints);
+    this.tournamentPoints = rankUpData.newPoints;
+    this.saveProgression();
+
+    const overlay = document.getElementById('modal-rankup')!;
+    overlay.classList.remove('hidden');
+
+    // 1. Update countdown timer until midnight
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0);
+    const diffMs = midnight.getTime() - now.getTime();
+    const hrs = Math.floor(diffMs / 3600000);
+    const mins = Math.floor((diffMs % 3600000) / 60000);
+    const secs = Math.floor((diffMs % 60000) / 1000);
+    const countdownEl = document.getElementById('rankup-timer-countdown');
+    if (countdownEl) {
+      countdownEl.textContent = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // 2. Render Cards List in initial state (user is at bottom, rank 50)
+    const container = document.getElementById('rankup-cards-container')!;
+    container.innerHTML = '';
+
+    rankUpData.displayList.forEach((entry, idx) => {
+      const card = document.createElement('div');
+      card.className = `rankup-card ${entry.isUser ? 'is-user-card' : ''}`;
+      card.id = `rankup-card-${idx}`;
+
+      card.innerHTML = `
+        <div class="card-rank-num" id="rank-num-${idx}">${entry.rank}</div>
+        <div class="card-avatar-box" style="background: ${entry.avatarBg}">
+          <span>${entry.avatar}</span>
+        </div>
+        <div class="card-user-name">${entry.name}</div>
+        <div class="card-score-pill">
+          <span class="score-bone-icon">🦴</span>
+          <span class="score-num" id="card-pts-${idx}">${entry.points}</span>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    // 3. Play flying bones & score increment after 450ms
+    setTimeout(() => {
+      this.playFlyingBones(earnedPoints, () => {
+        const userPtsEl = document.getElementById('card-pts-2');
+        if (userPtsEl) {
+          userPtsEl.textContent = String(rankUpData.newPoints);
+          userPtsEl.classList.add('bump');
+          sounds.playBark();
+        }
+
+        // 4. Slide Up Animation after 550ms
+        setTimeout(() => {
+          const userCard = document.getElementById('rankup-card-2');
+          const rivalCard = document.getElementById('rankup-card-1');
+
+          if (userCard && rivalCard) {
+            userCard.classList.add('slide-up');
+            rivalCard.classList.add('slide-down');
+            sounds.playPaw();
+
+            // 5. Update Ranks & Shine after slide completes (600ms)
+            setTimeout(() => {
+              const userRankEl = document.getElementById('rank-num-2');
+              const rivalRankEl = document.getElementById('rank-num-1');
+              if (userRankEl && rivalRankEl) {
+                userRankEl.textContent = String(rankUpData.newRank);
+                rivalRankEl.textContent = String(rankUpData.prevRank);
+                userRankEl.classList.add('bump');
+                rivalRankEl.classList.add('bump');
+              }
+
+              // Confetti pop!
+              confetti({
+                particleCount: 50,
+                spread: 60,
+                origin: { y: 0.7 },
+              });
+            }, 550);
+          }
+        }, 550);
+      });
+    }, 450);
+
+    // 6. Handle Tap to Continue
+    const handleTap = () => {
+      overlay.removeEventListener('click', handleTap);
+      overlay.classList.add('hidden');
+      // Advance to next level
+      const nextIndex = Math.min(this.currentStageIndex + 1, PRESET_STAGES.length - 1);
+      this.startGame(nextIndex);
+    };
+    overlay.addEventListener('click', handleTap);
+  }
+
+  private playFlyingBones(count: number, onComplete: () => void) {
+    const layer = document.getElementById('flying-bones-layer')!;
+    layer.innerHTML = '';
+    const targetCard = document.getElementById('rankup-card-2');
+    if (!targetCard) {
+      onComplete();
+      return;
+    }
+
+    const rect = targetCard.getBoundingClientRect();
+    const layerRect = layer.getBoundingClientRect();
+    const targetX = rect.right - layerRect.left - 50;
+    const targetY = rect.top - layerRect.top + 10;
+
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const bone = document.createElement('div');
+        bone.className = 'flying-bone';
+        bone.textContent = '🦴';
+        bone.style.left = `${layerRect.width / 2 + (i - 1) * 30}px`;
+        bone.style.top = `${layerRect.height - 30}px`;
+        layer.appendChild(bone);
+
+        void bone.offsetWidth;
+        bone.style.left = `${targetX}px`;
+        bone.style.top = `${targetY}px`;
+        bone.style.transform = 'scale(0.8) rotate(360deg)';
+
+        setTimeout(() => {
+          bone.remove();
+          if (i === count - 1) {
+            onComplete();
+          }
+        }, 650);
+      }, i * 140);
+    }
+  }
+
 
   private updateStatus(dogCount?: number) {
     const size = this.currentPuzzle.size;
@@ -1087,12 +1230,15 @@ class InudokuGame {
         localStorage.removeItem('inudoku_unlocked_level');
         localStorage.removeItem('inudoku_completed_levels');
         localStorage.removeItem('inudoku_active_game');
+        localStorage.removeItem('inudoku_tournament_points');
         this.unlockedLevel = 1;
         this.completedLevels = {};
+        this.tournamentPoints = 0;
         document.getElementById('modal-settings')?.classList.add('hidden');
         this.showTitleScreen();
         alert('進捗データを初期化しましたワン！');
       }
+
     });
   }
 
