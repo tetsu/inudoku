@@ -1427,11 +1427,65 @@ class InudokuGame {
     });
   }
 
+  private isTouchDevice(): boolean {
+    return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
+  }
+
+  private showControlsModal() {
+    const isTouch = this.isTouchDevice();
+    const badgePc = document.getElementById('badge-device-pc');
+    const badgeMobile = document.getElementById('badge-device-mobile');
+
+    if (isTouch) {
+      badgePc?.classList.add('hidden');
+      badgeMobile?.classList.remove('hidden');
+      this.switchControlsTab('mobile');
+    } else {
+      badgePc?.classList.remove('hidden');
+      badgeMobile?.classList.add('hidden');
+      this.switchControlsTab('pc');
+    }
+
+    document.getElementById('modal-controls')?.classList.remove('hidden');
+  }
+
+  private switchControlsTab(tab: 'pc' | 'mobile') {
+    const tabPc = document.getElementById('tab-controls-pc');
+    const tabMobile = document.getElementById('tab-controls-mobile');
+    const secPc = document.getElementById('controls-section-pc');
+    const secMobile = document.getElementById('controls-section-mobile');
+
+    if (tab === 'mobile') {
+      tabMobile?.classList.add('active');
+      tabPc?.classList.remove('active');
+      secMobile?.classList.remove('hidden');
+      secPc?.classList.add('hidden');
+    } else {
+      tabPc?.classList.add('active');
+      tabMobile?.classList.remove('active');
+      secPc?.classList.remove('hidden');
+      secMobile?.classList.add('hidden');
+    }
+  }
+
   private bindModals() {
     const openHelp = () => {
       document.getElementById('modal-help')?.classList.remove('hidden');
     };
     document.querySelector('.mini-rules-bar')?.addEventListener('click', openHelp);
+
+    document.getElementById('btn-controls')?.addEventListener('click', () => {
+      this.showControlsModal();
+    });
+    document.getElementById('btn-title-controls')?.addEventListener('click', () => {
+      this.showControlsModal();
+    });
+    document.getElementById('tab-controls-pc')?.addEventListener('click', () => {
+      this.switchControlsTab('pc');
+    });
+    document.getElementById('tab-controls-mobile')?.addEventListener('click', () => {
+      this.switchControlsTab('mobile');
+    });
 
     document.getElementById('btn-settings')?.addEventListener('click', () => {
       this.syncSettingsUI();

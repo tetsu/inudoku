@@ -51,6 +51,10 @@
               <span class="menu-icon">🏆</span>
               <span>ランキング</span>
             </button>
+            <button id="btn-title-controls" class="menu-pill-btn">
+              <span class="menu-icon">🎮</span>
+              <span>操作ガイド</span>
+            </button>
             <button id="btn-title-help" class="menu-pill-btn">
               <span class="menu-icon">❓</span>
               <span>ルール</span>
@@ -97,6 +101,9 @@
           </div>
 
           <div class="header-right-btns">
+            <button id="btn-controls" class="circle-btn" title="操作方法" aria-label="操作方法">
+              <span style="font-size: 1.15rem;">🎮</span>
+            </button>
             <button id="btn-game-ranking" class="circle-btn" title="ランキング" aria-label="ランキング">
               <span style="font-size: 1.15rem;">🏆</span>
             </button>
@@ -348,6 +355,131 @@
         </div>
         <div class="modal-footer">
           <button class="primary-btn" data-close-modal="modal-help">わかったワン！</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls / How to Play Modal -->
+    <div id="modal-controls" class="modal-backdrop hidden">
+      <div class="modal-card modal-controls-card">
+        <div class="modal-header">
+          <h2>🎮 操作ガイド</h2>
+          <button class="modal-close" data-close-modal="modal-controls">✕</button>
+        </div>
+
+        <!-- Device Tabs with Auto-detect Indicator -->
+        <div class="controls-env-tabs">
+          <button id="tab-controls-pc" class="controls-tab-btn active" data-tab="pc">
+            💻 パソコン (PC)
+            <span id="badge-device-pc" class="device-active-badge hidden">現在</span>
+          </button>
+          <button id="tab-controls-mobile" class="controls-tab-btn" data-tab="mobile">
+            📱 スマホ・タブレット
+            <span id="badge-device-mobile" class="device-active-badge hidden">現在</span>
+          </button>
+        </div>
+
+        <div class="modal-body controls-modal-body">
+          <!-- PC Section -->
+          <div id="controls-section-pc" class="controls-section">
+            <div class="controls-group">
+              <div class="controls-group-title">🖱️ マウス操作</div>
+              <div class="control-row">
+                <span class="control-action"><span class="ctrl-icon">🖱️</span> 左クリック</span>
+                <span class="control-desc"><strong>柴犬（🐶）</strong>を配置 / ✕マークを消す</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="ctrl-icon">🖱️</span> 右クリック</span>
+                <span class="control-desc"><strong>✕ マーク</strong>を配置 / 削除</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="ctrl-icon">🖱️</span> 中央クリック（ホイール）</span>
+                <span class="control-desc"><strong>？ 仮置きマーク</strong>を配置 / 削除</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="ctrl-icon">🖱️</span> ドラッグ</span>
+                <span class="control-desc">複数のマスに連続で <strong>✕ マーク</strong> を記入</span>
+              </div>
+            </div>
+
+            <div class="controls-group">
+              <div class="controls-group-title">⌨️ キーボード操作</div>
+              <div class="control-row">
+                <span class="control-action"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span>
+                <span class="control-desc">枠を移動</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><kbd>Space</kbd> / <kbd>Enter</kbd></span>
+                <span class="control-desc"><strong>柴犬（🐶）</strong>を配置</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><kbd>X</kbd> / <kbd>M</kbd></span>
+                <span class="control-desc"><strong>✕ マーク</strong>を配置</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><kbd>N</kbd></span>
+                <span class="control-desc"><strong>？ 仮置きマーク</strong>を配置</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><kbd>Z</kbd></span>
+                <span class="control-desc">1手戻す（アンドゥ）</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><kbd>H</kbd></span>
+                <span class="control-desc">ヒントを見る</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><kbd>Esc</kbd></span>
+                <span class="control-desc">タイトル画面に戻る</span>
+              </div>
+            </div>
+
+            <div class="controls-tip-box">
+              💡 <strong>お役立ちヒント:</strong><br />
+              ・✕マークや？マークがあるマスでも、直接クリック/スペースで柴犬🐶を置けます（ミスにはなりません）。<br />
+              ・マウスで遊んでいると、キーボード用のオレンジ枠は自動で消えます。
+            </div>
+          </div>
+
+          <!-- Mobile Section -->
+          <div id="controls-section-mobile" class="controls-section hidden">
+            <div class="controls-group">
+              <div class="controls-group-title">👆 タッチ操作</div>
+              <div class="control-row">
+                <span class="control-action"><span class="ctrl-icon">👆</span> タップ（1回押す）</span>
+                <span class="control-desc">
+                  画面下のモード（<strong>柴犬🐶</strong> または <strong>✕</strong>）に応じて配置
+                </span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="ctrl-icon">⏳</span> 長押し（約0.4秒）</span>
+                <span class="control-desc">
+                  <strong>？ 仮置きマーク</strong>を配置 / 削除<br />
+                  <small style="color: var(--color-text-muted);">（対応端末ならブルッと震えます）</small>
+                </span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="ctrl-icon">👉</span> スワイプ / なぞる</span>
+                <span class="control-desc">
+                  「✕モード」のとき、指でなぞって一気に <strong>✕ マーク</strong> を塗れます
+                </span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="ctrl-icon">↩️</span> もどすボタン</span>
+                <span class="control-desc">間違えたときに1手前に戻せます</span>
+              </div>
+            </div>
+
+            <div class="controls-tip-box">
+              💡 <strong>スマホで素早く解くコツ:</strong><br />
+              ・まず「✕モード」にして置けない場所を一気に塗りつぶすのがおすすめ！<br />
+              ・✕マークがついているマスでも、柴犬モードでタップすればそのまま柴犬🐶を置けます（ミス判定になりません）。
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="primary-btn" data-close-modal="modal-controls">わかったワン！</button>
         </div>
       </div>
     </div>
