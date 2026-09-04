@@ -26,6 +26,7 @@ class InudokuGame {
   private isPointerDown: boolean = false;
   private dragMark: CellMark | null = null;
   private focusedPos: Position | null = null;
+  private inputDevice: 'pointer' | 'keyboard' = 'pointer';
 
   // Progression & Score
   private unlockedLevel: number = 1;
@@ -123,6 +124,7 @@ class InudokuGame {
   }
 
   public setFocusedCell(r: number, c: number) {
+    this.inputDevice = 'keyboard';
     // Never show keyboard focus box on touch/mobile devices
     if (window.matchMedia('(pointer: coarse), (hover: none)').matches) {
       return;
@@ -141,11 +143,14 @@ class InudokuGame {
     nextEl?.classList.add('cell-focused');
   }
 
-  public clearFocusedCell() {
+  public clearFocusedCell(keepDevice: boolean = false) {
     if (this.focusedPos) {
       const prevEl = document.getElementById(`cell-${this.focusedPos.r}-${this.focusedPos.c}`);
       prevEl?.classList.remove('cell-focused');
       this.focusedPos = null;
+    }
+    if (!keepDevice) {
+      this.inputDevice = 'pointer';
     }
   }
 
@@ -336,8 +341,10 @@ class InudokuGame {
       }
     }
 
-    if (this.focusedPos) {
+    if (this.inputDevice === 'keyboard' && this.focusedPos) {
       this.setFocusedCell(this.focusedPos.r, this.focusedPos.c);
+    } else {
+      this.clearFocusedCell(true);
     }
   }
 
@@ -1172,7 +1179,7 @@ class InudokuGame {
       }
 
       // Check if any modal is currently visible
-      const activeModal = document.querySelector('.modal-overlay:not(.hidden)');
+      const activeModal = document.querySelector('.modal-backdrop:not(.hidden), .rankup-overlay:not(.hidden), .modal-overlay:not(.hidden)');
       if (activeModal) {
         if (e.key === 'Escape') {
           activeModal.classList.add('hidden');
@@ -1193,6 +1200,7 @@ class InudokuGame {
         case 'w':
         case 'W':
           e.preventDefault();
+          this.inputDevice = 'keyboard';
           if (!this.focusedPos) {
             this.setFocusedCell(0, 0);
           } else {
@@ -1204,6 +1212,7 @@ class InudokuGame {
         case 's':
         case 'S':
           e.preventDefault();
+          this.inputDevice = 'keyboard';
           if (!this.focusedPos) {
             this.setFocusedCell(0, 0);
           } else {
@@ -1215,6 +1224,7 @@ class InudokuGame {
         case 'a':
         case 'A':
           e.preventDefault();
+          this.inputDevice = 'keyboard';
           if (!this.focusedPos) {
             this.setFocusedCell(0, 0);
           } else {
@@ -1226,6 +1236,7 @@ class InudokuGame {
         case 'd':
         case 'D':
           e.preventDefault();
+          this.inputDevice = 'keyboard';
           if (!this.focusedPos) {
             this.setFocusedCell(0, 0);
           } else {
@@ -1235,10 +1246,7 @@ class InudokuGame {
         case ' ':
         case 'Enter':
           e.preventDefault();
-          if (!this.focusedPos) {
-            this.setFocusedCell(0, 0);
-          }
-          if (this.focusedPos) {
+          if (this.inputDevice === 'keyboard' && this.focusedPos) {
             this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'dog');
           }
           break;
@@ -1247,10 +1255,7 @@ class InudokuGame {
         case 'm':
         case 'M':
           e.preventDefault();
-          if (!this.focusedPos) {
-            this.setFocusedCell(0, 0);
-          }
-          if (this.focusedPos) {
+          if (this.inputDevice === 'keyboard' && this.focusedPos) {
             this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
           }
           break;
