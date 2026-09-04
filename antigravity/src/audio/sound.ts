@@ -137,6 +137,31 @@ class SoundEngine {
   }
 
   /**
+   * Question mark sound (inquisitive head tilt / note)
+   */
+  public playQuestion() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(420, t);
+    osc.frequency.exponentialRampToValueAtTime(680, t + 0.1);
+
+    gain.gain.setValueAtTime(0.18, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.13);
+  }
+
+  /**
    * Conflict sound (error/personal space violation)
    */
   public playConflict() {

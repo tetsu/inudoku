@@ -1,4 +1,4 @@
-export type CellMark = 'empty' | 'dog' | 'cross' | 'dot';
+export type CellMark = 'empty' | 'dog' | 'cross' | 'dot' | 'question';
 
 export interface Position {
   r: number;

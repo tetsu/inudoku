@@ -197,6 +197,32 @@ export function getPawSvg(): string {
 }
 
 /**
+ * Returns the iconic white rounded Question Mark (❓) for tentative/hypothetical notes.
+ */
+export function getQuestionSvg(): string {
+  return `
+    <svg viewBox="0 0 48 48" class="question-svg">
+      <defs>
+        <filter id="question-shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="1.5" stdDeviation="1" flood-color="#000000" flood-opacity="0.22" />
+        </filter>
+      </defs>
+      <g filter="url(#question-shadow)">
+        <path
+          d="M16 16 C16 10.5 20.5 8 24 8 C28 8 32 10.8 32 15.5 C32 19.5 28.5 22 25 24.5 C24 25.3 24 26.5 24 28.5"
+          fill="none"
+          stroke="#FFFFFF"
+          stroke-width="7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <circle cx="24" cy="38" r="2.2" fill="#FFFFFF" />
+      </g>
+    </svg>
+  `;
+}
+
+/**
  * Exactly matched palette from Meowdoku / Zoodoku screenshot:
  * Clean, saturated, distinct solid pastel colors with no dark borders.
  */

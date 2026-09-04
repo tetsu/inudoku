@@ -12,7 +12,7 @@ import { getAutoCrossCells, validateGrid } from './logic/validator';
 import { getNextHint } from './logic/solver';
 import { generateUniquePuzzle } from './logic/generator';
 import { sounds } from './audio/sound';
-import { getCrossSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
+import { getCrossSvg, getQuestionSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
 import { calculateRankUp, getDailyLeaderboard, simulateRivalPoints } from './logic/leaderboard';
 import { storage } from './storage/storage';
 
@@ -26,7 +26,14 @@ class InudokuGame {
   private isPointerDown: boolean = false;
   private dragMark: CellMark | null = null;
   private focusedPos: Position | null = null;
+  private hoveredPos: Position | null = null;
   private inputDevice: 'pointer' | 'keyboard' = 'pointer';
+
+  // Mobile Long-Press for '?' mark
+  private longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  private longPressFired: boolean = false;
+  private touchStartPos: { x: number; y: number } | null = null;
+  private touchStartCell: Position | null = null;
 
   // Progression & Score
   private unlockedLevel: number = 1;
@@ -292,6 +299,14 @@ class InudokuGame {
     this.resetTimer();
     this.startTimer();
     this.hideHint();
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
+    this.longPressFired = false;
+    this.touchStartCell = null;
+    this.touchStartPos = null;
+    this.hoveredPos = null;
 
     const size = puzzle.size;
     this.grid = Array.from({ length: size }, (_, r) =>
@@ -357,6 +372,8 @@ class InudokuGame {
       cellEl.innerHTML = `<div class="cell-dog">${getShibaSvg(this.settings.shibaType, state)}</div>`;
     } else if (cell.mark === 'cross') {
       cellEl.innerHTML = `<div class="cell-cross">${getCrossSvg()}</div>`;
+    } else if (cell.mark === 'question') {
+      cellEl.innerHTML = `<div class="cell-question">${getQuestionSvg()}</div>`;
     }
   }
 
@@ -380,10 +397,30 @@ class InudokuGame {
     }
   }
 
-  private handleCellClick(r: number, c: number, forceMark?: 'dog' | 'cross') {
+  private handleCellClick(r: number, c: number, forceMark?: 'dog' | 'cross' | 'question') {
     if (this.isFinished) return;
 
     const cell = this.grid[r][c];
+
+    // Direct Question Mark placement / toggle (Middle click, N key, or mobile long press)
+    if (forceMark === 'question') {
+      const prevMark = cell.mark;
+      const newMark: CellMark = cell.mark === 'question' ? 'empty' : 'question';
+      cell.mark = newMark;
+      this.undoStack.push([{ r, c, prevMark, newMark }]);
+
+      if (newMark === 'question') {
+        sounds.playQuestion();
+      } else {
+        sounds.playErase();
+      }
+
+      this.updateCellView(r, c);
+      this.saveActiveGame();
+      this.validateAndCheckWin();
+      return;
+    }
+
     const targetMark = forceMark || (this.inputMode === 'dog' ? 'dog' : 'cross');
 
     if (targetMark === 'dog') {
@@ -403,6 +440,8 @@ class InudokuGame {
         sounds.playConflict();
         return;
       }
+
+      // Note: If cell.mark === 'question', it CAN be overwritten by a dog!
 
       // Check collision rules
       const sameRowDog = this.findDogInRow(r, c);
@@ -448,19 +487,17 @@ class InudokuGame {
         }
       }
 
-      // Valid placement!
-
+      // Valid placement! (Overwrites empty or question mark)
       const moveGroup: MoveAction[] = [];
       const prevMark = cell.mark;
       cell.mark = 'dog';
       moveGroup.push({ r, c, prevMark, newMark: 'dog' });
 
-
       // Auto-Mark crosses if enabled
       if (this.settings.autoMark) {
         const autoCrosses = getAutoCrossCells(r, c, this.currentPuzzle, this.grid);
         for (const pos of autoCrosses) {
-          if (this.grid[pos.r][pos.c].mark === 'empty') {
+          if (this.grid[pos.r][pos.c].mark === 'empty' || this.grid[pos.r][pos.c].mark === 'question') {
             const oldM = this.grid[pos.r][pos.c].mark;
             this.grid[pos.r][pos.c].mark = 'cross';
             moveGroup.push({ r: pos.r, c: pos.c, prevMark: oldM, newMark: 'cross' });
@@ -475,7 +512,7 @@ class InudokuGame {
       this.saveActiveGame();
       this.validateAndCheckWin();
     } else {
-      // Mark mode (cross)
+      // Mark mode (cross): Overwrites empty, question mark, or dog with cross
       const prevMark = cell.mark;
       const newMark: CellMark = cell.mark === 'cross' ? 'empty' : 'cross';
       cell.mark = newMark;
@@ -491,8 +528,6 @@ class InudokuGame {
       this.saveActiveGame();
       this.validateAndCheckWin();
     }
-
-
   }
 
   private findDogInRow(r: number, excludeC: number): Position | null {
@@ -1055,34 +1090,113 @@ class InudokuGame {
     };
 
     this.gridBoardEl.addEventListener('pointerdown', (e) => {
-      if (e.button === 2) return;
+      if (e.button === 2) return; // Right click handled by contextmenu
       const cellEl = (e.target as HTMLElement).closest('.grid-cell') as HTMLElement | null;
-      if (cellEl && cellEl.dataset.r !== undefined && cellEl.dataset.c !== undefined) {
-        this.isPointerDown = true;
-        const r = parseInt(cellEl.dataset.r, 10);
-        const c = parseInt(cellEl.dataset.c, 10);
+      if (!cellEl || cellEl.dataset.r === undefined || cellEl.dataset.c === undefined) return;
+
+      const r = parseInt(cellEl.dataset.r, 10);
+      const c = parseInt(cellEl.dataset.c, 10);
+
+      // PC Mouse Middle Button Click -> '?' mark
+      if (e.button === 1) {
+        e.preventDefault();
         this.clearFocusedCell();
+        this.handleCellClick(r, c, 'question');
+        return;
+      }
+
+      this.clearFocusedCell();
+
+      if (e.pointerType === 'touch') {
+        // Mobile / Touch: initialize potential Long-Press for '?' mark
+        this.longPressFired = false;
+        this.touchStartPos = { x: e.clientX, y: e.clientY };
+        this.touchStartCell = { r, c };
+
+        if (this.longPressTimer) {
+          clearTimeout(this.longPressTimer);
+        }
+
+        this.longPressTimer = setTimeout(() => {
+          this.longPressFired = true;
+          this.longPressTimer = null;
+          // Trigger Question Mark on mobile long-press!
+          this.handleCellClick(r, c, 'question');
+          if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try {
+              navigator.vibrate(35);
+            } catch {}
+          }
+        }, 420);
+
+        this.isPointerDown = true;
+        this.dragMark = null;
+      } else {
+        // PC Mouse Left Click: execute immediately and support drag-marking
+        this.isPointerDown = true;
         this.handleCellClick(r, c);
         this.dragMark = this.grid[r][c].mark;
       }
     });
 
     window.addEventListener('pointermove', (e) => {
+      // Cancel mobile long press if finger moved significantly
+      if (this.longPressTimer && this.touchStartPos) {
+        const dist = Math.hypot(e.clientX - this.touchStartPos.x, e.clientY - this.touchStartPos.y);
+        if (dist > 8) {
+          clearTimeout(this.longPressTimer);
+          this.longPressTimer = null;
+
+          // If in mark mode, start drag-marking from start cell
+          if (this.inputMode === 'mark' && this.touchStartCell) {
+            this.handleCellClick(this.touchStartCell.r, this.touchStartCell.c);
+            this.dragMark = this.grid[this.touchStartCell.r][this.touchStartCell.c].mark;
+            this.touchStartCell = null;
+          }
+        }
+      }
+
       handlePointerDragMove(e.clientX, e.clientY);
     });
 
-    window.addEventListener('pointerup', () => {
+    window.addEventListener('pointerup', (e) => {
       this.isPointerDown = false;
       this.dragMark = null;
+
+      if (this.longPressTimer) {
+        clearTimeout(this.longPressTimer);
+        this.longPressTimer = null;
+      }
+
+      // If mobile touch finished and was NOT a long-press, execute standard tap
+      if (e.pointerType === 'touch') {
+        if (!this.longPressFired && this.touchStartCell) {
+          this.handleCellClick(this.touchStartCell.r, this.touchStartCell.c);
+        }
+        this.touchStartCell = null;
+        this.touchStartPos = null;
+      }
     });
 
     window.addEventListener('pointercancel', () => {
       this.isPointerDown = false;
       this.dragMark = null;
+      if (this.longPressTimer) {
+        clearTimeout(this.longPressTimer);
+        this.longPressTimer = null;
+      }
+      this.touchStartCell = null;
+      this.touchStartPos = null;
     });
 
     this.gridBoardEl.addEventListener('contextmenu', (e) => {
       e.preventDefault();
+      // If long press already fired on touch, don't trigger contextmenu cross
+      if (this.longPressFired) {
+        this.longPressFired = false;
+        return;
+      }
+
       const cellEl = (e.target as HTMLElement).closest('.grid-cell') as HTMLElement | null;
       if (cellEl && cellEl.dataset.r !== undefined && cellEl.dataset.c !== undefined) {
         const r = parseInt(cellEl.dataset.r, 10);
@@ -1090,6 +1204,34 @@ class InudokuGame {
         this.clearFocusedCell();
         this.handleCellClick(r, c, 'cross');
       }
+    });
+
+    // Prevent default middle-click autoscroll behavior
+    this.gridBoardEl.addEventListener('auxclick', (e) => {
+      if (e.button === 1) {
+        e.preventDefault();
+      }
+    });
+
+    this.gridBoardEl.addEventListener('mousedown', (e) => {
+      if (e.button === 1) {
+        e.preventDefault();
+      }
+    });
+
+    // Track mouse hover position for PC keyboard shortcuts
+    this.gridBoardEl.addEventListener('pointerover', (e) => {
+      const cellEl = (e.target as HTMLElement).closest('.grid-cell') as HTMLElement | null;
+      if (cellEl && cellEl.dataset.r !== undefined && cellEl.dataset.c !== undefined) {
+        this.hoveredPos = {
+          r: parseInt(cellEl.dataset.r, 10),
+          c: parseInt(cellEl.dataset.c, 10),
+        };
+      }
+    });
+
+    this.gridBoardEl.addEventListener('pointerleave', () => {
+      this.hoveredPos = null;
     });
 
     // Mode Toggle Buttons
@@ -1257,6 +1399,19 @@ class InudokuGame {
           e.preventDefault();
           if (this.inputDevice === 'keyboard' && this.focusedPos) {
             this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
+          }
+          break;
+        case 'n':
+        case 'N':
+          e.preventDefault();
+          {
+            const targetPos =
+              this.inputDevice === 'keyboard' && this.focusedPos
+                ? this.focusedPos
+                : (this.hoveredPos || this.focusedPos);
+            if (targetPos) {
+              this.handleCellClick(targetPos.r, targetPos.c, 'question');
+            }
           }
           break;
         case 'z':
