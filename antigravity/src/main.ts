@@ -435,13 +435,7 @@ class InudokuGame {
         return;
       }
 
-      if (cell.mark === 'cross') {
-        this.flashDeny(r, c, '足跡（✕）のあるマスには柴犬を置けないワン！先に✕を解除してね。');
-        sounds.playConflict();
-        return;
-      }
-
-      // Note: If cell.mark === 'question', it CAN be overwritten by a dog!
+      // Note: If cell.mark is 'cross', 'question', or 'empty', it CAN be directly overwritten by a dog!
 
       // Check collision rules
       const sameRowDog = this.findDogInRow(r, c);
