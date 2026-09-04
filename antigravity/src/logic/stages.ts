@@ -404,8 +404,9 @@ export function getStageByLevel(levelNumber: number): PuzzleDefinition {
     size = 8;
     difficulty = 'hard';
   } else {
-    // 501..999,999 alternates 8 and 9
-    size = level % 2 === 0 ? 8 : 9;
+    // 501..999,999: cycles between 8x8, 9x9, and 10x10!
+    const cycle = level % 3;
+    size = cycle === 0 ? 8 : cycle === 1 ? 9 : 10;
     difficulty = 'expert';
   }
 

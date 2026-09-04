@@ -271,7 +271,7 @@ class InudokuGame {
       this.levelValEl.textContent = String(this.currentStageIndex + 1);
     }
     if (this.diffValEl) {
-      this.diffValEl.textContent = this.getDifficultyLabel(puzzle.difficulty);
+      this.diffValEl.textContent = this.getDifficultyLabel(puzzle.difficulty, puzzle.size);
     }
     this.renderBoard();
     this.validateAndCheckWin();
@@ -304,7 +304,7 @@ class InudokuGame {
       this.levelValEl.textContent = String(this.currentStageIndex + 1);
     }
     if (this.diffValEl) {
-      this.diffValEl.textContent = this.getDifficultyLabel(puzzle.difficulty);
+      this.diffValEl.textContent = this.getDifficultyLabel(puzzle.difficulty, puzzle.size);
     }
     this.renderBoard();
     this.updateStatus();
@@ -648,8 +648,8 @@ class InudokuGame {
     this.clearActiveGame();
     this.saveProgression();
 
-    // Earn bone points based on puzzle size (3, 4, or 5 points)
-    const earnedPoints = Math.max(3, Math.min(5, size - 3));
+    // Earn bone points based on puzzle size (3, 4, 5, or 6 points)
+    const earnedPoints = Math.max(3, Math.min(6, size - 3));
 
     // Simulate other competitors earning points realistically over time
     simulateRivalPoints();
@@ -1366,7 +1366,7 @@ class InudokuGame {
 
       cell.innerHTML = `
         <span class="level-num">Lv.${levelNum.toLocaleString()}</span>
-        <span class="level-size-tag">${stage.size}x${stage.size} (${this.getDifficultyLabel(stage.difficulty)})</span>
+        <span class="level-size-tag">${stage.size}x${stage.size} (${this.getDifficultyLabel(stage.difficulty, stage.size)})</span>
         <span class="level-stars">${starIcon}</span>
       `;
 
@@ -1378,7 +1378,8 @@ class InudokuGame {
     }
   }
 
-  private getDifficultyLabel(diff: string): string {
+  private getDifficultyLabel(diff: string, size?: number): string {
+    if (size === 10) return '超名人';
     switch (diff) {
       case 'beginner': return '入門';
       case 'easy': return '初級';
