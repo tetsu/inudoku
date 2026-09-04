@@ -286,6 +286,15 @@ button {
   transform: scale(1.02);
 }
 
+/* Hide arrow-key focus frame completely on touch/smartphone devices */
+@media (pointer: coarse), (hover: none) {
+  .grid-cell.cell-focused {
+    outline: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+}
+
 /* NO BLACK BORDERS AT ALL (Overridden and removed per user request) */
 .border-top-region,
 .border-bottom-region,

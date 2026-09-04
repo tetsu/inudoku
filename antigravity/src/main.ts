@@ -123,6 +123,11 @@ class InudokuGame {
   }
 
   public setFocusedCell(r: number, c: number) {
+    // Never show keyboard focus box on touch/mobile devices
+    if (window.matchMedia('(pointer: coarse), (hover: none)').matches) {
+      return;
+    }
+
     const size = this.currentPuzzle.size;
     if (r < 0 || r >= size || c < 0 || c >= size) return;
 
@@ -245,6 +250,7 @@ class InudokuGame {
     this.isFinished = false;
     this.elapsedSeconds = elapsedSecs || 0;
     this.lives = savedLives !== undefined ? savedLives : 3;
+    this.focusedPos = null;
     this.updateLivesView();
     this.timerValEl.textContent = this.formatTime(this.elapsedSeconds);
     this.startTimer();
@@ -276,6 +282,7 @@ class InudokuGame {
     this.undoStack = [];
     this.isFinished = false;
     this.lives = 3;
+    this.focusedPos = null;
     this.updateLivesView();
     this.resetTimer();
     this.startTimer();
@@ -331,8 +338,6 @@ class InudokuGame {
 
     if (this.focusedPos) {
       this.setFocusedCell(this.focusedPos.r, this.focusedPos.c);
-    } else {
-      this.setFocusedCell(0, 0);
     }
   }
 
@@ -1035,7 +1040,7 @@ class InudokuGame {
       if (cellEl && cellEl.dataset.r !== undefined && cellEl.dataset.c !== undefined) {
         const r = parseInt(cellEl.dataset.r, 10);
         const c = parseInt(cellEl.dataset.c, 10);
-        this.setFocusedCell(r, c);
+        this.clearFocusedCell();
         if (this.grid[r]?.[c] && this.grid[r][c].mark !== this.dragMark && this.grid[r][c].mark !== 'dog') {
           this.handleCellClick(r, c, this.dragMark as 'cross');
         }
@@ -1049,7 +1054,7 @@ class InudokuGame {
         this.isPointerDown = true;
         const r = parseInt(cellEl.dataset.r, 10);
         const c = parseInt(cellEl.dataset.c, 10);
-        this.setFocusedCell(r, c);
+        this.clearFocusedCell();
         this.handleCellClick(r, c);
         this.dragMark = this.grid[r][c].mark;
       }
@@ -1075,7 +1080,7 @@ class InudokuGame {
       if (cellEl && cellEl.dataset.r !== undefined && cellEl.dataset.c !== undefined) {
         const r = parseInt(cellEl.dataset.r, 10);
         const c = parseInt(cellEl.dataset.c, 10);
-        this.setFocusedCell(r, c);
+        this.clearFocusedCell();
         this.handleCellClick(r, c, 'cross');
       }
     });
@@ -1181,7 +1186,6 @@ class InudokuGame {
       }
 
       const size = this.currentPuzzle.size;
-      const current = this.focusedPos || { r: 0, c: 0 };
 
       switch (e.key) {
         case 'ArrowUp':
@@ -1189,32 +1193,51 @@ class InudokuGame {
         case 'w':
         case 'W':
           e.preventDefault();
-          this.setFocusedCell(Math.max(0, current.r - 1), current.c);
+          if (!this.focusedPos) {
+            this.setFocusedCell(0, 0);
+          } else {
+            this.setFocusedCell(Math.max(0, this.focusedPos.r - 1), this.focusedPos.c);
+          }
           break;
         case 'ArrowDown':
         case 'KeyS':
         case 's':
         case 'S':
           e.preventDefault();
-          this.setFocusedCell(Math.min(size - 1, current.r + 1), current.c);
+          if (!this.focusedPos) {
+            this.setFocusedCell(0, 0);
+          } else {
+            this.setFocusedCell(Math.min(size - 1, this.focusedPos.r + 1), this.focusedPos.c);
+          }
           break;
         case 'ArrowLeft':
         case 'KeyA':
         case 'a':
         case 'A':
           e.preventDefault();
-          this.setFocusedCell(current.r, Math.max(0, current.c - 1));
+          if (!this.focusedPos) {
+            this.setFocusedCell(0, 0);
+          } else {
+            this.setFocusedCell(this.focusedPos.r, Math.max(0, this.focusedPos.c - 1));
+          }
           break;
         case 'ArrowRight':
         case 'KeyD':
         case 'd':
         case 'D':
           e.preventDefault();
-          this.setFocusedCell(current.r, Math.min(size - 1, current.c + 1));
+          if (!this.focusedPos) {
+            this.setFocusedCell(0, 0);
+          } else {
+            this.setFocusedCell(this.focusedPos.r, Math.min(size - 1, this.focusedPos.c + 1));
+          }
           break;
         case ' ':
         case 'Enter':
           e.preventDefault();
+          if (!this.focusedPos) {
+            this.setFocusedCell(0, 0);
+          }
           if (this.focusedPos) {
             this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'dog');
           }
@@ -1224,6 +1247,9 @@ class InudokuGame {
         case 'm':
         case 'M':
           e.preventDefault();
+          if (!this.focusedPos) {
+            this.setFocusedCell(0, 0);
+          }
           if (this.focusedPos) {
             this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
           }
