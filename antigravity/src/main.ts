@@ -1,6 +1,7 @@
 import confetti from 'canvas-confetti';
-import { PRESET_STAGES } from './logic/stages';
+import { getStageByLevel, MAX_STAGE_LEVEL } from './logic/stages';
 import {
+
   CellMark,
   CellState,
   GameSettings,
@@ -13,10 +14,11 @@ import { getNextHint } from './logic/solver';
 import { generateUniquePuzzle } from './logic/generator';
 import { sounds } from './audio/sound';
 import { getCrossSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
-import { calculateRankUp, getDailyLeaderboard } from './logic/leaderboard';
+import { calculateRankUp, getDailyLeaderboard, simulateRivalPoints } from './logic/leaderboard';
 
 class InudokuGame {
-  private currentPuzzle: PuzzleDefinition = PRESET_STAGES[0];
+  private currentPuzzle: PuzzleDefinition = getStageByLevel(1);
+
   private currentStageIndex: number = 0;
   private grid: CellState[][] = [];
   private undoStack: MoveAction[][] = [];
@@ -107,13 +109,13 @@ class InudokuGame {
       }
     }
 
-    // Tournament Points
-    const savedPoints = localStorage.getItem('inudoku_tournament_points');
+    // Tournament Points (Daily)
+    const todayTourneyKey = `inudoku_tournament_points_${new Date().toISOString().slice(0, 10)}`;
+    const savedPoints = localStorage.getItem(todayTourneyKey) || localStorage.getItem('inudoku_tournament_points');
     if (savedPoints) {
       this.tournamentPoints = Math.max(0, parseInt(savedPoints, 10));
     }
   }
-
 
   private saveActiveGame() {
     if (this.isFinished) return;
@@ -156,14 +158,18 @@ class InudokuGame {
   private saveProgression() {
     localStorage.setItem('inudoku_unlocked_level', String(this.unlockedLevel));
     localStorage.setItem('inudoku_completed_levels', JSON.stringify(this.completedLevels));
+
+    const todayDate = new Date().toISOString().slice(0, 10);
+    localStorage.setItem(`inudoku_tournament_points_${todayDate}`, String(this.tournamentPoints));
     localStorage.setItem('inudoku_tournament_points', String(this.tournamentPoints));
 
-    const todayKey = `inudoku_score_${new Date().toISOString().slice(0, 10)}`;
+    const todayKey = `inudoku_score_${todayDate}`;
     localStorage.setItem(
       todayKey,
       JSON.stringify({ score: this.dailyBestScore, timeSecs: this.dailyBestTimeSecs })
     );
   }
+
 
 
   private initDOMElements() {
@@ -210,7 +216,7 @@ class InudokuGame {
     const progressEl = document.getElementById('title-progress-text');
     if (progressEl) {
       const completedCount = Object.keys(this.completedLevels).length;
-      progressEl.textContent = `${completedCount} / ${PRESET_STAGES.length}`;
+      progressEl.textContent = `${completedCount} クリア (Lv.${this.unlockedLevel})`;
     }
   }
 
@@ -228,32 +234,35 @@ class InudokuGame {
     let targetIndex: number;
 
     if (levelIndex !== undefined) {
-      targetIndex = Math.min(Math.max(0, levelIndex), PRESET_STAGES.length - 1);
+      targetIndex = Math.min(Math.max(0, levelIndex), MAX_STAGE_LEVEL - 1);
       // If choosing a different stage than cached active game, start fresh
       if (activeGame && activeGame.stageIndex !== targetIndex) {
         this.clearActiveGame();
       }
     } else {
-      targetIndex = activeGame ? activeGame.stageIndex : Math.min(this.unlockedLevel - 1, PRESET_STAGES.length - 1);
+      targetIndex = activeGame ? activeGame.stageIndex : Math.min(this.unlockedLevel - 1, MAX_STAGE_LEVEL - 1);
     }
 
     this.currentStageIndex = targetIndex;
     this.screenTitleEl.classList.add('hidden');
     this.screenGameEl.classList.remove('hidden');
 
+    const targetPuzzle = getStageByLevel(targetIndex + 1);
+
     const freshActive = this.getActiveGame();
     if (freshActive && freshActive.stageIndex === targetIndex && freshActive.marks) {
       // Resume from saved cached board state!
       this.resumePuzzle(
-        PRESET_STAGES[targetIndex],
+        targetPuzzle,
         freshActive.marks,
         freshActive.elapsedSeconds,
         freshActive.lives
       );
     } else {
-      this.initPuzzle(PRESET_STAGES[targetIndex]);
+      this.initPuzzle(targetPuzzle);
     }
   }
+
 
 
   public resumePuzzle(puzzle: PuzzleDefinition, savedMarks: CellMark[][], elapsedSecs: number, savedLives?: number) {
@@ -643,7 +652,7 @@ class InudokuGame {
     };
 
     if (this.currentStageIndex + 1 >= this.unlockedLevel) {
-      this.unlockedLevel = Math.min(PRESET_STAGES.length, this.currentStageIndex + 2);
+      this.unlockedLevel = Math.min(MAX_STAGE_LEVEL, this.currentStageIndex + 2);
     }
 
     if (score > this.dailyBestScore) {
@@ -656,6 +665,9 @@ class InudokuGame {
 
     // Earn bone points based on puzzle size (3, 4, or 5 points)
     const earnedPoints = Math.max(3, Math.min(5, size - 3));
+
+    // Simulate other competitors earning points realistically over time
+    simulateRivalPoints();
 
     // Confetti celebration
     confetti({
@@ -692,7 +704,28 @@ class InudokuGame {
       countdownEl.textContent = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
-    // 2. Render Cards List in initial state (user is at bottom, rank 50)
+    // 2. Update Podium tops (Gold, Silver, Bronze) dynamically (including Champion user!)
+    const goldAvatar = document.querySelector('.podium-gold .avatar-emoji');
+    const goldName = document.querySelector('.podium-gold .podium-name');
+    const goldScore = document.querySelector('.podium-gold .score-num');
+    const silverAvatar = document.querySelector('.podium-silver .avatar-emoji');
+    const silverName = document.querySelector('.podium-silver .podium-name');
+    const silverScore = document.querySelector('.podium-silver .score-num');
+    const bronzeAvatar = document.querySelector('.podium-bronze .avatar-emoji');
+    const bronzeName = document.querySelector('.podium-bronze .podium-name');
+    const bronzeScore = document.querySelector('.podium-bronze .score-num');
+
+    if (goldAvatar && rankUpData.top3[1]) goldAvatar.textContent = rankUpData.top3[1].avatar;
+    if (goldName && rankUpData.top3[1]) goldName.textContent = rankUpData.top3[1].name;
+    if (goldScore && rankUpData.top3[1]) goldScore.textContent = String(rankUpData.top3[1].points);
+    if (silverAvatar && rankUpData.top3[0]) silverAvatar.textContent = rankUpData.top3[0].avatar;
+    if (silverName && rankUpData.top3[0]) silverName.textContent = rankUpData.top3[0].name;
+    if (silverScore && rankUpData.top3[0]) silverScore.textContent = String(rankUpData.top3[0].points);
+    if (bronzeAvatar && rankUpData.top3[2]) bronzeAvatar.textContent = rankUpData.top3[2].avatar;
+    if (bronzeName && rankUpData.top3[2]) bronzeName.textContent = rankUpData.top3[2].name;
+    if (bronzeScore && rankUpData.top3[2]) bronzeScore.textContent = String(rankUpData.top3[2].points);
+
+    // 3. Render Cards List in initial state
     const container = document.getElementById('rankup-cards-container')!;
     container.innerHTML = '';
 
@@ -715,27 +748,28 @@ class InudokuGame {
       container.appendChild(card);
     });
 
-    // 3. Play flying bones & score increment after 450ms
+    // 4. Play flying bones & score increment after 450ms
     setTimeout(() => {
       this.playFlyingBones(earnedPoints, () => {
-        const userPtsEl = document.getElementById('card-pts-2');
+        const userPtsEl = document.getElementById(`card-pts-${rankUpData.userIndexBefore}`);
         if (userPtsEl) {
           userPtsEl.textContent = String(rankUpData.newPoints);
           userPtsEl.classList.add('bump');
           sounds.playBark();
         }
 
-        // 4. Slide Up Animation after 550ms
+        // 5. Slide Up Animation if user actually moved up in rank
         setTimeout(() => {
           const userCard = document.getElementById('rankup-card-2');
           const rivalCard = document.getElementById('rankup-card-1');
 
-          if (userCard && rivalCard) {
+          if (rankUpData.newRank < rankUpData.prevRank && userCard && rivalCard) {
+            // Overtake animation!
             userCard.classList.add('slide-up');
             rivalCard.classList.add('slide-down');
             sounds.playPaw();
 
-            // 5. Update Ranks & Shine after slide completes (600ms)
+            // 6. Update Ranks & Shine after slide completes (600ms), and physically reorder DOM!
             setTimeout(() => {
               const userRankEl = document.getElementById('rank-num-2');
               const rivalRankEl = document.getElementById('rank-num-1');
@@ -746,28 +780,39 @@ class InudokuGame {
                 rivalRankEl.classList.add('bump');
               }
 
+              // Physically reorder DOM elements to eliminate any gap or offset!
+              userCard.classList.remove('slide-up');
+              rivalCard.classList.remove('slide-down');
+              container.insertBefore(userCard, rivalCard);
+
               // Confetti pop!
               confetti({
-                particleCount: 50,
+                particleCount: 60,
                 spread: 60,
                 origin: { y: 0.7 },
               });
-            }, 550);
+            }, 600);
+          } else if (userCard) {
+            // 1st place defense or closing in!
+            userCard.style.boxShadow = '0 0 25px rgba(245, 158, 11, 0.7)';
+            sounds.playBark();
           }
         }, 550);
       });
     }, 450);
 
-    // 6. Handle Tap to Continue
+    // 7. Handle Tap to Continue
     const handleTap = () => {
       overlay.removeEventListener('click', handleTap);
       overlay.classList.add('hidden');
       // Advance to next level
-      const nextIndex = Math.min(this.currentStageIndex + 1, PRESET_STAGES.length - 1);
+      const nextIndex = Math.min(this.currentStageIndex + 1, MAX_STAGE_LEVEL - 1);
       this.startGame(nextIndex);
     };
     overlay.addEventListener('click', handleTap);
   }
+
+
 
   private playFlyingBones(count: number, onComplete: () => void) {
     const layer = document.getElementById('flying-bones-layer')!;
@@ -1105,7 +1150,7 @@ class InudokuGame {
 
     document.getElementById('btn-win-next')!.addEventListener('click', () => {
       document.getElementById('modal-win')!.classList.add('hidden');
-      const nextIndex = Math.min(this.currentStageIndex + 1, PRESET_STAGES.length - 1);
+      const nextIndex = Math.min(this.currentStageIndex + 1, MAX_STAGE_LEVEL - 1);
       this.startGame(nextIndex);
     });
 
@@ -1152,6 +1197,21 @@ class InudokuGame {
   }
 
   private setupStageModal() {
+    // Jump to specific level (1 to 999,999)
+    document.getElementById('btn-jump-level')?.addEventListener('click', () => {
+      const input = document.getElementById('input-jump-level') as HTMLInputElement;
+      const level = parseInt(input.value, 10);
+      if (level >= 1 && level <= MAX_STAGE_LEVEL) {
+        document.getElementById('modal-stages')!.classList.add('hidden');
+        this.screenTitleEl.classList.add('hidden');
+        this.screenGameEl.classList.remove('hidden');
+        this.startGame(level - 1);
+      } else {
+        alert('1 から 999,999 までのレベル番号を入力してくださいワン！');
+      }
+    });
+
+    // Random generator
     document.getElementById('btn-generate-puzzle')?.addEventListener('click', () => {
       const selectEl = document.getElementById('select-random-size') as HTMLSelectElement;
       const size = parseInt(selectEl.value, 10);
@@ -1170,19 +1230,23 @@ class InudokuGame {
     if (!gridEl) return;
     gridEl.innerHTML = '';
 
-    PRESET_STAGES.forEach((stage, idx) => {
+    // Show up to the unlocked level + 4 previews (minimum 30 levels displayed)
+    const maxDisplay = Math.min(MAX_STAGE_LEVEL, Math.max(30, this.unlockedLevel + 4));
+
+    for (let idx = 0; idx < maxDisplay; idx++) {
       const levelNum = idx + 1;
       const isLocked = levelNum > this.unlockedLevel;
       const isCompleted = !!this.completedLevels[levelNum];
       const isCurrent = idx === this.currentStageIndex;
 
+      const stage = getStageByLevel(levelNum);
       const cell = document.createElement('div');
       cell.className = `level-cell ${isLocked ? 'locked' : ''} ${isCurrent ? 'current' : ''}`;
 
       let starIcon = isCompleted ? '⭐⭐⭐' : isLocked ? '🔒' : '🐾';
 
       cell.innerHTML = `
-        <span class="level-num">Lv.${levelNum}</span>
+        <span class="level-num">Lv.${levelNum.toLocaleString()}</span>
         <span class="level-size-tag">${stage.size}x${stage.size} (${this.getDifficultyLabel(stage.difficulty)})</span>
         <span class="level-stars">${starIcon}</span>
       `;
@@ -1195,8 +1259,9 @@ class InudokuGame {
       }
 
       gridEl.appendChild(cell);
-    });
+    }
   }
+
 
   private getDifficultyLabel(diff: string): string {
     switch (diff) {

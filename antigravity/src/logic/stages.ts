@@ -366,3 +366,55 @@ export const PRESET_STAGES: PuzzleDefinition[] = [
     ],
   },
 ];
+
+export const MAX_STAGE_LEVEL = 999999;
+
+import { generateSeededPuzzle } from './generator';
+
+const stageCache: Map<number, PuzzleDefinition> = new Map();
+
+/**
+ * Returns the puzzle definition for any level between 1 and 999,999.
+ * Deterministic: Anyone playing Level X will get the exact same puzzle layout.
+ */
+export function getStageByLevel(levelNumber: number): PuzzleDefinition {
+  const level = Math.max(1, Math.min(MAX_STAGE_LEVEL, Math.floor(levelNumber)));
+
+  // Return preset stage if within 1..15
+  if (level <= PRESET_STAGES.length) {
+    return PRESET_STAGES[level - 1];
+  }
+
+  // Check cache
+  if (stageCache.has(level)) {
+    return stageCache.get(level)!;
+  }
+
+  // Determine size & difficulty progression up to Level 999,999
+  let size: number;
+  let difficulty: 'beginner' | 'easy' | 'medium' | 'hard' | 'expert';
+
+  if (level <= 30) {
+    size = 6;
+    difficulty = 'easy';
+  } else if (level <= 100) {
+    size = 7;
+    difficulty = 'medium';
+  } else if (level <= 500) {
+    size = 8;
+    difficulty = 'hard';
+  } else {
+    // 501..999,999 alternates 8 and 9
+    size = level % 2 === 0 ? 8 : 9;
+    difficulty = 'expert';
+  }
+
+  const puzzle = generateSeededPuzzle(level, size, {
+    name: `レベル ${level.toLocaleString()}`,
+    difficulty,
+  });
+
+  stageCache.set(level, puzzle);
+  return puzzle;
+}
+

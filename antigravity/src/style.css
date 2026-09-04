@@ -1714,19 +1714,20 @@ input:checked + .slider:before {
   color: #78350F;
 }
 
-/* Rank Up Slide Animation */
+/* Rank Up Slide Animation: card height (64px) + gap (8px) = 72px exact */
 .rankup-card.slide-up {
-  transform: translateY(-62px);
+  transform: translateY(-72px);
 }
 
 .rankup-card.slide-down {
-  transform: translateY(62px);
+  transform: translateY(72px);
 }
 
 .card-rank-num.bump {
   animation: numBump 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   color: #EA580C;
 }
+
 
 @keyframes numBump {
   0% { transform: scale(1); }

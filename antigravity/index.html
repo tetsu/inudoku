@@ -259,6 +259,21 @@
             <!-- Level cards generated dynamically -->
           </div>
 
+          <div class="stage-jump-card" style="margin-top: 16px; background: #FFFBEB; border: 1.5px solid #FCD34D; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;">
+            <div class="random-info">
+              <h3 style="font-size: 0.95rem; margin: 0; color: #92400E; display: flex; align-items: center; gap: 6px;">
+                <span>🔢</span> ステージ番号指定 (最大 Lv. 999,999)
+              </h3>
+              <p style="font-size: 0.8rem; margin: 2px 0 0 0; color: #B45309;">
+                同じ番号なら誰がいつ遊んでも完全に同じパズルが生成されます！
+              </p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <input type="number" id="input-jump-level" min="1" max="999999" placeholder="レベル番号 (1〜999999)" style="flex: 1; padding: 8px 12px; border-radius: 8px; border: 1.5px solid #FCD34D; font-size: 0.9rem; font-weight: 700; color: #78350F; outline: none;" />
+              <button id="btn-jump-level" class="primary-btn" style="padding: 8px 16px; font-size: 0.85rem; white-space: nowrap;">遊ぶ 🐾</button>
+            </div>
+          </div>
+
           <div class="random-generator-card">
             <div class="random-info">
               <h3>🎲 無限ランダムパズル</h3>
@@ -278,6 +293,7 @@
         </div>
       </div>
     </div>
+
 
     <!-- Rule / Help Modal -->
     <div id="modal-help" class="modal-backdrop hidden">
