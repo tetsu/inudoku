@@ -1,7 +1,6 @@
 import confetti from 'canvas-confetti';
 import { getStageByLevel, MAX_STAGE_LEVEL } from './logic/stages';
 import {
-
   CellMark,
   CellState,
   GameSettings,
@@ -15,6 +14,7 @@ import { generateUniquePuzzle } from './logic/generator';
 import { sounds } from './audio/sound';
 import { getCrossSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
 import { calculateRankUp, getDailyLeaderboard, simulateRivalPoints } from './logic/leaderboard';
+import { storage } from './storage/storage';
 
 class InudokuGame {
   private currentPuzzle: PuzzleDefinition = getStageByLevel(1);
@@ -25,6 +25,7 @@ class InudokuGame {
   private inputMode: 'dog' | 'mark' = 'dog';
   private isPointerDown: boolean = false;
   private dragMark: CellMark | null = null;
+  private focusedPos: Position | null = null;
 
   // Progression & Score
   private unlockedLevel: number = 1;
@@ -33,7 +34,6 @@ class InudokuGame {
   private dailyBestTimeSecs: number = 0;
   private tournamentPoints: number = 0;
   private lives: number = 3;
-
 
   // Settings
   private settings: GameSettings = {
@@ -70,104 +70,78 @@ class InudokuGame {
   }
 
   private loadSavedData() {
-    // Settings
-    const savedSettings = localStorage.getItem('inudoku_settings');
-    if (savedSettings) {
-      try {
-        this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
-      } catch (e) {
-        console.error('Failed to parse settings', e);
-      }
-    }
+    this.settings = storage.getSettings(this.settings);
     sounds.setEnabled(this.settings.soundEnabled);
 
-    // Progression
-    const savedLevel = localStorage.getItem('inudoku_unlocked_level');
-    if (savedLevel) {
-      this.unlockedLevel = Math.max(1, parseInt(savedLevel, 10));
+    this.unlockedLevel = storage.getUnlockedLevel();
+    this.completedLevels = storage.getCompletedLevels();
+
+    const daily = storage.getDailyScore();
+    if (daily) {
+      this.dailyBestScore = daily.score;
+      this.dailyBestTimeSecs = daily.timeSecs;
     }
 
-    const savedCompleted = localStorage.getItem('inudoku_completed_levels');
-    if (savedCompleted) {
-      try {
-        this.completedLevels = JSON.parse(savedCompleted);
-      } catch (e) {
-        console.error('Failed to parse completed levels', e);
-      }
-    }
-
-    // Daily Score
-    const todayKey = `inudoku_score_${new Date().toISOString().slice(0, 10)}`;
-    const savedScore = localStorage.getItem(todayKey);
-    if (savedScore) {
-      try {
-        const parsed = JSON.parse(savedScore);
-        this.dailyBestScore = parsed.score || 0;
-        this.dailyBestTimeSecs = parsed.timeSecs || 0;
-      } catch (e) {
-        console.error('Failed to parse daily score', e);
-      }
-    }
-
-    // Tournament Points (Daily)
-    const todayTourneyKey = `inudoku_tournament_points_${new Date().toISOString().slice(0, 10)}`;
-    const savedPoints = localStorage.getItem(todayTourneyKey) || localStorage.getItem('inudoku_tournament_points');
-    if (savedPoints) {
-      this.tournamentPoints = Math.max(0, parseInt(savedPoints, 10));
-    }
+    this.tournamentPoints = storage.getDailyTournamentPoints();
   }
 
   private saveActiveGame() {
     if (this.isFinished) return;
     const marks: CellMark[][] = this.grid.map((row) => row.map((cell) => cell.mark));
-    const state = {
+    storage.saveActiveGame({
       stageIndex: this.currentStageIndex,
       elapsedSeconds: this.elapsedSeconds,
       marks,
       puzzleId: this.currentPuzzle.id,
       lives: this.lives,
       timestamp: Date.now(),
-    };
-    try {
-      localStorage.setItem('inudoku_active_game', JSON.stringify(state));
-    } catch (e) {
-      console.warn('Failed to cache active game', e);
-    }
+    });
   }
 
   private clearActiveGame() {
-    localStorage.removeItem('inudoku_active_game');
+    storage.clearActiveGame();
   }
 
   private getActiveGame() {
-    const raw = localStorage.getItem('inudoku_active_game');
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
+    return storage.getActiveGame();
   }
 
   private saveSettings() {
-    localStorage.setItem('inudoku_settings', JSON.stringify(this.settings));
+    storage.saveSettings(this.settings);
     sounds.setEnabled(this.settings.soundEnabled);
     this.updateAutomarkBadge();
   }
 
   private saveProgression() {
-    localStorage.setItem('inudoku_unlocked_level', String(this.unlockedLevel));
-    localStorage.setItem('inudoku_completed_levels', JSON.stringify(this.completedLevels));
+    storage.saveUnlockedLevel(this.unlockedLevel);
+    storage.saveCompletedLevels(this.completedLevels);
+    storage.saveDailyTournamentPoints(this.tournamentPoints);
+    storage.saveDailyScore({
+      score: this.dailyBestScore,
+      timeSecs: this.dailyBestTimeSecs,
+    });
+  }
 
-    const todayDate = new Date().toISOString().slice(0, 10);
-    localStorage.setItem(`inudoku_tournament_points_${todayDate}`, String(this.tournamentPoints));
-    localStorage.setItem('inudoku_tournament_points', String(this.tournamentPoints));
+  public setFocusedCell(r: number, c: number) {
+    const size = this.currentPuzzle.size;
+    if (r < 0 || r >= size || c < 0 || c >= size) return;
 
-    const todayKey = `inudoku_score_${todayDate}`;
-    localStorage.setItem(
-      todayKey,
-      JSON.stringify({ score: this.dailyBestScore, timeSecs: this.dailyBestTimeSecs })
-    );
+    if (this.focusedPos) {
+      const prevEl = document.getElementById(`cell-${this.focusedPos.r}-${this.focusedPos.c}`);
+      prevEl?.classList.remove('cell-focused');
+    }
+
+    this.focusedPos = { r, c };
+    const nextEl = document.getElementById(`cell-${r}-${c}`);
+    nextEl?.classList.add('cell-focused');
+  }
+
+  public clearFocusedCell() {
+    if (this.focusedPos) {
+      const prevEl = document.getElementById(`cell-${this.focusedPos.r}-${this.focusedPos.c}`);
+      prevEl?.classList.remove('cell-focused');
+      this.focusedPos = null;
+    }
   }
 
 
@@ -353,6 +327,12 @@ class InudokuGame {
         this.renderCellContent(cellEl, cell);
         this.gridBoardEl.appendChild(cellEl);
       }
+    }
+
+    if (this.focusedPos) {
+      this.setFocusedCell(this.focusedPos.r, this.focusedPos.c);
+    } else {
+      this.setFocusedCell(0, 0);
     }
   }
 
@@ -1046,32 +1026,45 @@ class InudokuGame {
       this.startGame(this.unlockedLevel - 1);
     });
 
-    // Cell Click & Drag interactions
-    this.gridBoardEl.addEventListener('mousedown', (e) => {
+    // Cell Click & Drag interactions (Pointer & Touch unified)
+    const handlePointerDragMove = (clientX: number, clientY: number) => {
+      if (!this.isPointerDown || !this.dragMark || this.inputMode !== 'mark') return;
+      const elUnder = document.elementFromPoint(clientX, clientY);
+      if (!elUnder) return;
+      const cellEl = elUnder.closest('.grid-cell') as HTMLElement | null;
+      if (cellEl && cellEl.dataset.r !== undefined && cellEl.dataset.c !== undefined) {
+        const r = parseInt(cellEl.dataset.r, 10);
+        const c = parseInt(cellEl.dataset.c, 10);
+        this.setFocusedCell(r, c);
+        if (this.grid[r]?.[c] && this.grid[r][c].mark !== this.dragMark && this.grid[r][c].mark !== 'dog') {
+          this.handleCellClick(r, c, this.dragMark as 'cross');
+        }
+      }
+    };
+
+    this.gridBoardEl.addEventListener('pointerdown', (e) => {
       if (e.button === 2) return;
       const cellEl = (e.target as HTMLElement).closest('.grid-cell') as HTMLElement | null;
-      if (cellEl) {
+      if (cellEl && cellEl.dataset.r !== undefined && cellEl.dataset.c !== undefined) {
         this.isPointerDown = true;
-        const r = parseInt(cellEl.dataset.r!, 10);
-        const c = parseInt(cellEl.dataset.c!, 10);
+        const r = parseInt(cellEl.dataset.r, 10);
+        const c = parseInt(cellEl.dataset.c, 10);
+        this.setFocusedCell(r, c);
         this.handleCellClick(r, c);
         this.dragMark = this.grid[r][c].mark;
       }
     });
 
-    this.gridBoardEl.addEventListener('mouseenter', (e) => {
-      if (!this.isPointerDown || !this.dragMark || this.inputMode !== 'mark') return;
-      const cellEl = (e.target as HTMLElement).closest('.grid-cell') as HTMLElement | null;
-      if (cellEl) {
-        const r = parseInt(cellEl.dataset.r!, 10);
-        const c = parseInt(cellEl.dataset.c!, 10);
-        if (this.grid[r][c].mark !== this.dragMark && this.grid[r][c].mark !== 'dog') {
-          this.handleCellClick(r, c, this.dragMark as 'cross');
-        }
-      }
-    }, true);
+    window.addEventListener('pointermove', (e) => {
+      handlePointerDragMove(e.clientX, e.clientY);
+    });
 
-    window.addEventListener('mouseup', () => {
+    window.addEventListener('pointerup', () => {
+      this.isPointerDown = false;
+      this.dragMark = null;
+    });
+
+    window.addEventListener('pointercancel', () => {
       this.isPointerDown = false;
       this.dragMark = null;
     });
@@ -1079,9 +1072,10 @@ class InudokuGame {
     this.gridBoardEl.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       const cellEl = (e.target as HTMLElement).closest('.grid-cell') as HTMLElement | null;
-      if (cellEl) {
-        const r = parseInt(cellEl.dataset.r!, 10);
-        const c = parseInt(cellEl.dataset.c!, 10);
+      if (cellEl && cellEl.dataset.r !== undefined && cellEl.dataset.c !== undefined) {
+        const r = parseInt(cellEl.dataset.r, 10);
+        const c = parseInt(cellEl.dataset.c, 10);
+        this.setFocusedCell(r, c);
         this.handleCellClick(r, c, 'cross');
       }
     });
@@ -1164,8 +1158,94 @@ class InudokuGame {
       document.getElementById('modal-gameover')?.classList.add('hidden');
       this.initPuzzle(this.currentPuzzle);
     });
-  }
 
+    // Keyboard Navigation & Hotkeys
+    window.addEventListener('keydown', (e) => {
+      const targetTag = (document.activeElement?.tagName || '').toUpperCase();
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(targetTag)) {
+        return;
+      }
+
+      // Check if any modal is currently visible
+      const activeModal = document.querySelector('.modal-overlay:not(.hidden)');
+      if (activeModal) {
+        if (e.key === 'Escape') {
+          activeModal.classList.add('hidden');
+        }
+        return;
+      }
+
+      // Only active when playing on the game screen
+      if (this.screenGameEl.classList.contains('hidden') || this.isFinished) {
+        return;
+      }
+
+      const size = this.currentPuzzle.size;
+      const current = this.focusedPos || { r: 0, c: 0 };
+
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'KeyW':
+        case 'w':
+        case 'W':
+          e.preventDefault();
+          this.setFocusedCell(Math.max(0, current.r - 1), current.c);
+          break;
+        case 'ArrowDown':
+        case 'KeyS':
+        case 's':
+        case 'S':
+          e.preventDefault();
+          this.setFocusedCell(Math.min(size - 1, current.r + 1), current.c);
+          break;
+        case 'ArrowLeft':
+        case 'KeyA':
+        case 'a':
+        case 'A':
+          e.preventDefault();
+          this.setFocusedCell(current.r, Math.max(0, current.c - 1));
+          break;
+        case 'ArrowRight':
+        case 'KeyD':
+        case 'd':
+        case 'D':
+          e.preventDefault();
+          this.setFocusedCell(current.r, Math.min(size - 1, current.c + 1));
+          break;
+        case ' ':
+        case 'Enter':
+          e.preventDefault();
+          if (this.focusedPos) {
+            this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'dog');
+          }
+          break;
+        case 'x':
+        case 'X':
+        case 'm':
+        case 'M':
+          e.preventDefault();
+          if (this.focusedPos) {
+            this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
+          }
+          break;
+        case 'z':
+        case 'Z':
+          if (!e.repeat) {
+            e.preventDefault();
+            this.undo();
+          }
+          break;
+        case 'h':
+        case 'H':
+          e.preventDefault();
+          this.showHint();
+          break;
+        case 'Escape':
+          this.showTitleScreen();
+          break;
+      }
+    });
+  }
 
   private bindModals() {
     const openHelp = () => {
@@ -1197,6 +1277,19 @@ class InudokuGame {
   }
 
   private setupStageModal() {
+    // Single delegated click listener on stages grid
+    const gridEl = document.getElementById('stages-level-grid');
+    gridEl?.addEventListener('click', (e) => {
+      const cell = (e.target as HTMLElement).closest('.level-cell') as HTMLElement | null;
+      if (!cell || cell.classList.contains('locked')) return;
+      const idxStr = cell.dataset.levelIndex;
+      if (idxStr !== undefined) {
+        const idx = parseInt(idxStr, 10);
+        document.getElementById('modal-stages')?.classList.add('hidden');
+        this.startGame(idx);
+      }
+    });
+
     // Jump to specific level (1 to 999,999)
     document.getElementById('btn-jump-level')?.addEventListener('click', () => {
       const input = document.getElementById('input-jump-level') as HTMLInputElement;
@@ -1252,16 +1345,12 @@ class InudokuGame {
       `;
 
       if (!isLocked) {
-        cell.addEventListener('click', () => {
-          document.getElementById('modal-stages')!.classList.add('hidden');
-          this.startGame(idx);
-        });
+        cell.dataset.levelIndex = String(idx);
       }
 
       gridEl.appendChild(cell);
     }
   }
-
 
   private getDifficultyLabel(diff: string): string {
     switch (diff) {
@@ -1309,10 +1398,7 @@ class InudokuGame {
     const resetProgressBtn = document.getElementById('btn-reset-progress');
     resetProgressBtn?.addEventListener('click', () => {
       if (confirm('すべてのクリア進捗とセーブデータを初期化しますか？')) {
-        localStorage.removeItem('inudoku_unlocked_level');
-        localStorage.removeItem('inudoku_completed_levels');
-        localStorage.removeItem('inudoku_active_game');
-        localStorage.removeItem('inudoku_tournament_points');
+        storage.resetAllProgress();
         this.unlockedLevel = 1;
         this.completedLevels = {};
         this.tournamentPoints = 0;
@@ -1320,7 +1406,6 @@ class InudokuGame {
         this.showTitleScreen();
         alert('進捗データを初期化しましたワン！');
       }
-
     });
   }
 

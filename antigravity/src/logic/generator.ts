@@ -1,5 +1,6 @@
 import { Position, PuzzleDefinition } from './types';
 import { solvePuzzle } from './solver';
+import { mulberry32 } from './prng';
 
 /**
  * Generates a valid Queens placement for size N (each row, col has 1, no 8-way contact).
@@ -174,15 +175,6 @@ export function generateUniquePuzzle(
   };
 }
 
-
-function mulberry32(seed: number) {
-  return function () {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /**
  * Deterministically generates a valid unique puzzle for any given seed/level.

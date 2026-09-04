@@ -278,6 +278,14 @@ button {
   transform: scale(0.96);
 }
 
+.grid-cell.cell-focused {
+  outline: 3.5px solid #E78B3F;
+  outline-offset: -2.5px;
+  box-shadow: 0 0 12px rgba(231, 139, 63, 0.7);
+  z-index: 2;
+  transform: scale(1.02);
+}
+
 /* NO BLACK BORDERS AT ALL (Overridden and removed per user request) */
 .border-top-region,
 .border-bottom-region,

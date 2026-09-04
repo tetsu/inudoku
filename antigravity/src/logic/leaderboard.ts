@@ -3,6 +3,9 @@
  * Generates engaging, realistic daily competitor scores based on the current date seed.
  */
 
+import { mulberry32 } from './prng';
+import { storage } from '../storage/storage';
+
 export interface LeaderboardEntry {
   rank: number;
   name: string;
@@ -10,16 +13,6 @@ export interface LeaderboardEntry {
   score: number;
   time: string;
   isUser?: boolean;
-}
-
-// Simple seeded PRNG (Mulberry32)
-function mulberry32(seed: number) {
-  return function () {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }
 
 function getDateSeed(dateStr?: string): number {
@@ -112,14 +105,13 @@ const RIVAL_PROFILES = [
  */
 export function getDailyTournamentCompetitors(): TournamentEntry[] {
   const dateSeed = getDateSeed();
-  const todayKey = `inudoku_rivals_${dateSeed}`;
-  const stored = localStorage.getItem(todayKey);
+  const stored = storage.getRivals(dateSeed);
 
   if (stored) {
     try {
       return JSON.parse(stored);
     } catch (e) {
-      console.warn('Failed to parse rivals from localStorage', e);
+      console.warn('Failed to parse rivals from storage', e);
     }
   }
 
@@ -153,7 +145,7 @@ export function getDailyTournamentCompetitors(): TournamentEntry[] {
   }
 
 
-  localStorage.setItem(todayKey, JSON.stringify(competitors));
+  storage.saveRivals(dateSeed, JSON.stringify(competitors));
   return competitors;
 }
 
@@ -163,14 +155,15 @@ export function getDailyTournamentCompetitors(): TournamentEntry[] {
  */
 export function simulateRivalPoints(): void {
   const dateSeed = getDateSeed();
-  const todayKey = `inudoku_rivals_${dateSeed}`;
-  const lastSimKey = `inudoku_rivals_last_sim_${dateSeed}`;
   const competitors = getDailyTournamentCompetitors();
 
   const now = Date.now();
-  const lastSim = parseInt(localStorage.getItem(lastSimKey) || '0', 10);
+  const lastSimKey = `shibadoku_rivals_last_sim_${dateSeed}`;
+  const lastSim = parseInt(localStorage.getItem(lastSimKey) || localStorage.getItem(`inudoku_rivals_last_sim_${dateSeed}`) || '0', 10);
   const elapsedSec = (now - lastSim) / 1000;
-  localStorage.setItem(lastSimKey, String(now));
+  try {
+    localStorage.setItem(lastSimKey, String(now));
+  } catch {}
 
   // Determine how many competitors gain a point based on time passed
   let countToAdvance = 1;
@@ -196,7 +189,7 @@ export function simulateRivalPoints(): void {
     c.rank = i + 1;
   });
 
-  localStorage.setItem(todayKey, JSON.stringify(competitors));
+  storage.saveRivals(dateSeed, JSON.stringify(competitors));
 }
 
 /**
