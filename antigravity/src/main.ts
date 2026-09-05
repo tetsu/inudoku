@@ -15,6 +15,7 @@ import { sounds } from './audio/sound';
 import { getCrossSvg, getQuestionSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
 import { calculateRankUp, getDailyLeaderboard, simulateRivalPoints } from './logic/leaderboard';
 import { storage } from './storage/storage';
+import { i18n, t } from './i18n/i18n';
 
 class InudokuGame {
   private currentPuzzle: PuzzleDefinition = getStageByLevel(1);
@@ -53,6 +54,7 @@ class InudokuGame {
     soundEnabled: true,
     shibaType: 'aka',
     highContrast: false,
+    language: 'auto',
   };
 
   // Timer
@@ -84,6 +86,8 @@ class InudokuGame {
   private loadSavedData() {
     this.settings = storage.getSettings(this.settings);
     sounds.setEnabled(this.settings.soundEnabled);
+    i18n.setSetting(this.settings.language || 'auto');
+    i18n.applyTranslations();
 
     this.unlockedLevel = storage.getUnlockedLevel();
     this.completedLevels = storage.getCompletedLevels();
@@ -196,22 +200,26 @@ class InudokuGame {
 
     if (playBtnText) {
       if (activeGame) {
-        playBtnText.innerHTML = `つづきから (レベル ${targetLvl}) 🐾`;
+        playBtnText.innerHTML = t('title.btn.resume', { level: targetLvl });
       } else {
-        playBtnText.innerHTML = `あそぶ (レベル ${targetLvl})`;
+        playBtnText.innerHTML = t('title.btn.play', { level: targetLvl });
       }
     }
 
     const todayDateEl = document.getElementById('title-today-date');
     if (todayDateEl) {
       const now = new Date();
-      todayDateEl.textContent = `${now.getFullYear()}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')}`;
+      if (i18n.getResolvedLang() === 'ja') {
+        todayDateEl.textContent = `${now.getFullYear()}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')}`;
+      } else {
+        todayDateEl.textContent = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
     }
 
     const progressEl = document.getElementById('title-progress-text');
     if (progressEl) {
       const completedCount = Object.keys(this.completedLevels).length;
-      progressEl.textContent = `${completedCount} クリア (Lv.${this.unlockedLevel})`;
+      progressEl.textContent = t('title.footer.cleared', { completed: completedCount, total: 15 });
     }
   }
 
@@ -255,6 +263,30 @@ class InudokuGame {
       );
     } else {
       this.initPuzzle(targetPuzzle);
+    }
+
+    // 初回プレイヤーの場合は遊び方ルールを自動表示！
+    if (this.isFirstTimeUser()) {
+      this.showHelpModal(true);
+    }
+  }
+
+  private isFirstTimeUser(): boolean {
+    if (storage.hasSeenRules()) return false;
+    const completed = storage.getCompletedLevels();
+    const hasCompletedAny = Object.keys(completed).length > 0;
+    const isLevel1 = storage.getUnlockedLevel() === 1;
+    const hasActiveGame = !!storage.getActiveGame();
+    return !hasCompletedAny && isLevel1 && !hasActiveGame;
+  }
+
+  public showHelpModal(isInitial: boolean = false) {
+    const helpModal = document.getElementById('modal-help');
+    if (!helpModal) return;
+    this.stopTimer();
+    helpModal.classList.remove('hidden');
+    if (isInitial) {
+      storage.setHasSeenRules(true);
     }
   }
 
@@ -446,28 +478,28 @@ class InudokuGame {
       // Check collision rules
       const sameRowDog = this.findDogInRow(r, c);
       if (sameRowDog) {
-        this.flashDeny(r, c, '同じ横列（行）には1匹しか置けないワン！', sameRowDog);
+        this.flashDeny(r, c, t('msg.deny.row'), sameRowDog);
         sounds.playConflict();
         return;
       }
 
       const sameColDog = this.findDogInCol(r, c);
       if (sameColDog) {
-        this.flashDeny(r, c, '同じ縦列（列）には1匹しか置けないワン！', sameColDog);
+        this.flashDeny(r, c, t('msg.deny.col'), sameColDog);
         sounds.playConflict();
         return;
       }
 
       const sameRegionDog = this.findDogInRegion(r, c, cell.region);
       if (sameRegionDog) {
-        this.flashDeny(r, c, '同じ色のエリアには1匹しか置けないワン！', sameRegionDog);
+        this.flashDeny(r, c, t('msg.deny.region'), sameRegionDog);
         sounds.playConflict();
         return;
       }
 
       const adjacentDog = this.findAdjacentDog(r, c);
       if (adjacentDog) {
-        this.flashDeny(r, c, '柴犬同士が近すぎるワン！（斜めも含めて8マス接触禁止）', adjacentDog);
+        this.flashDeny(r, c, t('msg.deny.adjacent'), adjacentDog);
         sounds.playConflict();
         return;
       }
@@ -478,7 +510,7 @@ class InudokuGame {
           (s) => s.r === r && s.c === c
         );
         if (!isSolutionPosition) {
-          this.flashDeny(r, c, 'そこは柴犬の居場所じゃないワン！（間違ったマスです）');
+          this.flashDeny(r, c, t('msg.deny.solution'));
           sounds.playConflict();
           cell.mark = 'cross';
           this.updateCellView(r, c);
@@ -928,7 +960,16 @@ class InudokuGame {
 
     const hint = getNextHint(this.currentPuzzle, currentDogs);
     if (hint) {
-      this.hintBubbleTextEl.textContent = hint.reason;
+      if (hint.reasonKey) {
+        if (hint.reasonKey === 'msg.hint.place' && hint.reasonParams) {
+          const region = t('msg.hint.regionName', { num: hint.reasonParams.regionIndex });
+          this.hintBubbleTextEl.textContent = t(hint.reasonKey, { row: hint.reasonParams.row, region });
+        } else {
+          this.hintBubbleTextEl.textContent = t(hint.reasonKey);
+        }
+      } else {
+        this.hintBubbleTextEl.textContent = hint.reason;
+      }
       this.hintBubbleEl.classList.remove('hidden');
 
       const targetEl = document.getElementById(`cell-${hint.pos.r}-${hint.pos.c}`);
@@ -942,7 +983,7 @@ class InudokuGame {
       }
       sounds.playBark();
     } else {
-      this.hintBubbleTextEl.textContent = '順調だワン！この調子で空いているエリアを探してみよう。';
+      this.hintBubbleTextEl.textContent = t('msg.hint.smooth');
       this.hintBubbleEl.classList.remove('hidden');
     }
 
@@ -1006,7 +1047,11 @@ class InudokuGame {
 
     const now = new Date();
     if (dateEl) {
-      dateEl.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+      if (i18n.getResolvedLang() === 'ja') {
+        dateEl.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+      } else {
+        dateEl.textContent = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
     }
 
     const userEntry = leaderboard.find((e) => e.isUser);
@@ -1014,9 +1059,15 @@ class InudokuGame {
       myRankEl.textContent = userEntry ? `#${userEntry.rank}` : '# -';
     }
     if (mySummaryEl) {
-      mySummaryEl.textContent = userEntry
-        ? `スコア: ${userEntry.score} 点 (${userEntry.time})`
-        : '今日のスコア: まだ未挑戦';
+      if (i18n.getResolvedLang() === 'ja') {
+        mySummaryEl.textContent = userEntry
+          ? `スコア: ${userEntry.score} 点 (${userEntry.time})`
+          : '今日のスコア: まだ未挑戦';
+      } else {
+        mySummaryEl.textContent = userEntry
+          ? `Score: ${userEntry.score} pts (${userEntry.time})`
+          : "Today's score: Not played yet";
+      }
     }
 
     if (listEl) {
@@ -1061,7 +1112,7 @@ class InudokuGame {
       this.showLeaderboard();
     });
     document.getElementById('btn-title-help')?.addEventListener('click', () => {
-      document.getElementById('modal-help')?.classList.remove('hidden');
+      this.showHelpModal();
     });
     document.getElementById('btn-title-settings')?.addEventListener('click', () => {
       this.syncSettingsUI();
@@ -1367,7 +1418,7 @@ class InudokuGame {
       if (this.focusedPos) {
         this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'dog');
       } else {
-        this.showToast('マスをダブルタップ（Wクリック）で柴犬🐶を配置できるワン！');
+        this.showToast(t('msg.toast.dog'));
       }
     });
 
@@ -1375,7 +1426,7 @@ class InudokuGame {
       if (this.focusedPos) {
         this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
       } else {
-        this.showToast('マスをタップまたはスライドで✕マークを配置できるワン！🐾');
+        this.showToast(t('msg.toast.cross'));
       }
     });
 
@@ -1450,6 +1501,12 @@ class InudokuGame {
       if (activeModal) {
         if (e.key === 'Escape') {
           activeModal.classList.add('hidden');
+          if (activeModal.id === 'modal-help') {
+            storage.setHasSeenRules(true);
+            if (!this.screenGameEl.classList.contains('hidden') && !this.isFinished) {
+              this.startTimer();
+            }
+          }
         }
         return;
       }
@@ -1601,7 +1658,7 @@ class InudokuGame {
 
   private bindModals() {
     const openHelp = () => {
-      document.getElementById('modal-help')?.classList.remove('hidden');
+      this.showHelpModal();
     };
     document.querySelector('.mini-rules-bar')?.addEventListener('click', openHelp);
 
@@ -1628,6 +1685,12 @@ class InudokuGame {
         const modalId = (e.currentTarget as HTMLElement).dataset.closeModal;
         if (modalId) {
           document.getElementById(modalId)?.classList.add('hidden');
+          if (modalId === 'modal-help') {
+            storage.setHasSeenRules(true);
+            if (!this.screenGameEl.classList.contains('hidden') && !this.isFinished) {
+              this.startTimer();
+            }
+          }
         }
       });
     });
@@ -1636,6 +1699,12 @@ class InudokuGame {
       backdrop.addEventListener('click', (e) => {
         if (e.target === backdrop) {
           backdrop.classList.add('hidden');
+          if (backdrop.id === 'modal-help') {
+            storage.setHasSeenRules(true);
+            if (!this.screenGameEl.classList.contains('hidden') && !this.isFinished) {
+              this.startTimer();
+            }
+          }
         }
       });
     });
@@ -1655,7 +1724,7 @@ class InudokuGame {
       }
     });
 
-    // Jump to specific level (1 to 999,999)
+      // Jump to specific level (1 to 999,999)
     document.getElementById('btn-jump-level')?.addEventListener('click', () => {
       const input = document.getElementById('input-jump-level') as HTMLInputElement;
       const level = parseInt(input.value, 10);
@@ -1665,7 +1734,7 @@ class InudokuGame {
         this.screenGameEl.classList.remove('hidden');
         this.startGame(level - 1);
       } else {
-        alert('1 から 999,999 までのレベル番号を入力してくださいワン！');
+        alert(t('msg.alert.jumpInvalid'));
       }
     });
 
@@ -1674,7 +1743,7 @@ class InudokuGame {
       const selectEl = document.getElementById('select-random-size') as HTMLSelectElement;
       const size = parseInt(selectEl.value, 10);
       const generated = generateUniquePuzzle(size, {
-        name: `カスタム ${size}x${size}`,
+        name: `Custom ${size}x${size}`,
       });
       document.getElementById('modal-stages')!.classList.add('hidden');
       this.screenTitleEl.classList.add('hidden');
@@ -1718,13 +1787,13 @@ class InudokuGame {
   }
 
   private getDifficultyLabel(diff: string, size?: number): string {
-    if (size === 10) return '超名人';
+    if (size === 10) return t('game.diff.master');
     switch (diff) {
-      case 'beginner': return '入門';
-      case 'easy': return '初級';
-      case 'medium': return '中級';
-      case 'hard': return '上級';
-      case 'expert': return '名人';
+      case 'beginner': return t('game.diff.beginner');
+      case 'easy': return t('game.diff.easy');
+      case 'medium': return t('game.diff.medium');
+      case 'hard': return t('game.diff.hard');
+      case 'expert': return t('game.diff.expert');
       default: return diff;
     }
   }
@@ -1737,6 +1806,20 @@ class InudokuGame {
   }
 
   private setupSettingsModal() {
+    const langSelect = document.getElementById('setting-language') as HTMLSelectElement;
+    langSelect?.addEventListener('change', () => {
+      const selected = (langSelect.value as 'auto' | 'ja' | 'en') || 'auto';
+      this.settings.language = selected;
+      i18n.setSetting(selected);
+      i18n.applyTranslations();
+      this.saveSettings();
+      this.renderTitleScreen();
+      if (this.diffValEl && this.currentPuzzle) {
+        this.diffValEl.textContent = this.getDifficultyLabel(this.currentPuzzle.difficulty, this.currentPuzzle.size);
+      }
+      this.updateAutomarkBadge();
+    });
+
     const shibaBtns = document.querySelectorAll('.shiba-choice-btn');
     shibaBtns.forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -1763,20 +1846,24 @@ class InudokuGame {
 
     const resetProgressBtn = document.getElementById('btn-reset-progress');
     resetProgressBtn?.addEventListener('click', () => {
-      if (confirm('すべてのクリア進捗とセーブデータを初期化しますか？')) {
+      if (confirm(t('msg.alert.resetConfirm'))) {
         storage.resetAllProgress();
         this.unlockedLevel = 1;
         this.completedLevels = {};
         this.tournamentPoints = 0;
         document.getElementById('modal-settings')?.classList.add('hidden');
         this.showTitleScreen();
-        alert('進捗データを初期化しましたワン！');
+        alert(t('msg.alert.resetDone'));
       }
     });
   }
 
-
   private syncSettingsUI() {
+    const langSelect = document.getElementById('setting-language') as HTMLSelectElement;
+    if (langSelect) {
+      langSelect.value = this.settings.language || 'auto';
+    }
+
     const shibaBtns = document.querySelectorAll('.shiba-choice-btn');
     shibaBtns.forEach((btn) => {
       btn.classList.toggle(

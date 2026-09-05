@@ -30,9 +30,9 @@
         </div>
 
         <div class="title-brand">
-          <h1 class="title-logo">Shibadoku</h1>
-          <span class="title-sublogo">柴独</span>
-          <p class="title-tagline">柴犬たちのパーソナルスペース・ロジックパズル</p>
+          <h1 class="title-logo" data-i18n="title.logo">Shibadoku</h1>
+          <span class="title-sublogo" data-i18n="title.sublogo">柴独</span>
+          <p class="title-tagline" data-i18n="title.tagline">柴犬たちのパーソナルスペース・ロジックパズル</p>
         </div>
 
 
@@ -45,30 +45,30 @@
           <div class="title-sub-buttons">
             <button id="btn-title-stages" class="menu-pill-btn">
               <span class="menu-icon">📋</span>
-              <span>ステージ</span>
+              <span data-i18n="title.btn.stages">ステージ</span>
             </button>
             <button id="btn-title-ranking" class="menu-pill-btn">
               <span class="menu-icon">🏆</span>
-              <span>ランキング</span>
+              <span data-i18n="title.btn.ranking">ランキング</span>
             </button>
             <button id="btn-title-controls" class="menu-pill-btn">
               <span class="menu-icon">🎮</span>
-              <span>操作ガイド</span>
+              <span data-i18n="title.btn.controls">操作ガイド</span>
             </button>
             <button id="btn-title-help" class="menu-pill-btn">
               <span class="menu-icon">❓</span>
-              <span>ルール</span>
+              <span data-i18n="title.btn.rules">ルール</span>
             </button>
             <button id="btn-title-settings" class="menu-pill-btn">
               <span class="menu-icon">⚙️</span>
-              <span>設定</span>
+              <span data-i18n="title.btn.settings">設定</span>
             </button>
           </div>
         </div>
 
         <div class="title-footer-stats">
           <span class="daily-today-badge">📅 <span id="title-today-date">2026/09/04</span></span>
-          <span class="progress-badge">クリア達成: <span id="title-progress-text">0 / 15</span></span>
+          <span class="progress-badge"><span id="title-progress-text">クリア達成: 0 / 15</span></span>
         </div>
       </section>
 
@@ -78,7 +78,7 @@
       <section id="screen-game" class="screen-game hidden">
         <!-- Top Bar (Zoodoku Header) -->
         <header class="game-top-bar">
-          <button id="btn-back-home" class="circle-btn" title="タイトルへ戻る" aria-label="タイトルへ戻る">
+          <button id="btn-back-home" class="circle-btn" data-i18n-title="game.header.home" title="タイトルへ戻る" aria-label="タイトルへ戻る">
             <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
@@ -87,27 +87,27 @@
 
           <div class="header-stats">
             <div class="stat-col">
-              <span class="stat-title">レベル</span>
+              <span class="stat-title" data-i18n="game.header.level">レベル</span>
               <span id="level-val" class="stat-num">1</span>
             </div>
             <div class="stat-col">
-              <span class="stat-title">タイム</span>
+              <span class="stat-title" data-i18n="game.header.time">タイム</span>
               <span id="timer-val" class="stat-num">00:00</span>
             </div>
             <div class="stat-col">
-              <span class="stat-title"><span class="flame-icon">🔥</span> 難易度</span>
+              <span class="stat-title"><span class="flame-icon">🔥</span> <span data-i18n="game.header.difficulty">難易度</span></span>
               <span id="difficulty-val" class="stat-num">入門</span>
             </div>
           </div>
 
           <div class="header-right-btns">
-            <button id="btn-controls" class="circle-btn" title="操作方法" aria-label="操作方法">
+            <button id="btn-controls" class="circle-btn" data-i18n-title="game.header.controls" title="操作方法" aria-label="操作方法">
               <span style="font-size: 1.15rem;">🎮</span>
             </button>
-            <button id="btn-game-ranking" class="circle-btn" title="ランキング" aria-label="ランキング">
+            <button id="btn-game-ranking" class="circle-btn" data-i18n-title="game.header.ranking" title="ランキング" aria-label="ランキング">
               <span style="font-size: 1.15rem;">🏆</span>
             </button>
-            <button id="btn-settings" class="circle-btn" title="設定" aria-label="設定">
+            <button id="btn-settings" class="circle-btn" data-i18n-title="game.header.settings" title="設定" aria-label="設定">
               <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -131,14 +131,14 @@
 
 
         <!-- Mini Rule Guide Cards -->
-        <section class="mini-rules-bar" title="ルールを見る">
+        <section class="mini-rules-bar" data-i18n-title="game.minirule.tooltip" title="ルールを見る">
           <div class="mini-rule-card">
             <div class="mini-rule-grid">
               <span>❌</span><span>❌</span><span>❌</span>
               <span>❌</span><span>🐶</span><span>❌</span>
               <span>❌</span><span>❌</span><span>❌</span>
             </div>
-            <span class="mini-rule-label">1色に1匹</span>
+            <span class="mini-rule-label" data-i18n="game.minirule.color">1色に1匹</span>
           </div>
           <div class="mini-rule-card">
             <div class="mini-rule-grid">
@@ -146,7 +146,7 @@
               <span>❌</span><span>❌</span><span>❌</span>
               <span>❌</span><span>❌</span><span>❌</span>
             </div>
-            <span class="mini-rule-label">行と列に1匹ずつ</span>
+            <span class="mini-rule-label" data-i18n="game.minirule.rowcol">行と列に1匹ずつ</span>
           </div>
           <div class="mini-rule-card">
             <div class="mini-rule-grid">
@@ -154,7 +154,7 @@
               <span>❌</span><span>🐶</span><span>❌</span>
               <span>❌</span><span>❌</span><span>❌</span>
             </div>
-            <span class="mini-rule-label">柴犬同士は隣接不可</span>
+            <span class="mini-rule-label" data-i18n="game.minirule.adjacent">柴犬同士は隣接不可</span>
           </div>
         </section>
 
@@ -180,7 +180,7 @@
                 <span class="hero-btn-avatar">🐶</span>
                 <span class="hero-badge" id="dog-mode-badge" style="background:#E78B3F;color:#FFF;font-size:0.65rem;padding:2px 4px;">2x</span>
               </button>
-              <span class="hero-btn-caption">柴犬 (Wタップ)</span>
+              <span class="hero-btn-caption" data-i18n="game.btn.dog">柴犬 (Wタップ)</span>
             </div>
 
             <div class="hero-action-wrapper">
@@ -188,7 +188,7 @@
                 <span class="hero-btn-avatar">❌</span>
                 <span class="hero-badge" id="mark-mode-badge" style="background:#10B981;color:#FFF;font-size:0.65rem;padding:2px 4px;">1x</span>
               </button>
-              <span class="hero-btn-caption">バツ印 (タップ)</span>
+              <span class="hero-btn-caption" data-i18n="game.btn.mark">バツ印 (タップ)</span>
             </div>
 
             <div class="hero-action-wrapper">
@@ -196,7 +196,7 @@
                 <span class="hero-btn-avatar">💡</span>
                 <span class="hero-badge">∞</span>
               </button>
-              <span class="hero-btn-caption">ヒント</span>
+              <span class="hero-btn-caption" data-i18n="game.btn.hint">ヒント</span>
             </div>
           </div>
 
@@ -204,15 +204,15 @@
           <div class="utility-actions-bar">
             <button id="btn-undo" class="utility-btn" title="元に戻す">
               <span class="utility-icon">↩️</span>
-              <span>戻す</span>
+              <span data-i18n="game.btn.undo">戻す</span>
             </button>
             <button id="btn-automark" class="utility-btn" title="オートマーク切替">
               <span class="utility-icon">⚡</span>
-              <span>自動✕: <strong id="automark-badge">ON</strong></span>
+              <span><span data-i18n="game.btn.automark">自動✕: </span><strong id="automark-badge">ON</strong></span>
             </button>
             <button id="btn-reset" class="utility-btn" title="最初からやり直す">
               <span class="utility-icon">🔄</span>
-              <span>リセット</span>
+              <span data-i18n="game.btn.reset">リセット</span>
             </button>
           </div>
         </footer>
@@ -228,7 +228,7 @@
       <div class="modal-card modal-wide">
         <div class="modal-header">
           <div>
-            <h2>🏆 本日のデイリーランキング</h2>
+            <h2 data-i18n="lead.modal.title">🏆 本日のデイリーランキング</h2>
             <span id="leaderboard-date" class="leaderboard-date-badge">2026年9月4日</span>
           </div>
           <button class="modal-close" data-close-modal="modal-leaderboard">✕</button>
@@ -238,11 +238,11 @@
             <div class="user-card-left">
               <span class="user-rank-badge" id="my-rank-badge"># -</span>
               <div class="user-info">
-                <strong>あなた (柴犬マスター)</strong>
+                <strong id="my-user-name" data-i18n="lead.user.name">あなた (柴犬マスター)</strong>
                 <span id="my-stats-summary">今日のベストスコア: - 点</span>
               </div>
             </div>
-            <button id="btn-leaderboard-play" class="primary-btn btn-sm">挑戦する 🐾</button>
+            <button id="btn-leaderboard-play" class="primary-btn btn-sm" data-i18n="lead.btn.play">挑戦する 🐾</button>
           </div>
 
           <div class="leaderboard-list" id="leaderboard-list">
@@ -250,7 +250,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="secondary-btn" data-close-modal="modal-leaderboard">とじる</button>
+          <button class="secondary-btn" data-close-modal="modal-leaderboard" data-i18n="lead.btn.close">とじる</button>
         </div>
       </div>
     </div>
@@ -259,7 +259,7 @@
     <div id="modal-stages" class="modal-backdrop hidden">
       <div class="modal-card modal-wide">
         <div class="modal-header">
-          <h2>📋 レベル選択</h2>
+          <h2 data-i18n="stage.modal.title">📋 レベル選択</h2>
           <button class="modal-close" data-close-modal="modal-stages">✕</button>
         </div>
         <div class="modal-body">
@@ -270,33 +270,33 @@
           <div class="stage-jump-card" style="margin-top: 16px; background: #FFFBEB; border: 1.5px solid #FCD34D; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;">
             <div class="random-info">
               <h3 style="font-size: 0.95rem; margin: 0; color: #92400E; display: flex; align-items: center; gap: 6px;">
-                <span>🔢</span> ステージ番号指定 (最大 Lv. 999,999)
+                <span>🔢</span> <span data-i18n="stage.jump.title">ステージ番号指定 (最大 Lv. 999,999)</span>
               </h3>
-              <p style="font-size: 0.8rem; margin: 2px 0 0 0; color: #B45309;">
+              <p style="font-size: 0.8rem; margin: 2px 0 0 0; color: #B45309;" data-i18n="stage.jump.desc">
                 同じ番号なら誰がいつ遊んでも完全に同じパズルが生成されます！
               </p>
             </div>
             <div style="display: flex; gap: 8px;">
-              <input type="number" id="input-jump-level" min="1" max="999999" placeholder="レベル番号 (1〜999999)" style="flex: 1; padding: 8px 12px; border-radius: 8px; border: 1.5px solid #FCD34D; font-size: 0.9rem; font-weight: 700; color: #78350F; outline: none;" />
-              <button id="btn-jump-level" class="primary-btn" style="padding: 8px 16px; font-size: 0.85rem; white-space: nowrap;">遊ぶ 🐾</button>
+              <input type="number" id="input-jump-level" min="1" max="999999" data-i18n-placeholder="stage.jump.placeholder" placeholder="レベル番号 (1〜999999)" style="flex: 1; padding: 8px 12px; border-radius: 8px; border: 1.5px solid #FCD34D; font-size: 0.9rem; font-weight: 700; color: #78350F; outline: none;" />
+              <button id="btn-jump-level" class="primary-btn" data-i18n="stage.jump.btn" style="padding: 8px 16px; font-size: 0.85rem; white-space: nowrap;">遊ぶ 🐾</button>
             </div>
           </div>
 
           <div class="random-generator-card">
             <div class="random-info">
-              <h3>🎲 無限ランダムパズル</h3>
-              <p>決まったレベル以外にも、毎回異なる唯一解パズルを自動生成して遊べます！</p>
+              <h3 data-i18n="stage.random.title">🎲 無限ランダムパズル</h3>
+              <p data-i18n="stage.random.desc">決まったレベル以外にも、毎回異なる唯一解パズルを自動生成して遊べます！</p>
             </div>
             <div class="random-actions">
               <select id="select-random-size" class="select-styled">
-                <option value="5">5x5 (入門)</option>
-                <option value="6" selected>6x6 (初級)</option>
-                <option value="7">7x7 (中級)</option>
-                <option value="8">8x8 (上級)</option>
-                <option value="9">9x9 (名人)</option>
-                <option value="10">10x10 (超名人)</option>
+                <option value="5">5x5 (入門 / Beginner)</option>
+                <option value="6" selected>6x6 (初級 / Easy)</option>
+                <option value="7">7x7 (中級 / Medium)</option>
+                <option value="8">8x8 (上級 / Hard)</option>
+                <option value="9">9x9 (名人 / Expert)</option>
+                <option value="10">10x10 (超名人 / Master)</option>
               </select>
-              <button id="btn-generate-puzzle" class="primary-btn">新しく生成</button>
+              <button id="btn-generate-puzzle" class="primary-btn" data-i18n="stage.random.btn">新しく生成</button>
             </div>
           </div>
         </div>
@@ -308,12 +308,12 @@
     <div id="modal-help" class="modal-backdrop hidden">
       <div class="modal-card">
         <div class="modal-header">
-          <h2>🐕 Shibadoku (柴独) の遊び方</h2>
+          <h2 data-i18n="rule.modal.title">🐕 Shibadoku (柴独) の遊び方</h2>
           <button class="modal-close" data-close-modal="modal-help">✕</button>
         </div>
 
         <div class="modal-body help-content">
-          <p class="help-lead">
+          <p class="help-lead" data-i18n-html="rule.lead">
             <strong>「柴犬たちのパーソナルスペースを守ろう！」</strong><br />
             数独のように論理で解く、癒やしのパズルゲームです。
           </p>
@@ -321,40 +321,52 @@
           <div class="rule-card">
             <div class="rule-icon">1️⃣</div>
             <div class="rule-text">
-              <strong>各エリアに1匹</strong>
-              <p>色で分かれた各ドッグラン（エリア）に、柴犬（🐶）を<strong>ちょうど1匹</strong>配置します。</p>
+              <strong data-i18n="rule.card1.title">各エリアに1匹</strong>
+              <p data-i18n-html="rule.card1.desc">色で分かれた各ドッグラン（エリア）に、柴犬（🐶）を<strong>ちょうど1匹</strong>配置します。</p>
             </div>
           </div>
 
           <div class="rule-card">
             <div class="rule-icon">2️⃣</div>
             <div class="rule-text">
-              <strong>行と列に1匹ずつ</strong>
-              <p>タテ1列、ヨコ1列につき、柴犬（🐶）は<strong>1匹だけ</strong>入ることができます。</p>
+              <strong data-i18n="rule.card2.title">行と列に1匹ずつ</strong>
+              <p data-i18n-html="rule.card2.desc">タテ1列、ヨコ1列につき、柴犬（🐶）は<strong>1匹だけ</strong>入ることができます。</p>
             </div>
           </div>
 
           <div class="rule-card rule-highlight">
             <div class="rule-icon">🚫</div>
             <div class="rule-text">
-              <strong>触れ合いNG！（パーソナルスペース）</strong>
-              <p>柴犬同士は、<strong>縦・横・斜めの8方向すべてで隣り合ってはいけません</strong>。</p>
+              <strong data-i18n="rule.card3.title">触れ合いNG！（パーソナルスペース）</strong>
+              <p data-i18n-html="rule.card3.desc">柴犬同士は、<strong>縦・横・斜めの8方向すべてで隣り合ってはいけません</strong>。</p>
             </div>
           </div>
 
           <div class="rule-card" style="background: rgba(231, 139, 63, 0.08); border-color: rgba(231, 139, 63, 0.25);">
             <div class="rule-icon">❓</div>
             <div class="rule-text">
-              <strong>仮置きマーク（？）</strong>
-              <p>いくつかの配置パターンを試すメモとして使えます。<br />
+              <strong data-i18n="rule.card4.title">仮置きマーク（？）</strong>
+              <p data-i18n-html="rule.card4.desc">いくつかの配置パターンを試すメモとして使えます。<br />
               <strong>PC:</strong> 右クリック または <code>[N]</code> キー<br />
               <strong>スマホ:</strong> マスを長押し<br />
               ※柴犬（🐶）や✕マークでそのまま上書きできます。</p>
             </div>
           </div>
+
+          <div class="rule-card" style="background: rgba(82, 182, 154, 0.09); border-color: rgba(82, 182, 154, 0.25);">
+            <div class="rule-icon">🐾</div>
+            <div class="rule-text">
+              <strong data-i18n="rule.card5.title">かんたん操作</strong>
+              <p data-i18n-html="rule.card5.desc">
+                <strong>クリック / タップ:</strong> ✕ マーク（柴犬が入れない場所）<br />
+                <strong>ダブルクリック / ダブルタップ:</strong> 柴犬（🐶）を配置！<br />
+                <strong>ドラッグ / スライド:</strong> 連続マーク＆Xマスからスライドで消去
+              </p>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
-          <button class="primary-btn" data-close-modal="modal-help">わかったワン！</button>
+          <button class="primary-btn" data-close-modal="modal-help" data-i18n="rule.btn.close">わかったワン！</button>
         </div>
       </div>
     </div>
@@ -363,19 +375,19 @@
     <div id="modal-controls" class="modal-backdrop hidden">
       <div class="modal-card modal-controls-card">
         <div class="modal-header">
-          <h2>🎮 操作ガイド</h2>
+          <h2 data-i18n="ctrl.modal.title">🎮 操作ガイド</h2>
           <button class="modal-close" data-close-modal="modal-controls">✕</button>
         </div>
 
         <!-- Device Tabs with Auto-detect Indicator -->
         <div class="controls-env-tabs">
           <button id="tab-controls-pc" class="controls-tab-btn active" data-tab="pc">
-            💻 パソコン (PC)
-            <span id="badge-device-pc" class="device-active-badge hidden">現在</span>
+            <span data-i18n="ctrl.tab.pc">💻 パソコン (PC)</span>
+            <span id="badge-device-pc" class="device-active-badge hidden" data-i18n="ctrl.badge.current">現在</span>
           </button>
           <button id="tab-controls-mobile" class="controls-tab-btn" data-tab="mobile">
-            📱 スマホ・タブレット
-            <span id="badge-device-mobile" class="device-active-badge hidden">現在</span>
+            <span data-i18n="ctrl.tab.mobile">📱 スマホ・タブレット</span>
+            <span id="badge-device-mobile" class="device-active-badge hidden" data-i18n="ctrl.badge.current">現在</span>
           </button>
         </div>
 
@@ -383,58 +395,58 @@
           <!-- PC Section -->
           <div id="controls-section-pc" class="controls-section">
             <div class="controls-group">
-              <div class="controls-group-title">🖱️ マウス操作</div>
+              <div class="controls-group-title" data-i18n="ctrl.pc.mouseTitle">🖱️ マウス操作</div>
               <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">🖱️</span> 左シングルクリック</span>
-                <span class="control-desc"><strong>✕ マーク</strong> を配置 / 削除</span>
+                <span class="control-action"><span class="ctrl-icon">🖱️</span> <span data-i18n="ctrl.pc.leftClick">左シングルクリック</span></span>
+                <span class="control-desc" data-i18n-html="ctrl.pc.leftClickDesc"><strong>✕ マーク</strong> を配置 / 削除</span>
               </div>
               <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">🖱️</span> 左クリックドラッグ</span>
-                <span class="control-desc">複数のマスに連続で <strong>✕ マーク</strong> を記入</span>
+                <span class="control-action"><span class="ctrl-icon">🖱️</span> <span data-i18n="ctrl.pc.leftDrag">左クリックドラッグ</span></span>
+                <span class="control-desc" data-i18n-html="ctrl.pc.leftDragDesc">複数のマスに連続で <strong>✕ マーク</strong> を記入（Xマスからドラッグで消去）</span>
               </div>
               <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">🖱️</span> 左ダブルクリック</span>
-                <span class="control-desc"><strong>柴犬（🐶）</strong> を配置 / 削除</span>
+                <span class="control-action"><span class="ctrl-icon">🖱️</span> <span data-i18n="ctrl.pc.doubleClick">左ダブルクリック</span></span>
+                <span class="control-desc" data-i18n-html="ctrl.pc.doubleClickDesc"><strong>柴犬（🐶）</strong> を配置 / 削除</span>
               </div>
               <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">🖱️</span> 右クリック</span>
-                <span class="control-desc"><strong>？ 仮置きマーク</strong> を配置 / 削除</span>
+                <span class="control-action"><span class="ctrl-icon">🖱️</span> <span data-i18n="ctrl.pc.rightClick">右クリック</span></span>
+                <span class="control-desc" data-i18n-html="ctrl.pc.rightClickDesc"><strong>？ 仮置きマーク</strong> を配置 / 削除</span>
               </div>
             </div>
 
             <div class="controls-group">
-              <div class="controls-group-title">⌨️ キーボード操作</div>
+              <div class="controls-group-title" data-i18n="ctrl.pc.keyboardTitle">⌨️ キーボード操作</div>
               <div class="control-row">
                 <span class="control-action"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span>
-                <span class="control-desc">枠を移動</span>
+                <span class="control-desc" data-i18n="ctrl.pc.keyMove">枠を移動</span>
               </div>
               <div class="control-row">
                 <span class="control-action"><kbd>Space</kbd> / <kbd>Enter</kbd></span>
-                <span class="control-desc"><strong>柴犬（🐶）</strong>を配置</span>
+                <span class="control-desc" data-i18n-html="ctrl.pc.keyDog"><strong>柴犬（🐶）</strong>を配置</span>
               </div>
               <div class="control-row">
                 <span class="control-action"><kbd>X</kbd> / <kbd>M</kbd></span>
-                <span class="control-desc"><strong>✕ マーク</strong>を配置</span>
+                <span class="control-desc" data-i18n-html="ctrl.pc.keyCross"><strong>✕ マーク</strong>を配置</span>
               </div>
               <div class="control-row">
                 <span class="control-action"><kbd>N</kbd></span>
-                <span class="control-desc"><strong>？ 仮置きマーク</strong>を配置</span>
+                <span class="control-desc" data-i18n-html="ctrl.pc.keyQuestion"><strong>？ 仮置きマーク</strong>を配置</span>
               </div>
               <div class="control-row">
                 <span class="control-action"><kbd>Z</kbd></span>
-                <span class="control-desc">1手戻す（アンドゥ）</span>
+                <span class="control-desc" data-i18n="ctrl.pc.keyUndo">1手戻す（アンドゥ）</span>
               </div>
               <div class="control-row">
                 <span class="control-action"><kbd>H</kbd></span>
-                <span class="control-desc">ヒントを見る</span>
+                <span class="control-desc" data-i18n="ctrl.pc.keyHint">ヒントを見る</span>
               </div>
               <div class="control-row">
                 <span class="control-action"><kbd>Esc</kbd></span>
-                <span class="control-desc">タイトル画面に戻る</span>
+                <span class="control-desc" data-i18n="ctrl.pc.keyEsc">タイトル画面に戻る</span>
               </div>
             </div>
 
-            <div class="controls-tip-box">
+            <div class="controls-tip-box" data-i18n-html="ctrl.pc.tip">
               💡 <strong>お役立ちヒント:</strong><br />
               ・✕マークや？マークがあるマスでも、ダブルクリックやスペースキーで直接柴犬🐶を置けます（ミス判定にはなりません）。<br />
               ・ドラッグで引いた連続✕マークも、戻すボタン（またはZキー）1回でまとめて元に戻せます。
@@ -444,39 +456,39 @@
           <!-- Mobile Section -->
           <div id="controls-section-mobile" class="controls-section hidden">
             <div class="controls-group">
-              <div class="controls-group-title">👆 タッチ操作</div>
+              <div class="controls-group-title" data-i18n="ctrl.mobile.touchTitle">👆 タッチ操作</div>
               <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">👆</span> シングルタップ</span>
-                <span class="control-desc">
+                <span class="control-action"><span class="ctrl-icon">👆</span> <span data-i18n="ctrl.mobile.singleTap">シングルタップ</span></span>
+                <span class="control-desc" data-i18n-html="ctrl.mobile.singleTapDesc">
                   <strong>✕ マーク</strong> を配置 / 削除
                 </span>
               </div>
               <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">👉</span> シングルタップスライド</span>
-                <span class="control-desc">
-                  指でなぞって一気に <strong>✕ マーク</strong> を連続記入
+                <span class="control-action"><span class="ctrl-icon">👉</span> <span data-i18n="ctrl.mobile.tapSlide">シングルタップスライド</span></span>
+                <span class="control-desc" data-i18n-html="ctrl.mobile.tapSlideDesc">
+                  指でなぞって一気に <strong>✕ マーク</strong> を連続記入（Xマスからスライドで消去）
                 </span>
               </div>
               <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">🐶</span> ダブルタップ（素早く2回）</span>
-                <span class="control-desc">
+                <span class="control-action"><span class="ctrl-icon">🐶</span> <span data-i18n="ctrl.mobile.doubleTap">ダブルタップ（素早く2回）</span></span>
+                <span class="control-desc" data-i18n-html="ctrl.mobile.doubleTapDesc">
                   <strong>柴犬（🐶）</strong> を配置 / 削除
                 </span>
               </div>
               <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">⏳</span> 長押し（約0.4秒）</span>
-                <span class="control-desc">
+                <span class="control-action"><span class="ctrl-icon">⏳</span> <span data-i18n="ctrl.mobile.longPress">長押し（約0.4秒）</span></span>
+                <span class="control-desc" data-i18n-html="ctrl.mobile.longPressDesc">
                   <strong>？ 仮置きマーク</strong> を配置 / 削除<br />
                   <small style="color: var(--color-text-muted);">（対応端末ならブルッと震えます）</small>
                 </span>
               </div>
               <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">↩️</span> もどすボタン</span>
-                <span class="control-desc">間違えたときに1手前に戻せます（スライド記入も1手で復元）</span>
+                <span class="control-action"><span class="ctrl-icon">↩️</span> <span data-i18n="ctrl.mobile.undo">もどすボタン</span></span>
+                <span class="control-desc" data-i18n="ctrl.mobile.undoDesc">間違えたときに1手前に戻せます（スライド記入も1手で復元）</span>
               </div>
             </div>
 
-            <div class="controls-tip-box">
+            <div class="controls-tip-box" data-i18n-html="ctrl.mobile.tip">
               💡 <strong>スマホで素早く解くコツ:</strong><br />
               ・指でスライドして置けないマスを一気に塗りつぶし、確定マスをダブルタップで柴犬🐶にするのがおすすめ！<br />
               ・✕マークがついているマスでも、ダブルタップすればそのまま柴犬🐶を置けます。
@@ -485,7 +497,7 @@
         </div>
 
         <div class="modal-footer">
-          <button class="primary-btn" data-close-modal="modal-controls">わかったワン！</button>
+          <button class="primary-btn" data-close-modal="modal-controls" data-i18n="rule.btn.close">わかったワン！</button>
         </div>
       </div>
     </div>
@@ -494,35 +506,48 @@
     <div id="modal-settings" class="modal-backdrop hidden">
       <div class="modal-card">
         <div class="modal-header">
-          <h2>⚙️ ゲーム設定</h2>
+          <h2 data-i18n="set.modal.title">⚙️ ゲーム設定</h2>
           <button class="modal-close" data-close-modal="modal-settings">✕</button>
         </div>
         <div class="modal-body settings-list">
+          <!-- Language Setting -->
           <div class="setting-item">
             <div class="setting-label-group">
-              <span class="setting-name">🐕 柴犬の種類</span>
-              <span class="setting-desc">盤面に登場する柴犬の毛色を選べます</span>
+              <span class="setting-name" data-i18n="set.lang.name">🌐 言語 (Language)</span>
+              <span class="setting-desc" data-i18n="set.lang.desc">表示言語を切り替えます</span>
+            </div>
+            <select id="setting-language" class="select-styled" style="font-weight: 700; border-color: #E78B3F; color: #78350F; padding: 6px 12px;">
+              <option value="auto" data-i18n="set.lang.auto">自動 (Auto)</option>
+              <option value="ja" data-i18n="set.lang.ja">日本語 (Japanese)</option>
+              <option value="en" data-i18n="set.lang.en">English (英語)</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-label-group">
+              <span class="setting-name" data-i18n="set.shiba.name">🐕 柴犬の種類</span>
+              <span class="setting-desc" data-i18n="set.shiba.desc">盤面に登場する柴犬の毛色を選べます</span>
             </div>
             <div class="shiba-picker">
               <button class="shiba-choice-btn active" data-shiba="aka">
                 <span class="shiba-avatar-preview">🐕</span>
-                赤柴
+                <span data-i18n="set.shiba.aka">赤柴</span>
               </button>
               <button class="shiba-choice-btn" data-shiba="kuro">
                 <span class="shiba-avatar-preview">🐕‍🦺</span>
-                黒柴
+                <span data-i18n="set.shiba.kuro">黒柴</span>
               </button>
               <button class="shiba-choice-btn" data-shiba="shiro">
                 <span class="shiba-avatar-preview">🤍</span>
-                白柴
+                <span data-i18n="set.shiba.shiro">白柴</span>
               </button>
             </div>
           </div>
 
           <div class="setting-item">
             <div class="setting-label-group">
-              <span class="setting-name">🔊 効果音 (Sound)</span>
-              <span class="setting-desc">柴犬の鳴き声やタップ音を再生</span>
+              <span class="setting-name" data-i18n="set.sound.name">🔊 効果音 (Sound)</span>
+              <span class="setting-desc" data-i18n="set.sound.desc">柴犬の鳴き声やタップ音を再生</span>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="setting-sound" checked />
@@ -532,8 +557,8 @@
 
           <div class="setting-item">
             <div class="setting-label-group">
-              <span class="setting-name">⚡ 自動マーク (Auto-Mark)</span>
-              <span class="setting-desc">柴犬配置時に置けないマスを自動で✕マーク</span>
+              <span class="setting-name" data-i18n="set.automark.name">⚡ 自動マーク (Auto-Mark)</span>
+              <span class="setting-desc" data-i18n="set.automark.desc">柴犬配置時に置けないマスを自動で✕マーク</span>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="setting-automark" checked />
@@ -543,17 +568,17 @@
 
           <div class="setting-item">
             <div class="setting-label-group">
-              <span class="setting-name">🗑️ 進捗データ初期化</span>
-              <span class="setting-desc">クリアしたレベルやキャッシュを消去</span>
+              <span class="setting-name" data-i18n="set.reset.name">🗑️ 進捗データ初期化</span>
+              <span class="setting-desc" data-i18n="set.reset.desc">クリアしたレベルやキャッシュを消去</span>
             </div>
-            <button id="btn-reset-progress" class="secondary-btn btn-sm" style="color: #DC2626; border: 1px solid #FCA5A5;">
+            <button id="btn-reset-progress" class="secondary-btn btn-sm" style="color: #DC2626; border: 1px solid #FCA5A5;" data-i18n="set.reset.btn">
               リセット
             </button>
           </div>
         </div>
 
         <div class="modal-footer">
-          <button class="primary-btn" data-close-modal="modal-settings">設定を保存</button>
+          <button class="primary-btn" data-close-modal="modal-settings" data-i18n="set.btn.save">設定を保存</button>
         </div>
       </div>
     </div>
@@ -562,22 +587,22 @@
     <div id="modal-win" class="modal-backdrop hidden">
       <div class="modal-card victory-card">
         <div class="victory-shiba" id="victory-shiba-container"></div>
-        <h2 class="victory-title">🎉 レベルクリア！ 🎉</h2>
-        <p class="victory-subtitle">すべての柴犬が仲良く過ごせる場所が見つかったワン！</p>
+        <h2 class="victory-title" data-i18n="win.modal.title">🎉 レベルクリア！ 🎉</h2>
+        <p class="victory-subtitle" data-i18n="win.modal.subtitle">すべての柴犬が仲良く過ごせる場所が見つかったワン！</p>
         <div class="victory-stats">
           <div class="stat-box">
-            <span class="stat-label">クリアタイム</span>
+            <span class="stat-label" data-i18n="win.stat.time">クリアタイム</span>
             <span id="win-time" class="stat-val">01:23</span>
           </div>
           <div class="stat-box">
-            <span class="stat-label">スコア</span>
+            <span class="stat-label" data-i18n="win.stat.score">スコア</span>
             <span id="win-score" class="stat-val">2880</span>
           </div>
         </div>
         <div class="victory-actions">
-          <button id="btn-win-replay" class="secondary-btn">もう一度</button>
-          <button id="btn-win-ranking" class="secondary-btn">🏆 順位を見る</button>
-          <button id="btn-win-next" class="primary-btn">次のレベルへ 🐾</button>
+          <button id="btn-win-replay" class="secondary-btn" data-i18n="win.btn.replay">もう一度</button>
+          <button id="btn-win-ranking" class="secondary-btn" data-i18n="win.btn.ranking">🏆 順位を見る</button>
+          <button id="btn-win-next" class="primary-btn" data-i18n="win.btn.next">次のレベルへ 🐾</button>
         </div>
       </div>
     </div>
@@ -586,11 +611,11 @@
     <div id="modal-gameover" class="modal-backdrop hidden">
       <div class="modal-card gameover-card">
         <div class="gameover-shiba" id="gameover-shiba-container"></div>
-        <h2 class="gameover-title">🦴 骨がなくなっちゃったワン...</h2>
-        <p class="gameover-subtitle">3回間違えてしまいました。最初からやり直してもう一度挑戦しよう！</p>
+        <h2 class="gameover-title" data-i18n="gameover.modal.title">🦴 骨がなくなっちゃったワン...</h2>
+        <p class="gameover-subtitle" data-i18n="gameover.modal.subtitle">3回間違えてしまいました。最初からやり直してもう一度挑戦しよう！</p>
         <div class="gameover-actions">
-          <button id="btn-gameover-home" class="secondary-btn">タイトルへ</button>
-          <button id="btn-gameover-retry" class="primary-btn">もう一度やり直す 🐾</button>
+          <button id="btn-gameover-home" class="secondary-btn" data-i18n="gameover.btn.home">タイトルへ</button>
+          <button id="btn-gameover-retry" class="primary-btn" data-i18n="gameover.btn.retry">もう一度やり直す 🐾</button>
         </div>
       </div>
     </div>
@@ -598,7 +623,7 @@
     <!-- Clear Rank-Up Screen (Matching Meowdoku Screenshot) -->
     <div id="modal-rankup" class="rankup-overlay hidden">
       <div class="rankup-content">
-        <h1 class="rankup-header-title">ランキング</h1>
+        <h1 class="rankup-header-title" data-i18n="rankup.title">ランキング</h1>
         
         <div class="rankup-timer-pill">
           <span class="timer-clock-icon">⏱️</span>
@@ -673,7 +698,7 @@
 
         <!-- Tap to Continue Hint -->
         <div class="tap-to-continue" id="rankup-tap-continue">
-          <span>タップしてつづける</span>
+          <span data-i18n="rankup.continue">タップしてつづける</span>
         </div>
       </div>
     </div>

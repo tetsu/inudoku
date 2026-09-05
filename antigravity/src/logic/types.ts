@@ -43,4 +43,5 @@ export interface GameSettings {
   soundEnabled: boolean;
   shibaType: 'aka' | 'kuro' | 'shiro'; // 赤柴, 黒柴, 白柴
   highContrast: boolean;
+  language?: 'auto' | 'ja' | 'en';
 }

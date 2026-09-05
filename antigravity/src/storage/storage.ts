@@ -28,6 +28,7 @@ export const STORAGE_KEYS = {
   COMPLETED_LEVELS: 'shibadoku_completed_levels',
   ACTIVE_GAME: 'shibadoku_active_game',
   TOURNAMENT_POINTS: 'shibadoku_tournament_points',
+  HAS_SEEN_RULES: 'shibadoku_has_seen_rules',
   SCORE_PREFIX: 'shibadoku_score_',
   RIVALS_PREFIX: 'shibadoku_rivals_',
   TOURNAMENT_DAILY_PREFIX: 'shibadoku_tournament_points_',
@@ -234,12 +235,23 @@ export class StorageManager {
     this.safeSetItem(key, rivalsJson);
   }
 
+  // --- Rules Modal State ---
+  public hasSeenRules(): boolean {
+    const raw = this.safeGetItem(STORAGE_KEYS.HAS_SEEN_RULES);
+    return raw === 'true';
+  }
+
+  public setHasSeenRules(seen: boolean = true): void {
+    this.safeSetItem(STORAGE_KEYS.HAS_SEEN_RULES, String(seen));
+  }
+
   // --- Reset All Progress ---
   public resetAllProgress(): void {
     this.safeRemoveItem(STORAGE_KEYS.UNLOCKED_LEVEL, STORAGE_KEYS.LEGACY_UNLOCKED_LEVEL);
     this.safeRemoveItem(STORAGE_KEYS.COMPLETED_LEVELS, STORAGE_KEYS.LEGACY_COMPLETED_LEVELS);
     this.safeRemoveItem(STORAGE_KEYS.ACTIVE_GAME, STORAGE_KEYS.LEGACY_ACTIVE_GAME);
     this.safeRemoveItem(STORAGE_KEYS.TOURNAMENT_POINTS, STORAGE_KEYS.LEGACY_TOURNAMENT_POINTS);
+    this.safeRemoveItem(STORAGE_KEYS.HAS_SEEN_RULES);
   }
 }
 

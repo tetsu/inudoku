@@ -75,7 +75,13 @@ export function getNextHint(
   puzzle: PuzzleDefinition,
   currentDogs: Position[],
   solution?: Position[]
-): { type: 'place' | 'eliminate' | 'clear-conflict'; pos: Position; reason: string } | null {
+): {
+  type: 'place' | 'eliminate' | 'clear-conflict';
+  pos: Position;
+  reason: string;
+  reasonKey?: string;
+  reasonParams?: Record<string, string | number>;
+} | null {
   const sol = solution || puzzle.solution || solvePuzzle(puzzle, 1).solutions[0];
   if (!sol) return null;
 
@@ -88,6 +94,7 @@ export function getNextHint(
         type: 'clear-conflict',
         pos: dog,
         reason: 'ここにいる柴犬は他の柴犬とケンカしてしまう場所にあるワン！場所を見直してみよう。',
+        reasonKey: 'msg.hint.conflict',
       };
     }
   }
@@ -96,11 +103,13 @@ export function getNextHint(
   const placedMap = new Set(currentDogs.map((p) => `${p.r},${p.c}`));
   for (const p of sol) {
     if (!placedMap.has(`${p.r},${p.c}`)) {
-      const regionName = `エリア ${puzzle.regions[p.r][p.c] + 1}`;
+      const regionIndex = puzzle.regions[p.r][p.c] + 1;
       return {
         type: 'place',
         pos: p,
-        reason: `${p.r + 1}行目、${regionName} に柴犬を配置できるチャンスだワン！`,
+        reason: `${p.r + 1}行目、エリア ${regionIndex} に柴犬を配置できるチャンスだワン！`,
+        reasonKey: 'msg.hint.place',
+        reasonParams: { row: p.r + 1, regionIndex },
       };
     }
   }
