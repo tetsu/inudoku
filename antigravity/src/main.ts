@@ -22,18 +22,21 @@ class InudokuGame {
   private currentStageIndex: number = 0;
   private grid: CellState[][] = [];
   private undoStack: MoveAction[][] = [];
-  private inputMode: 'dog' | 'mark' = 'dog';
-  private isPointerDown: boolean = false;
-  private dragMark: CellMark | null = null;
+  private inputMode: 'dog' | 'mark' = 'mark';
   private focusedPos: Position | null = null;
   private hoveredPos: Position | null = null;
   private inputDevice: 'pointer' | 'keyboard' = 'pointer';
 
-  // Mobile Long-Press for '?' mark
+  // Pointer, Drag, Double-Tap & Long-Press tracking
+  private isPointerDown: boolean = false;
+  private pointerDownPos: { x: number; y: number } | null = null;
+  private pointerDownCell: Position | null = null;
+  private isDragging: boolean = false;
+  private dragMoveGroup: MoveAction[] = [];
+  private visitedDragCells: Set<string> = new Set();
+  private lastTapInfo: { r: number; c: number; time: number; prevMark: CellMark } | null = null;
   private longPressTimer: ReturnType<typeof setTimeout> | null = null;
   private longPressFired: boolean = false;
-  private touchStartPos: { x: number; y: number } | null = null;
-  private touchStartCell: Position | null = null;
 
   // Progression & Score
   private unlockedLevel: number = 1;
@@ -304,8 +307,9 @@ class InudokuGame {
       this.longPressTimer = null;
     }
     this.longPressFired = false;
-    this.touchStartCell = null;
-    this.touchStartPos = null;
+    this.pointerDownCell = null;
+    this.pointerDownPos = null;
+    this.lastTapInfo = null;
     this.hoveredPos = null;
 
     const size = puzzle.size;
@@ -953,6 +957,13 @@ class InudokuGame {
     this.hintBubbleEl.classList.add('hidden');
   }
 
+  public showToast(msg: string) {
+    this.hintBubbleTextEl.textContent = msg;
+    this.hintBubbleEl.classList.remove('hidden');
+    if (this.hintTimeout !== null) clearTimeout(this.hintTimeout);
+    this.hintTimeout = window.setTimeout(() => this.hideHint(), 2500);
+  }
+
   private startTimer() {
     this.stopTimer();
     this.timerInterval = window.setInterval(() => {
@@ -1067,24 +1078,24 @@ class InudokuGame {
       this.startGame(this.unlockedLevel - 1);
     });
 
-    // Cell Click & Drag interactions (Pointer & Touch unified)
-    const handlePointerDragMove = (clientX: number, clientY: number) => {
-      if (!this.isPointerDown || !this.dragMark || this.inputMode !== 'mark') return;
-      const elUnder = document.elementFromPoint(clientX, clientY);
-      if (!elUnder) return;
-      const cellEl = elUnder.closest('.grid-cell') as HTMLElement | null;
-      if (cellEl && cellEl.dataset.r !== undefined && cellEl.dataset.c !== undefined) {
-        const r = parseInt(cellEl.dataset.r, 10);
-        const c = parseInt(cellEl.dataset.c, 10);
-        this.clearFocusedCell();
-        if (this.grid[r]?.[c] && this.grid[r][c].mark !== this.dragMark && this.grid[r][c].mark !== 'dog') {
-          this.handleCellClick(r, c, this.dragMark as 'cross');
-        }
-      }
-    };
+    // ========================================================================
+    // Unified Board Interactions:
+    // PC:
+    //   - Left Single Click: X mark
+    //   - Left Click Drag: Continuous X mark
+    //   - Left Double Click: Shiba Dog mark (🐶)
+    //   - Right Click: ? mark
+    // Mobile:
+    //   - Single Tap: X mark
+    //   - Single Tap Slide: Continuous X mark
+    //   - Double Tap: Shiba Dog mark (🐶)
+    //   - Long Press (~400ms): ? mark
+    // ========================================================================
 
     this.gridBoardEl.addEventListener('pointerdown', (e) => {
-      if (e.button === 2) return; // Right click handled by contextmenu
+      // Right click (button 2) is handled by contextmenu
+      if (e.button === 2) return;
+
       const cellEl = (e.target as HTMLElement).closest('.grid-cell') as HTMLElement | null;
       if (!cellEl || cellEl.dataset.r === undefined || cellEl.dataset.c === undefined) return;
 
@@ -1095,18 +1106,22 @@ class InudokuGame {
       if (e.button === 1) {
         e.preventDefault();
         this.clearFocusedCell();
+        this.lastTapInfo = null;
         this.handleCellClick(r, c, 'question');
         return;
       }
 
       this.clearFocusedCell();
+      this.isPointerDown = true;
+      this.isDragging = false;
+      this.longPressFired = false;
+      this.pointerDownPos = { x: e.clientX, y: e.clientY };
+      this.pointerDownCell = { r, c };
+      this.dragMoveGroup = [];
+      this.visitedDragCells = new Set();
 
       if (e.pointerType === 'touch') {
-        // Mobile / Touch: initialize potential Long-Press for '?' mark
-        this.longPressFired = false;
-        this.touchStartPos = { x: e.clientX, y: e.clientY };
-        this.touchStartCell = { r, c };
-
+        // Mobile / Touch: initialize potential Long-Press for '?' mark (~400ms)
         if (this.longPressTimer) {
           clearTimeout(this.longPressTimer);
         }
@@ -1114,78 +1129,161 @@ class InudokuGame {
         this.longPressTimer = setTimeout(() => {
           this.longPressFired = true;
           this.longPressTimer = null;
-          // Trigger Question Mark on mobile long-press!
+          this.lastTapInfo = null; // Long press cancels double-tap tracking
           this.handleCellClick(r, c, 'question');
           if (typeof navigator !== 'undefined' && navigator.vibrate) {
             try {
               navigator.vibrate(35);
             } catch {}
           }
-        }, 420);
-
-        this.isPointerDown = true;
-        this.dragMark = null;
-      } else {
-        // PC Mouse Left Click: execute immediately and support drag-marking
-        this.isPointerDown = true;
-        this.handleCellClick(r, c);
-        this.dragMark = this.grid[r][c].mark;
+        }, 400);
       }
     });
 
     window.addEventListener('pointermove', (e) => {
-      // Cancel mobile long press if finger moved significantly
-      if (this.longPressTimer && this.touchStartPos) {
-        const dist = Math.hypot(e.clientX - this.touchStartPos.x, e.clientY - this.touchStartPos.y);
-        if (dist > 8) {
+      if (!this.isPointerDown || !this.pointerDownPos || !this.pointerDownCell) return;
+
+      const dist = Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y);
+
+      // Threshold to detect start of drag / slide (8px)
+      if (!this.isDragging && dist > 8) {
+        this.isDragging = true;
+        if (this.longPressTimer) {
           clearTimeout(this.longPressTimer);
           this.longPressTimer = null;
+        }
+        this.lastTapInfo = null; // Dragging cancels double-tap
 
-          // If in mark mode, start drag-marking from start cell
-          if (this.inputMode === 'mark' && this.touchStartCell) {
-            this.handleCellClick(this.touchStartCell.r, this.touchStartCell.c);
-            this.dragMark = this.grid[this.touchStartCell.r][this.touchStartCell.c].mark;
-            this.touchStartCell = null;
+        // Apply continuous X to the starting cell (protect existing dogs)
+        const startR = this.pointerDownCell.r;
+        const startC = this.pointerDownCell.c;
+        this.visitedDragCells.add(`${startR},${startC}`);
+        const startCell = this.grid[startR]?.[startC];
+        if (startCell && startCell.mark !== 'dog') {
+          const prev = startCell.mark;
+          if (prev !== 'cross') {
+            startCell.mark = 'cross';
+            this.dragMoveGroup.push({ r: startR, c: startC, prevMark: prev, newMark: 'cross' });
+            sounds.playPaw();
+            this.updateCellView(startR, startC);
           }
         }
       }
 
-      handlePointerDragMove(e.clientX, e.clientY);
+      // Dragging / Sliding across board -> continuous X mark
+      if (this.isDragging) {
+        const elUnder = document.elementFromPoint(e.clientX, e.clientY);
+        if (!elUnder) return;
+        const cellEl = elUnder.closest('.grid-cell') as HTMLElement | null;
+        if (cellEl && cellEl.dataset.r !== undefined && cellEl.dataset.c !== undefined) {
+          const r = parseInt(cellEl.dataset.r, 10);
+          const c = parseInt(cellEl.dataset.c, 10);
+          const key = `${r},${c}`;
+          if (!this.visitedDragCells.has(key)) {
+            this.visitedDragCells.add(key);
+            const cell = this.grid[r]?.[c];
+            // Protect existing dogs from accidental overwrite during drag
+            if (cell && cell.mark !== 'dog' && cell.mark !== 'cross') {
+              const prev = cell.mark;
+              cell.mark = 'cross';
+              this.dragMoveGroup.push({ r, c, prevMark: prev, newMark: 'cross' });
+              sounds.playPaw();
+              this.updateCellView(r, c);
+            }
+          }
+        }
+      }
     });
 
-    window.addEventListener('pointerup', (e) => {
-      this.isPointerDown = false;
-      this.dragMark = null;
-
+    window.addEventListener('pointerup', () => {
       if (this.longPressTimer) {
         clearTimeout(this.longPressTimer);
         this.longPressTimer = null;
       }
 
-      // If mobile touch finished and was NOT a long-press, execute standard tap
-      if (e.pointerType === 'touch') {
-        if (!this.longPressFired && this.touchStartCell) {
-          this.handleCellClick(this.touchStartCell.r, this.touchStartCell.c);
+      if (!this.isPointerDown) return;
+      this.isPointerDown = false;
+
+      // Case A: Drag / Slide completed
+      if (this.isDragging) {
+        this.isDragging = false;
+        if (this.dragMoveGroup.length > 0) {
+          this.undoStack.push(this.dragMoveGroup);
+          this.dragMoveGroup = [];
+          this.saveActiveGame();
+          this.validateAndCheckWin();
         }
-        this.touchStartCell = null;
-        this.touchStartPos = null;
+        this.pointerDownCell = null;
+        this.pointerDownPos = null;
+        return;
       }
+
+      // Case B: Long-Press fired on mobile touch -> don't trigger click on release
+      if (this.longPressFired) {
+        this.longPressFired = false;
+        this.pointerDownCell = null;
+        this.pointerDownPos = null;
+        return;
+      }
+
+      // Case C: Single Click/Tap vs Double Click/Tap
+      if (this.pointerDownCell) {
+        const { r, c } = this.pointerDownCell;
+        const now = Date.now();
+
+        // Check if this tap is within 320ms on the SAME cell -> Double Click / Double Tap!
+        if (
+          this.lastTapInfo &&
+          this.lastTapInfo.r === r &&
+          this.lastTapInfo.c === c &&
+          now - this.lastTapInfo.time <= 320
+        ) {
+          // Double Click / Double Tap -> Place or toggle Shiba Dog (🐶)!
+          const prevMark = this.lastTapInfo.prevMark;
+          this.lastTapInfo = null;
+
+          // Revert the first tap's cross action from undoStack
+          if (this.undoStack.length > 0) {
+            const lastAction = this.undoStack[this.undoStack.length - 1];
+            if (lastAction.length === 1 && lastAction[0].r === r && lastAction[0].c === c) {
+              this.undoStack.pop();
+            }
+          }
+
+          // Restore state before the first tap
+          this.grid[r][c].mark = prevMark;
+
+          // Now place or toggle Shiba Dog!
+          this.handleCellClick(r, c, 'dog');
+        } else {
+          // Single Click / Single Tap -> Place or toggle Cross (✕)!
+          const prevMark = this.grid[r][c].mark;
+          this.lastTapInfo = { r, c, time: now, prevMark };
+
+          this.handleCellClick(r, c, 'cross');
+        }
+      }
+
+      this.pointerDownCell = null;
+      this.pointerDownPos = null;
     });
 
     window.addEventListener('pointercancel', () => {
       this.isPointerDown = false;
-      this.dragMark = null;
+      this.isDragging = false;
       if (this.longPressTimer) {
         clearTimeout(this.longPressTimer);
         this.longPressTimer = null;
       }
-      this.touchStartCell = null;
-      this.touchStartPos = null;
+      this.longPressFired = false;
+      this.pointerDownCell = null;
+      this.pointerDownPos = null;
+      this.dragMoveGroup = [];
     });
 
+    // Right Click (PC) -> '?' Mark
     this.gridBoardEl.addEventListener('contextmenu', (e) => {
       e.preventDefault();
-      // If long press already fired on touch, don't trigger contextmenu cross
       if (this.longPressFired) {
         this.longPressFired = false;
         return;
@@ -1196,7 +1294,8 @@ class InudokuGame {
         const r = parseInt(cellEl.dataset.r, 10);
         const c = parseInt(cellEl.dataset.c, 10);
         this.clearFocusedCell();
-        this.handleCellClick(r, c, 'cross');
+        this.lastTapInfo = null; // Right click cancels double-tap tracking
+        this.handleCellClick(r, c, 'question');
       }
     });
 
@@ -1228,24 +1327,24 @@ class InudokuGame {
       this.hoveredPos = null;
     });
 
-    // Mode Toggle Buttons
-    const modeDogBtn = document.getElementById('mode-dog')!;
-    const modeMarkBtn = document.getElementById('mode-mark')!;
+    // Footer Quick Action Buttons
+    const modeDogBtn = document.getElementById('mode-dog');
+    const modeMarkBtn = document.getElementById('mode-mark');
 
-    modeDogBtn.addEventListener('click', () => {
-      this.inputMode = 'dog';
-      modeDogBtn.classList.add('active');
-      modeMarkBtn.classList.remove('active');
-      document.getElementById('dog-mode-badge')?.classList.remove('off');
-      document.getElementById('mark-mode-badge')?.classList.add('off');
+    modeDogBtn?.addEventListener('click', () => {
+      if (this.focusedPos) {
+        this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'dog');
+      } else {
+        this.showToast('マスをダブルタップ（Wクリック）で柴犬🐶を配置できるワン！');
+      }
     });
 
-    modeMarkBtn.addEventListener('click', () => {
-      this.inputMode = 'mark';
-      modeMarkBtn.classList.add('active');
-      modeDogBtn.classList.remove('active');
-      document.getElementById('dog-mode-badge')?.classList.add('off');
-      document.getElementById('mark-mode-badge')?.classList.remove('off');
+    modeMarkBtn?.addEventListener('click', () => {
+      if (this.focusedPos) {
+        this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
+      } else {
+        this.showToast('マスをタップまたはスライドで✕マークを配置できるワン！🐾');
+      }
     });
 
     // Action Buttons

@@ -176,19 +176,19 @@
         <footer class="game-footer">
           <div class="hero-actions-container">
             <div class="hero-action-wrapper">
-              <button id="mode-dog" class="hero-round-btn active" title="柴犬を配置">
+              <button id="mode-dog" class="hero-round-btn" title="柴犬（ダブルクリック / ダブルタップ）">
                 <span class="hero-btn-avatar">🐶</span>
-                <span class="hero-badge" id="dog-mode-badge">🐕</span>
+                <span class="hero-badge" id="dog-mode-badge" style="background:#E78B3F;color:#FFF;font-size:0.65rem;padding:2px 4px;">2x</span>
               </button>
-              <span class="hero-btn-caption">柴犬</span>
+              <span class="hero-btn-caption">柴犬 (Wタップ)</span>
             </div>
 
             <div class="hero-action-wrapper">
-              <button id="mode-mark" class="hero-round-btn" title="✕マーク（ここにはいない）">
+              <button id="mode-mark" class="hero-round-btn active" title="✕マーク（クリック / タップ / スライド）">
                 <span class="hero-btn-avatar">❌</span>
-                <span class="hero-badge off" id="mark-mode-badge">🐾</span>
+                <span class="hero-badge" id="mark-mode-badge" style="background:#10B981;color:#FFF;font-size:0.65rem;padding:2px 4px;">1x</span>
               </button>
-              <span class="hero-btn-caption">バツ印</span>
+              <span class="hero-btn-caption">バツ印 (タップ)</span>
             </div>
 
             <div class="hero-action-wrapper">
@@ -347,7 +347,7 @@
             <div class="rule-text">
               <strong>仮置きマーク（？）</strong>
               <p>いくつかの配置パターンを試すメモとして使えます。<br />
-              <strong>PC:</strong> マウスの真ん中クリック または <code>[N]</code> キー<br />
+              <strong>PC:</strong> 右クリック または <code>[N]</code> キー<br />
               <strong>スマホ:</strong> マスを長押し<br />
               ※柴犬（🐶）や✕マークでそのまま上書きできます。</p>
             </div>
@@ -385,20 +385,20 @@
             <div class="controls-group">
               <div class="controls-group-title">🖱️ マウス操作</div>
               <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">🖱️</span> 左クリック</span>
-                <span class="control-desc"><strong>柴犬（🐶）</strong>を配置 / ✕マークを消す</span>
+                <span class="control-action"><span class="ctrl-icon">🖱️</span> 左シングルクリック</span>
+                <span class="control-desc"><strong>✕ マーク</strong> を配置 / 削除</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="ctrl-icon">🖱️</span> 左クリックドラッグ</span>
+                <span class="control-desc">複数のマスに連続で <strong>✕ マーク</strong> を記入</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="ctrl-icon">🖱️</span> 左ダブルクリック</span>
+                <span class="control-desc"><strong>柴犬（🐶）</strong> を配置 / 削除</span>
               </div>
               <div class="control-row">
                 <span class="control-action"><span class="ctrl-icon">🖱️</span> 右クリック</span>
-                <span class="control-desc"><strong>✕ マーク</strong>を配置 / 削除</span>
-              </div>
-              <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">🖱️</span> 中央クリック（ホイール）</span>
-                <span class="control-desc"><strong>？ 仮置きマーク</strong>を配置 / 削除</span>
-              </div>
-              <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">🖱️</span> ドラッグ</span>
-                <span class="control-desc">複数のマスに連続で <strong>✕ マーク</strong> を記入</span>
+                <span class="control-desc"><strong>？ 仮置きマーク</strong> を配置 / 削除</span>
               </div>
             </div>
 
@@ -436,8 +436,8 @@
 
             <div class="controls-tip-box">
               💡 <strong>お役立ちヒント:</strong><br />
-              ・✕マークや？マークがあるマスでも、直接クリック/スペースで柴犬🐶を置けます（ミスにはなりません）。<br />
-              ・マウスで遊んでいると、キーボード用のオレンジ枠は自動で消えます。
+              ・✕マークや？マークがあるマスでも、ダブルクリックやスペースキーで直接柴犬🐶を置けます（ミス判定にはなりません）。<br />
+              ・ドラッグで引いた連続✕マークも、戻すボタン（またはZキー）1回でまとめて元に戻せます。
             </div>
           </div>
 
@@ -446,34 +446,40 @@
             <div class="controls-group">
               <div class="controls-group-title">👆 タッチ操作</div>
               <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">👆</span> タップ（1回押す）</span>
+                <span class="control-action"><span class="ctrl-icon">👆</span> シングルタップ</span>
                 <span class="control-desc">
-                  画面下のモード（<strong>柴犬🐶</strong> または <strong>✕</strong>）に応じて配置
+                  <strong>✕ マーク</strong> を配置 / 削除
+                </span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="ctrl-icon">👉</span> シングルタップスライド</span>
+                <span class="control-desc">
+                  指でなぞって一気に <strong>✕ マーク</strong> を連続記入
+                </span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="ctrl-icon">🐶</span> ダブルタップ（素早く2回）</span>
+                <span class="control-desc">
+                  <strong>柴犬（🐶）</strong> を配置 / 削除
                 </span>
               </div>
               <div class="control-row">
                 <span class="control-action"><span class="ctrl-icon">⏳</span> 長押し（約0.4秒）</span>
                 <span class="control-desc">
-                  <strong>？ 仮置きマーク</strong>を配置 / 削除<br />
+                  <strong>？ 仮置きマーク</strong> を配置 / 削除<br />
                   <small style="color: var(--color-text-muted);">（対応端末ならブルッと震えます）</small>
                 </span>
               </div>
               <div class="control-row">
-                <span class="control-action"><span class="ctrl-icon">👉</span> スワイプ / なぞる</span>
-                <span class="control-desc">
-                  「✕モード」のとき、指でなぞって一気に <strong>✕ マーク</strong> を塗れます
-                </span>
-              </div>
-              <div class="control-row">
                 <span class="control-action"><span class="ctrl-icon">↩️</span> もどすボタン</span>
-                <span class="control-desc">間違えたときに1手前に戻せます</span>
+                <span class="control-desc">間違えたときに1手前に戻せます（スライド記入も1手で復元）</span>
               </div>
             </div>
 
             <div class="controls-tip-box">
               💡 <strong>スマホで素早く解くコツ:</strong><br />
-              ・まず「✕モード」にして置けない場所を一気に塗りつぶすのがおすすめ！<br />
-              ・✕マークがついているマスでも、柴犬モードでタップすればそのまま柴犬🐶を置けます（ミス判定になりません）。
+              ・指でスライドして置けないマスを一気に塗りつぶし、確定マスをダブルタップで柴犬🐶にするのがおすすめ！<br />
+              ・✕マークがついているマスでも、ダブルタップすればそのまま柴犬🐶を置けます。
             </div>
           </div>
         </div>
