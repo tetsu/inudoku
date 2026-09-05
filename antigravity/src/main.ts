@@ -32,6 +32,7 @@ class InudokuGame {
   private pointerDownPos: { x: number; y: number } | null = null;
   private pointerDownCell: Position | null = null;
   private isDragging: boolean = false;
+  private dragMode: 'cross' | 'erase' | null = null;
   private dragMoveGroup: MoveAction[] = [];
   private visitedDragCells: Set<string> = new Set();
   private lastTapInfo: { r: number; c: number; time: number; prevMark: CellMark } | null = null;
@@ -311,6 +312,7 @@ class InudokuGame {
     this.pointerDownPos = null;
     this.lastTapInfo = null;
     this.hoveredPos = null;
+    this.dragMode = null;
 
     const size = puzzle.size;
     this.grid = Array.from({ length: size }, (_, r) =>
@@ -1082,12 +1084,14 @@ class InudokuGame {
     // Unified Board Interactions:
     // PC:
     //   - Left Single Click: X mark
-    //   - Left Click Drag: Continuous X mark
+    //   - Left Click Drag (from empty/?): Continuous X mark
+    //   - Left Click Drag (from X mark): Erase X mark only
     //   - Left Double Click: Shiba Dog mark (🐶)
-    //   - Right Click: ? mark
+    //   - Right Click / Middle Click: ? mark
     // Mobile:
     //   - Single Tap: X mark
-    //   - Single Tap Slide: Continuous X mark
+    //   - Single Tap Slide (from empty/?): Continuous X mark
+    //   - Single Tap Slide (from X mark): Erase X mark only
     //   - Double Tap: Shiba Dog mark (🐶)
     //   - Long Press (~400ms): ? mark
     // ========================================================================
@@ -1114,6 +1118,7 @@ class InudokuGame {
       this.clearFocusedCell();
       this.isPointerDown = true;
       this.isDragging = false;
+      this.dragMode = null;
       this.longPressFired = false;
       this.pointerDownPos = { x: e.clientX, y: e.clientY };
       this.pointerDownCell = { r, c };
@@ -1154,24 +1159,36 @@ class InudokuGame {
         }
         this.lastTapInfo = null; // Dragging cancels double-tap
 
-        // Apply continuous X to the starting cell (protect existing dogs)
         const startR = this.pointerDownCell.r;
         const startC = this.pointerDownCell.c;
         this.visitedDragCells.add(`${startR},${startC}`);
         const startCell = this.grid[startR]?.[startC];
-        if (startCell && startCell.mark !== 'dog') {
-          const prev = startCell.mark;
-          if (prev !== 'cross') {
+
+        if (startCell) {
+          if (startCell.mark === 'cross') {
+            // Xマークからドラッグ開始 -> Xマーク消去モード (erase)
+            this.dragMode = 'erase';
+            startCell.mark = 'empty';
+            this.dragMoveGroup.push({ r: startR, c: startC, prevMark: 'cross', newMark: 'empty' });
+            sounds.playErase();
+            this.updateCellView(startR, startC);
+          } else if (startCell.mark !== 'dog') {
+            // 空マスや?マークからドラッグ開始 -> 連続Xマークモード (cross)
+            this.dragMode = 'cross';
+            const prev = startCell.mark;
             startCell.mark = 'cross';
             this.dragMoveGroup.push({ r: startR, c: startC, prevMark: prev, newMark: 'cross' });
             sounds.playPaw();
             this.updateCellView(startR, startC);
+          } else {
+            // 犬からドラッグ開始した場合は誤操作防止のため何もしない
+            this.dragMode = null;
           }
         }
       }
 
-      // Dragging / Sliding across board -> continuous X mark
-      if (this.isDragging) {
+      // Dragging / Sliding across board
+      if (this.isDragging && this.dragMode) {
         const elUnder = document.elementFromPoint(e.clientX, e.clientY);
         if (!elUnder) return;
         const cellEl = elUnder.closest('.grid-cell') as HTMLElement | null;
@@ -1182,13 +1199,26 @@ class InudokuGame {
           if (!this.visitedDragCells.has(key)) {
             this.visitedDragCells.add(key);
             const cell = this.grid[r]?.[c];
-            // Protect existing dogs from accidental overwrite during drag
-            if (cell && cell.mark !== 'dog' && cell.mark !== 'cross') {
-              const prev = cell.mark;
-              cell.mark = 'cross';
-              this.dragMoveGroup.push({ r, c, prevMark: prev, newMark: 'cross' });
-              sounds.playPaw();
-              this.updateCellView(r, c);
+            if (cell) {
+              if (this.dragMode === 'erase') {
+                // Xマークのマスのみマークを消す！
+                if (cell.mark === 'cross') {
+                  const prev = cell.mark;
+                  cell.mark = 'empty';
+                  this.dragMoveGroup.push({ r, c, prevMark: prev, newMark: 'empty' });
+                  sounds.playErase();
+                  this.updateCellView(r, c);
+                }
+              } else if (this.dragMode === 'cross') {
+                // 連続Xマーク（既存の犬は保護）
+                if (cell.mark !== 'dog' && cell.mark !== 'cross') {
+                  const prev = cell.mark;
+                  cell.mark = 'cross';
+                  this.dragMoveGroup.push({ r, c, prevMark: prev, newMark: 'cross' });
+                  sounds.playPaw();
+                  this.updateCellView(r, c);
+                }
+              }
             }
           }
         }
@@ -1207,6 +1237,7 @@ class InudokuGame {
       // Case A: Drag / Slide completed
       if (this.isDragging) {
         this.isDragging = false;
+        this.dragMode = null;
         if (this.dragMoveGroup.length > 0) {
           this.undoStack.push(this.dragMoveGroup);
           this.dragMoveGroup = [];
@@ -1271,6 +1302,7 @@ class InudokuGame {
     window.addEventListener('pointercancel', () => {
       this.isPointerDown = false;
       this.isDragging = false;
+      this.dragMode = null;
       if (this.longPressTimer) {
         clearTimeout(this.longPressTimer);
         this.longPressTimer = null;
