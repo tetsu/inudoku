@@ -54,6 +54,7 @@ class InudokuGame {
   private settings: GameSettings = {
     autoMark: true,
     soundEnabled: true,
+    vibrationEnabled: true,
     shibaType: 'aka',
     highContrast: false,
     language: 'auto',
@@ -77,10 +78,12 @@ class InudokuGame {
   private hintBubbleTextEl!: HTMLElement;
   private automarkBadgeEl: HTMLElement | null = null;
   private dialogResolve: ((value: boolean) => void) | null = null;
+  private iosHapticInput: HTMLInputElement | null = null;
 
   constructor() {
     this.loadSavedData();
     this.initDOMElements();
+    this.initIosHaptics();
     this.bindEvents();
     this.renderTitleScreen();
     this.setupTitleMascot();
@@ -497,12 +500,54 @@ class InudokuGame {
     }
   }
 
-  private vibrateLight(durationMs: number = 15) {
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+  private initIosHaptics() {
+    if (typeof document === 'undefined') return;
+    try {
+      const isIOS =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (typeof navigator !== 'undefined' && navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (isIOS) {
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.setAttribute('switch', '');
+        input.style.position = 'fixed';
+        input.style.top = '-9999px';
+        input.style.left = '-9999px';
+        input.style.opacity = '0.001';
+        input.style.pointerEvents = 'none';
+        input.tabIndex = -1;
+        document.body.appendChild(input);
+        this.iosHapticInput = input;
+      }
+    } catch {}
+  }
+
+  private triggerIosHaptic() {
+    if (this.iosHapticInput) {
       try {
-        navigator.vibrate(durationMs);
+        this.iosHapticInput.click();
       } catch {}
     }
+  }
+
+  private vibrateLight(durationOrPattern: number | number[] = 35) {
+    if (!this.settings.vibrationEnabled) return;
+
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator && typeof navigator.vibrate === 'function') {
+      try {
+        if (Array.isArray(durationOrPattern)) {
+          navigator.vibrate(durationOrPattern);
+        } else {
+          // On mobile Chrome (Android), vibration motors require at least ~30ms to ramp up physically
+          const duration = Math.max(30, durationOrPattern);
+          navigator.vibrate([duration]);
+        }
+      } catch {}
+      return;
+    }
+
+    // iOS WebKit Taptic Engine fallback via switch control
+    this.triggerIosHaptic();
   }
 
   private handleCellClick(r: number, c: number, forceMark?: 'dog' | 'cross' | 'question') {
@@ -519,7 +564,7 @@ class InudokuGame {
 
       if (newMark === 'question') {
         sounds.playQuestion();
-        this.vibrateLight(15);
+        this.vibrateLight(35);
       } else {
         sounds.playErase();
       }
@@ -584,7 +629,7 @@ class InudokuGame {
           this.flashDeny(r, c, t('msg.deny.solution'));
           sounds.playConflict();
           cell.mark = 'cross';
-          this.vibrateLight(25);
+          this.vibrateLight([45, 30, 45]);
           this.updateCellView(r, c);
           this.saveActiveGame();
           return;
@@ -612,7 +657,7 @@ class InudokuGame {
 
       this.undoStack.push(moveGroup);
       sounds.playBark();
-      this.vibrateLight(20);
+      this.vibrateLight(50);
       this.updateCellView(r, c);
       this.saveActiveGame();
       this.validateAndCheckWin();
@@ -625,7 +670,7 @@ class InudokuGame {
 
       if (newMark === 'cross') {
         sounds.playPaw();
-        this.vibrateLight(15);
+        this.vibrateLight(35);
       } else {
         sounds.playErase();
       }
@@ -1297,11 +1342,7 @@ class InudokuGame {
           this.longPressTimer = null;
           this.lastTapInfo = null; // Long press cancels double-tap tracking
           this.handleCellClick(r, c, 'question');
-          if (typeof navigator !== 'undefined' && navigator.vibrate) {
-            try {
-              navigator.vibrate(35);
-            } catch {}
-          }
+          this.vibrateLight(45);
         }, 400);
       }
     });
@@ -1340,7 +1381,7 @@ class InudokuGame {
             startCell.mark = 'cross';
             this.dragMoveGroup.push({ r: startR, c: startC, prevMark: prev, newMark: 'cross' });
             sounds.playPaw();
-            this.vibrateLight(12);
+            this.vibrateLight(30);
             this.updateCellView(startR, startC);
           } else {
             // 犬からドラッグ開始した場合は誤操作防止のため何もしない
@@ -1378,7 +1419,7 @@ class InudokuGame {
                   cell.mark = 'cross';
                   this.dragMoveGroup.push({ r, c, prevMark: prev, newMark: 'cross' });
                   sounds.playPaw();
-                  this.vibrateLight(10);
+                  this.vibrateLight(25);
                   this.updateCellView(r, c);
                 }
               }
@@ -1975,6 +2016,15 @@ class InudokuGame {
       this.saveSettings();
     });
 
+    const vibrationToggle = document.getElementById('setting-vibration') as HTMLInputElement;
+    vibrationToggle?.addEventListener('change', () => {
+      this.settings.vibrationEnabled = vibrationToggle.checked;
+      this.saveSettings();
+      if (this.settings.vibrationEnabled) {
+        this.vibrateLight(40);
+      }
+    });
+
     const autoMarkToggle = document.getElementById('setting-automark') as HTMLInputElement;
     autoMarkToggle?.addEventListener('change', () => {
       this.settings.autoMark = autoMarkToggle.checked;
@@ -1998,6 +2048,7 @@ class InudokuGame {
         this.tournamentPoints = 0;
         this.hintCount = 5;
         this.settings.autoMark = true;
+        this.settings.vibrationEnabled = true;
         this.saveSettings();
         this.updateHintBadge();
         document.getElementById('modal-settings')?.classList.add('hidden');
@@ -2019,7 +2070,7 @@ class InudokuGame {
 
     confirmBtn?.addEventListener('click', () => {
       sounds.playPaw();
-      this.vibrateLight(15);
+      this.vibrateLight(35);
       modal?.classList.add('hidden');
       const resolve = this.dialogResolve;
       this.dialogResolve = null;
@@ -2028,7 +2079,7 @@ class InudokuGame {
 
     cancelBtn?.addEventListener('click', () => {
       sounds.playPaw();
-      this.vibrateLight(10);
+      this.vibrateLight(25);
       modal?.classList.add('hidden');
       const resolve = this.dialogResolve;
       this.dialogResolve = null;
@@ -2074,7 +2125,7 @@ class InudokuGame {
       }
 
       modal?.classList.remove('hidden');
-      this.vibrateLight(15);
+      this.vibrateLight(30);
     });
   }
 
@@ -2108,7 +2159,7 @@ class InudokuGame {
       }
 
       modal?.classList.remove('hidden');
-      this.vibrateLight(15);
+      this.vibrateLight(30);
     });
   }
 
@@ -2128,6 +2179,9 @@ class InudokuGame {
 
     const soundToggle = document.getElementById('setting-sound') as HTMLInputElement;
     if (soundToggle) soundToggle.checked = this.settings.soundEnabled;
+
+    const vibrationToggle = document.getElementById('setting-vibration') as HTMLInputElement;
+    if (vibrationToggle) vibrationToggle.checked = this.settings.vibrationEnabled;
 
     const autoMarkToggle = document.getElementById('setting-automark') as HTMLInputElement;
     if (autoMarkToggle) autoMarkToggle.checked = this.settings.autoMark;

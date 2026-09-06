@@ -151,6 +151,7 @@ export class StorageManager {
         ...defaults,
         ...parsed,
         autoMark: parsed.autoMark !== undefined ? Boolean(parsed.autoMark) : true,
+        vibrationEnabled: parsed.vibrationEnabled !== undefined ? Boolean(parsed.vibrationEnabled) : true,
       };
     } catch {
       return defaults;
