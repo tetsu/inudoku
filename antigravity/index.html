@@ -618,6 +618,19 @@
       </div>
     </div>
 
+    <!-- Custom Game Dialog Modal (Replaces browser alert/confirm) -->
+    <div id="modal-dialog" class="modal-backdrop hidden" style="z-index: 250;">
+      <div class="modal-card custom-dialog-card">
+        <div class="custom-dialog-icon" id="dialog-icon">🐕</div>
+        <h3 id="dialog-title" class="custom-dialog-title">確認</h3>
+        <p id="dialog-message" class="custom-dialog-message"></p>
+        <div class="custom-dialog-actions" id="dialog-actions">
+          <button id="dialog-btn-cancel" class="secondary-btn">キャンセル</button>
+          <button id="dialog-btn-confirm" class="primary-btn">OK 🐾</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Clear Rank-Up Screen (Matching Meowdoku Screenshot) -->
     <div id="modal-rankup" class="rankup-overlay hidden">
       <div class="rankup-content">

@@ -1955,3 +1955,75 @@ kbd {
   line-height: 1.45;
   color: #78350F;
 }
+
+/* ==========================================================================
+   Custom Game Dialog Modal (Replaces browser alert / confirm)
+   ========================================================================== */
+.custom-dialog-card {
+  max-width: 340px;
+  text-align: center;
+  padding: 24px 20px 20px;
+  border-radius: 24px;
+  background: #FFFFFF;
+  border: 2px solid #F3E8DC;
+  box-shadow: 0 16px 40px rgba(45, 34, 25, 0.28);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: scaleUp 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.custom-dialog-icon {
+  font-size: 3.2rem;
+  line-height: 1;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.12));
+}
+
+.custom-dialog-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-text-dark, #2D2219);
+  margin: 0;
+}
+
+.custom-dialog-message {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #5C4E43;
+  margin: 0 0 6px;
+  word-break: break-word;
+  white-space: pre-line;
+}
+
+.custom-dialog-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+}
+
+.custom-dialog-actions button {
+  flex: 1;
+  min-height: 42px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.custom-dialog-actions .btn-danger {
+  background: #EF4444;
+  color: #FFFFFF;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35);
+}
+
+.custom-dialog-actions .btn-danger:hover {
+  background: #DC2626;
+  transform: translateY(-1px);
+}
+

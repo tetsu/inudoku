@@ -72,6 +72,11 @@ export const DICTIONARY: Record<SupportedLang, Record<string, string>> = {
     'msg.alert.jumpInvalid': '1 から 999,999 までのレベル番号を入力してくださいワン！',
     'msg.alert.resetConfirm': 'すべての進行状況を初期化しますか？この操作は元に戻せません。',
     'msg.alert.resetDone': '進捗データを初期化しましたワン！',
+    'msg.confirm.resetBoard': '盤面をリセットして最初からやり直しますか？',
+    'dialog.title.confirm': '確認',
+    'dialog.title.notice': 'お知らせ',
+    'dialog.btn.ok': 'OK 🐾',
+    'dialog.btn.cancel': 'キャンセル',
 
     // Daily Reward Modal
     'reward.modal.title': '🏆 前日1位達成ボーナス！',
@@ -255,6 +260,11 @@ export const DICTIONARY: Record<SupportedLang, Record<string, string>> = {
     'msg.alert.jumpInvalid': 'Please enter a level number between 1 and 999,999, Woof!',
     'msg.alert.resetConfirm': 'Are you sure you want to reset all progress? This cannot be undone.',
     'msg.alert.resetDone': 'All game progress has been reset, Woof!',
+    'msg.confirm.resetBoard': 'Reset the board and start over?',
+    'dialog.title.confirm': 'Confirm',
+    'dialog.title.notice': 'Notice',
+    'dialog.btn.ok': 'OK 🐾',
+    'dialog.btn.cancel': 'Cancel',
 
     // Daily Reward Modal
     'reward.modal.title': '🏆 1st Place Daily Bonus!',

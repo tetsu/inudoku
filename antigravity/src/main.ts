@@ -76,6 +76,7 @@ class InudokuGame {
   private hintBubbleEl!: HTMLElement;
   private hintBubbleTextEl!: HTMLElement;
   private automarkBadgeEl: HTMLElement | null = null;
+  private dialogResolve: ((value: boolean) => void) | null = null;
 
   constructor() {
     this.loadSavedData();
@@ -496,6 +497,14 @@ class InudokuGame {
     }
   }
 
+  private vibrateLight(durationMs: number = 15) {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(durationMs);
+      } catch {}
+    }
+  }
+
   private handleCellClick(r: number, c: number, forceMark?: 'dog' | 'cross' | 'question') {
     if (this.isFinished) return;
 
@@ -510,6 +519,7 @@ class InudokuGame {
 
       if (newMark === 'question') {
         sounds.playQuestion();
+        this.vibrateLight(15);
       } else {
         sounds.playErase();
       }
@@ -574,6 +584,7 @@ class InudokuGame {
           this.flashDeny(r, c, t('msg.deny.solution'));
           sounds.playConflict();
           cell.mark = 'cross';
+          this.vibrateLight(25);
           this.updateCellView(r, c);
           this.saveActiveGame();
           return;
@@ -601,6 +612,7 @@ class InudokuGame {
 
       this.undoStack.push(moveGroup);
       sounds.playBark();
+      this.vibrateLight(20);
       this.updateCellView(r, c);
       this.saveActiveGame();
       this.validateAndCheckWin();
@@ -613,6 +625,7 @@ class InudokuGame {
 
       if (newMark === 'cross') {
         sounds.playPaw();
+        this.vibrateLight(15);
       } else {
         sounds.playErase();
       }
@@ -1327,6 +1340,7 @@ class InudokuGame {
             startCell.mark = 'cross';
             this.dragMoveGroup.push({ r: startR, c: startC, prevMark: prev, newMark: 'cross' });
             sounds.playPaw();
+            this.vibrateLight(12);
             this.updateCellView(startR, startC);
           } else {
             // 犬からドラッグ開始した場合は誤操作防止のため何もしない
@@ -1364,6 +1378,7 @@ class InudokuGame {
                   cell.mark = 'cross';
                   this.dragMoveGroup.push({ r, c, prevMark: prev, newMark: 'cross' });
                   sounds.playPaw();
+                  this.vibrateLight(10);
                   this.updateCellView(r, c);
                 }
               }
@@ -1510,8 +1525,16 @@ class InudokuGame {
     // Action Buttons (Undo in sub-bar, Hint in footer, Reset in sub-bar)
     document.getElementById('btn-undo')?.addEventListener('click', () => this.undo());
     document.getElementById('btn-hint')?.addEventListener('click', () => this.showHint());
-    document.getElementById('btn-reset')?.addEventListener('click', () => {
-      if (confirm('盤面をリセットして最初からやり直しますか？')) {
+    document.getElementById('btn-reset')?.addEventListener('click', async () => {
+      const ok = await this.showConfirm({
+        title: t('dialog.title.confirm'),
+        message: t('msg.confirm.resetBoard'),
+        confirmText: t('game.btn.reset'),
+        cancelText: t('dialog.btn.cancel'),
+        icon: '🔄',
+        isDanger: true,
+      });
+      if (ok) {
         this.clearActiveGame();
         this.initPuzzle(this.currentPuzzle);
       }
@@ -1791,6 +1814,11 @@ class InudokuGame {
       backdrop.addEventListener('click', (e) => {
         if (e.target === backdrop) {
           backdrop.classList.add('hidden');
+          if (backdrop.id === 'modal-dialog') {
+            const resolve = this.dialogResolve;
+            this.dialogResolve = null;
+            if (resolve) resolve(false);
+          }
           if (backdrop.id === 'modal-help') {
             storage.setHasSeenRules(true);
             if (!this.screenGameEl.classList.contains('hidden') && !this.isFinished) {
@@ -1810,6 +1838,8 @@ class InudokuGame {
         }
       });
     });
+
+    this.setupDialogModal();
   }
 
   private setupStageModal() {
@@ -1827,7 +1857,7 @@ class InudokuGame {
     });
 
       // Jump to specific level (1 to 999,999)
-    document.getElementById('btn-jump-level')?.addEventListener('click', () => {
+    document.getElementById('btn-jump-level')?.addEventListener('click', async () => {
       const input = document.getElementById('input-jump-level') as HTMLInputElement;
       const level = parseInt(input.value, 10);
       if (level >= 1 && level <= MAX_STAGE_LEVEL) {
@@ -1836,7 +1866,12 @@ class InudokuGame {
         this.screenGameEl.classList.remove('hidden');
         this.startGame(level - 1);
       } else {
-        alert(t('msg.alert.jumpInvalid'));
+        await this.showAlert({
+          title: t('dialog.title.notice'),
+          message: t('msg.alert.jumpInvalid'),
+          btnText: t('dialog.btn.ok'),
+          icon: '🐕',
+        });
       }
     });
 
@@ -1947,8 +1982,16 @@ class InudokuGame {
     });
 
     const resetProgressBtn = document.getElementById('btn-reset-progress');
-    resetProgressBtn?.addEventListener('click', () => {
-      if (confirm(t('msg.alert.resetConfirm'))) {
+    resetProgressBtn?.addEventListener('click', async () => {
+      const ok = await this.showConfirm({
+        title: t('dialog.title.confirm'),
+        message: t('msg.alert.resetConfirm'),
+        confirmText: t('set.reset.btn'),
+        cancelText: t('dialog.btn.cancel'),
+        icon: '🗑️',
+        isDanger: true,
+      });
+      if (ok) {
         storage.resetAllProgress();
         this.unlockedLevel = 1;
         this.completedLevels = {};
@@ -1959,8 +2002,113 @@ class InudokuGame {
         this.updateHintBadge();
         document.getElementById('modal-settings')?.classList.add('hidden');
         this.showTitleScreen();
-        alert(t('msg.alert.resetDone'));
+        await this.showAlert({
+          title: t('dialog.title.notice'),
+          message: t('msg.alert.resetDone'),
+          btnText: t('dialog.btn.ok'),
+          icon: '🐾',
+        });
       }
+    });
+  }
+
+  private setupDialogModal() {
+    const modal = document.getElementById('modal-dialog');
+    const confirmBtn = document.getElementById('dialog-btn-confirm');
+    const cancelBtn = document.getElementById('dialog-btn-cancel');
+
+    confirmBtn?.addEventListener('click', () => {
+      sounds.playPaw();
+      this.vibrateLight(15);
+      modal?.classList.add('hidden');
+      const resolve = this.dialogResolve;
+      this.dialogResolve = null;
+      if (resolve) resolve(true);
+    });
+
+    cancelBtn?.addEventListener('click', () => {
+      sounds.playPaw();
+      this.vibrateLight(10);
+      modal?.classList.add('hidden');
+      const resolve = this.dialogResolve;
+      this.dialogResolve = null;
+      if (resolve) resolve(false);
+    });
+
+    // Intercept native alert to always use custom styled dialog
+    window.alert = (msg?: unknown) => {
+      this.showAlert({ message: String(msg ?? '') });
+    };
+  }
+
+  public showConfirm(options: {
+    title?: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    icon?: string;
+    isDanger?: boolean;
+  }): Promise<boolean> {
+    return new Promise((resolve) => {
+      this.dialogResolve = resolve;
+      const modal = document.getElementById('modal-dialog');
+      const iconEl = document.getElementById('dialog-icon');
+      const titleEl = document.getElementById('dialog-title');
+      const msgEl = document.getElementById('dialog-message');
+      const cancelBtn = document.getElementById('dialog-btn-cancel') as HTMLButtonElement | null;
+      const confirmBtn = document.getElementById('dialog-btn-confirm') as HTMLButtonElement | null;
+
+      if (iconEl) iconEl.textContent = options.icon || '🐕';
+      if (titleEl) titleEl.textContent = options.title || t('dialog.title.confirm');
+      if (msgEl) msgEl.textContent = options.message;
+
+      if (cancelBtn) {
+        cancelBtn.classList.remove('hidden');
+        cancelBtn.textContent = options.cancelText || t('dialog.btn.cancel');
+      }
+
+      if (confirmBtn) {
+        confirmBtn.textContent = options.confirmText || t('dialog.btn.ok');
+        confirmBtn.classList.toggle('btn-danger', !!options.isDanger);
+        confirmBtn.classList.toggle('primary-btn', !options.isDanger);
+      }
+
+      modal?.classList.remove('hidden');
+      this.vibrateLight(15);
+    });
+  }
+
+  public showAlert(options: {
+    title?: string;
+    message: string;
+    btnText?: string;
+    icon?: string;
+  }): Promise<void> {
+    return new Promise((resolve) => {
+      this.dialogResolve = () => resolve();
+      const modal = document.getElementById('modal-dialog');
+      const iconEl = document.getElementById('dialog-icon');
+      const titleEl = document.getElementById('dialog-title');
+      const msgEl = document.getElementById('dialog-message');
+      const cancelBtn = document.getElementById('dialog-btn-cancel') as HTMLButtonElement | null;
+      const confirmBtn = document.getElementById('dialog-btn-confirm') as HTMLButtonElement | null;
+
+      if (iconEl) iconEl.textContent = options.icon || '🐾';
+      if (titleEl) titleEl.textContent = options.title || t('dialog.title.notice');
+      if (msgEl) msgEl.textContent = options.message;
+
+      if (cancelBtn) {
+        cancelBtn.classList.add('hidden');
+      }
+
+      if (confirmBtn) {
+        confirmBtn.textContent = options.btnText || t('dialog.btn.ok');
+        confirmBtn.classList.remove('btn-danger');
+        confirmBtn.classList.add('primary-btn');
+      }
+
+      modal?.classList.remove('hidden');
+      this.vibrateLight(15);
     });
   }
 
