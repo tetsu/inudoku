@@ -40,6 +40,7 @@ export const STORAGE_KEYS = {
   LAST_SETTLEMENT_DATE: 'shibadoku_last_settlement_date',
   LAST_ACTIVE_DATE: 'shibadoku_last_active_date',
   FIRST_PLACE_PREFIX: 'shibadoku_first_place_',
+  REWARD_CLAIMED_PREFIX: 'shibadoku_reward_claimed_',
   SCORE_PREFIX: 'shibadoku_score_',
   RIVALS_PREFIX: 'shibadoku_rivals_',
   TOURNAMENT_DAILY_PREFIX: 'shibadoku_tournament_points_',
@@ -279,6 +280,14 @@ export class StorageManager {
 
   public hasDailyFirstPlace(dateStr: string): boolean {
     return this.safeGetItem(`${STORAGE_KEYS.FIRST_PLACE_PREFIX}${dateStr}`) === 'true';
+  }
+
+  public hasDailyRewardClaimed(dateStr: string): boolean {
+    return this.safeGetItem(`${STORAGE_KEYS.REWARD_CLAIMED_PREFIX}${dateStr}`) === 'true';
+  }
+
+  public setDailyRewardClaimed(dateStr: string, claimed: boolean = true): void {
+    this.safeSetItem(`${STORAGE_KEYS.REWARD_CLAIMED_PREFIX}${dateStr}`, String(claimed));
   }
 
   public getLastSettlementDate(): string | null {

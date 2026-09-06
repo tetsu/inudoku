@@ -123,9 +123,7 @@ class InudokuGame {
     if (lastSettlement !== today) {
       // Date has changed! Check if player reached 1st place on the previous active date
       const targetDate = lastActive || '';
-      if (targetDate && storage.hasDailyFirstPlace(targetDate)) {
-        this.hintCount += 5;
-        storage.saveHintCount(this.hintCount);
+      if (targetDate && storage.hasDailyFirstPlace(targetDate) && !storage.hasDailyRewardClaimed(today)) {
         this.pendingDailyReward = true;
       }
 
@@ -133,12 +131,18 @@ class InudokuGame {
       storage.setLastSettlementDate(today);
       storage.setLastActiveDate(today);
     } else {
+      // Same day, check if still pending and unclaimed
+      const prevDate = lastActive && lastActive !== today ? lastActive : '';
+      if (prevDate && storage.hasDailyFirstPlace(prevDate) && !storage.hasDailyRewardClaimed(today)) {
+        this.pendingDailyReward = true;
+      }
       storage.setLastActiveDate(today);
     }
   }
 
   private checkAndShowDailyReward() {
-    if (this.pendingDailyReward) {
+    const today = storage.getLocalDateString(new Date());
+    if (this.pendingDailyReward && !storage.hasDailyRewardClaimed(today)) {
       this.pendingDailyReward = false;
       const modal = document.getElementById('modal-daily-reward');
       if (modal) {
@@ -804,8 +808,10 @@ class InudokuGame {
     this.tournamentPoints = rankUpData.newPoints;
     this.saveProgression();
 
+    const today = storage.getLocalDateString(new Date());
+    const wasAlreadyFirstPlaceToday = storage.hasDailyFirstPlace(today);
+
     if (rankUpData.newRank === 1) {
-      const today = storage.getLocalDateString(new Date());
       storage.recordDailyFirstPlace(today);
     }
 
@@ -913,7 +919,8 @@ class InudokuGame {
                 origin: { y: 0.7 },
               });
 
-              if (rankUpData.newRank === 1) {
+              // Only show first-place toast if user reached 1st place for the first time today!
+              if (rankUpData.newRank === 1 && !wasAlreadyFirstPlaceToday) {
                 this.showToast(t('msg.rank.firstPlaceReached'));
               }
             }, 600);
@@ -921,9 +928,7 @@ class InudokuGame {
             // 1st place defense or closing in!
             userCard.style.boxShadow = '0 0 25px rgba(245, 158, 11, 0.7)';
             sounds.playBark();
-            if (rankUpData.newRank === 1) {
-              this.showToast(t('msg.rank.firstPlaceReached'));
-            }
+            // Do not show firstPlaceReached toast when already defending 1st place
           }
         }, 550);
       });
@@ -1599,6 +1604,16 @@ class InudokuGame {
               this.startTimer();
             }
           }
+          if (activeModal.id === 'modal-daily-reward') {
+            const today = storage.getLocalDateString(new Date());
+            if (!storage.hasDailyRewardClaimed(today)) {
+              storage.setDailyRewardClaimed(today, true);
+              this.hintCount += 5;
+              storage.saveHintCount(this.hintCount);
+              this.updateHintBadge();
+              this.pendingDailyReward = false;
+            }
+          }
         }
         return;
       }
@@ -1783,6 +1798,18 @@ class InudokuGame {
               this.startTimer();
             }
           }
+          if (modalId === 'modal-daily-reward') {
+            const today = storage.getLocalDateString(new Date());
+            if (!storage.hasDailyRewardClaimed(today)) {
+              storage.setDailyRewardClaimed(today, true);
+              this.hintCount += 5;
+              storage.saveHintCount(this.hintCount);
+              this.updateHintBadge();
+              this.pendingDailyReward = false;
+              this.showToast(t('reward.modal.bonus', { count: this.hintCount }));
+              sounds.playBark();
+            }
+          }
         }
       });
     });
@@ -1795,6 +1822,16 @@ class InudokuGame {
             storage.setHasSeenRules(true);
             if (!this.screenGameEl.classList.contains('hidden') && !this.isFinished) {
               this.startTimer();
+            }
+          }
+          if (backdrop.id === 'modal-daily-reward') {
+            const today = storage.getLocalDateString(new Date());
+            if (!storage.hasDailyRewardClaimed(today)) {
+              storage.setDailyRewardClaimed(today, true);
+              this.hintCount += 5;
+              storage.saveHintCount(this.hintCount);
+              this.updateHintBadge();
+              this.pendingDailyReward = false;
             }
           }
         }
