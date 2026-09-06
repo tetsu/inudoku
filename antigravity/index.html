@@ -118,6 +118,10 @@
 
         <!-- Sub Header (Shiba Count Pill & Treats) -->
         <section class="game-sub-bar">
+          <button id="btn-undo" class="sub-action-btn" title="元に戻す" aria-label="元に戻す">
+            <span class="sub-btn-icon">↩️</span>
+            <span class="sub-btn-text" data-i18n="game.btn.undo">戻す</span>
+          </button>
           <div class="pill-badge">
             <span class="pill-shiba-head">🐕</span>
             <span id="dog-counter" class="pill-text">0 / 5</span>
@@ -127,6 +131,10 @@
             <span class="treat-bone" id="bone-1">🦴</span>
             <span class="treat-bone" id="bone-2">🦴</span>
           </div>
+          <button id="btn-reset" class="sub-action-btn" title="最初からやり直す" aria-label="リセット">
+            <span class="sub-btn-icon">🔄</span>
+            <span class="sub-btn-text" data-i18n="game.btn.reset">リセット</span>
+          </button>
         </section>
 
 
@@ -172,25 +180,9 @@
           </div>
         </main>
 
-        <!-- Bottom Control Bar (Hero Round Buttons) -->
+        <!-- Bottom Control Bar (Hero Hint Button) -->
         <footer class="game-footer">
           <div class="hero-actions-container">
-            <div class="hero-action-wrapper">
-              <button id="mode-dog" class="hero-round-btn" title="柴犬（ダブルクリック / ダブルタップ）">
-                <span class="hero-btn-avatar">🐶</span>
-                <span class="hero-badge" id="dog-mode-badge" style="background:#E78B3F;color:#FFF;font-size:0.65rem;padding:2px 4px;">2x</span>
-              </button>
-              <span class="hero-btn-caption" data-i18n="game.btn.dog">柴犬 (Wタップ)</span>
-            </div>
-
-            <div class="hero-action-wrapper">
-              <button id="mode-mark" class="hero-round-btn active" title="✕マーク（クリック / タップ / スライド）">
-                <span class="hero-btn-avatar">❌</span>
-                <span class="hero-badge" id="mark-mode-badge" style="background:#10B981;color:#FFF;font-size:0.65rem;padding:2px 4px;">1x</span>
-              </button>
-              <span class="hero-btn-caption" data-i18n="game.btn.mark">バツ印 (タップ)</span>
-            </div>
-
             <div class="hero-action-wrapper">
               <button id="btn-hint" class="hero-round-btn bulb-btn" title="ヒント">
                 <span class="hero-btn-avatar">💡</span>
@@ -198,22 +190,6 @@
               </button>
               <span class="hero-btn-caption" data-i18n="game.btn.hint">ヒント</span>
             </div>
-          </div>
-
-          <!-- Utility Bar (Undo, Auto-Mark, Reset) -->
-          <div class="utility-actions-bar">
-            <button id="btn-undo" class="utility-btn" title="元に戻す">
-              <span class="utility-icon">↩️</span>
-              <span data-i18n="game.btn.undo">戻す</span>
-            </button>
-            <button id="btn-automark" class="utility-btn" title="オートマーク切替">
-              <span class="utility-icon">⚡</span>
-              <span><span data-i18n="game.btn.automark">自動✕: </span><strong id="automark-badge">ON</strong></span>
-            </button>
-            <button id="btn-reset" class="utility-btn" title="最初からやり直す">
-              <span class="utility-icon">🔄</span>
-              <span data-i18n="game.btn.reset">リセット</span>
-            </button>
           </div>
         </footer>
       </section>

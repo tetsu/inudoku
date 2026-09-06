@@ -75,7 +75,7 @@ class InudokuGame {
   private diffValEl!: HTMLElement;
   private hintBubbleEl!: HTMLElement;
   private hintBubbleTextEl!: HTMLElement;
-  private automarkBadgeEl!: HTMLElement;
+  private automarkBadgeEl: HTMLElement | null = null;
 
   constructor() {
     this.loadSavedData();
@@ -239,7 +239,7 @@ class InudokuGame {
     this.diffValEl = document.getElementById('difficulty-val')!;
     this.hintBubbleEl = document.getElementById('hint-bubble')!;
     this.hintBubbleTextEl = document.getElementById('hint-bubble-text')!;
-    this.automarkBadgeEl = document.getElementById('automark-badge')!;
+    this.automarkBadgeEl = document.getElementById('automark-badge');
 
     this.updateAutomarkBadge();
   }
@@ -1507,36 +1507,16 @@ class InudokuGame {
       this.hoveredPos = null;
     });
 
-    // Footer Quick Action Buttons
-    const modeDogBtn = document.getElementById('mode-dog');
-    const modeMarkBtn = document.getElementById('mode-mark');
-
-    modeDogBtn?.addEventListener('click', () => {
-      if (this.focusedPos) {
-        this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'dog');
-      } else {
-        this.showToast(t('msg.toast.dog'));
-      }
-    });
-
-    modeMarkBtn?.addEventListener('click', () => {
-      if (this.focusedPos) {
-        this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
-      } else {
-        this.showToast(t('msg.toast.cross'));
-      }
-    });
-
-    // Action Buttons
-    document.getElementById('btn-undo')!.addEventListener('click', () => this.undo());
-    document.getElementById('btn-hint')!.addEventListener('click', () => this.showHint());
-    document.getElementById('btn-reset')!.addEventListener('click', () => {
+    // Action Buttons (Undo in sub-bar, Hint in footer, Reset in sub-bar)
+    document.getElementById('btn-undo')?.addEventListener('click', () => this.undo());
+    document.getElementById('btn-hint')?.addEventListener('click', () => this.showHint());
+    document.getElementById('btn-reset')?.addEventListener('click', () => {
       if (confirm('盤面をリセットして最初からやり直しますか？')) {
         this.clearActiveGame();
         this.initPuzzle(this.currentPuzzle);
       }
     });
-    document.getElementById('btn-close-hint')!.addEventListener('click', () => this.hideHint());
+    document.getElementById('btn-close-hint')?.addEventListener('click', () => this.hideHint());
 
     // Auto-save on window blur or unload
     window.addEventListener('beforeunload', () => {
@@ -1544,13 +1524,6 @@ class InudokuGame {
     });
     window.addEventListener('pagehide', () => {
       this.saveActiveGame();
-    });
-
-
-    // Auto-mark button toggle
-    document.getElementById('btn-automark')!.addEventListener('click', () => {
-      this.settings.autoMark = !this.settings.autoMark;
-      this.saveSettings();
     });
 
     // Modals open/close
