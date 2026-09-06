@@ -1954,6 +1954,8 @@ class InudokuGame {
         this.completedLevels = {};
         this.tournamentPoints = 0;
         this.hintCount = 5;
+        this.settings.autoMark = true;
+        this.saveSettings();
         this.updateHintBadge();
         document.getElementById('modal-settings')?.classList.add('hidden');
         this.showTitleScreen();

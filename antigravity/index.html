@@ -118,10 +118,6 @@
 
         <!-- Sub Header (Shiba Count Pill & Treats) -->
         <section class="game-sub-bar">
-          <button id="btn-undo" class="sub-action-btn" title="元に戻す" aria-label="元に戻す">
-            <span class="sub-btn-icon">↩️</span>
-            <span class="sub-btn-text" data-i18n="game.btn.undo">戻す</span>
-          </button>
           <div class="pill-badge">
             <span class="pill-shiba-head">🐕</span>
             <span id="dog-counter" class="pill-text">0 / 5</span>
@@ -131,10 +127,6 @@
             <span class="treat-bone" id="bone-1">🦴</span>
             <span class="treat-bone" id="bone-2">🦴</span>
           </div>
-          <button id="btn-reset" class="sub-action-btn" title="最初からやり直す" aria-label="リセット">
-            <span class="sub-btn-icon">🔄</span>
-            <span class="sub-btn-text" data-i18n="game.btn.reset">リセット</span>
-          </button>
         </section>
 
 
@@ -180,15 +172,29 @@
           </div>
         </main>
 
-        <!-- Bottom Control Bar (Hero Hint Button) -->
+        <!-- Bottom Control Bar (Undo, Hint, Reset) -->
         <footer class="game-footer">
           <div class="hero-actions-container">
             <div class="hero-action-wrapper">
-              <button id="btn-hint" class="hero-round-btn bulb-btn" title="ヒント">
+              <button id="btn-undo" class="hero-round-btn secondary-round-btn" title="元に戻す" aria-label="元に戻す">
+                <span class="hero-btn-avatar">↩️</span>
+              </button>
+              <span class="hero-btn-caption" data-i18n="game.btn.undo">戻す</span>
+            </div>
+
+            <div class="hero-action-wrapper">
+              <button id="btn-hint" class="hero-round-btn bulb-btn" title="ヒント" aria-label="ヒント">
                 <span class="hero-btn-avatar">💡</span>
                 <span class="hero-badge" id="hint-count-badge">5</span>
               </button>
               <span class="hero-btn-caption" data-i18n="game.btn.hint">ヒント</span>
+            </div>
+
+            <div class="hero-action-wrapper">
+              <button id="btn-reset" class="hero-round-btn secondary-round-btn" title="最初からやり直す" aria-label="リセット">
+                <span class="hero-btn-avatar">🔄</span>
+              </button>
+              <span class="hero-btn-caption" data-i18n="game.btn.reset">リセット</span>
             </div>
           </div>
         </footer>

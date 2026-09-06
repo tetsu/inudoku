@@ -146,7 +146,12 @@ export class StorageManager {
     const raw = this.safeGetItem(STORAGE_KEYS.SETTINGS, STORAGE_KEYS.LEGACY_SETTINGS);
     if (!raw) return defaults;
     try {
-      return { ...defaults, ...JSON.parse(raw) };
+      const parsed = JSON.parse(raw);
+      return {
+        ...defaults,
+        ...parsed,
+        autoMark: parsed.autoMark !== undefined ? Boolean(parsed.autoMark) : true,
+      };
     } catch {
       return defaults;
     }
