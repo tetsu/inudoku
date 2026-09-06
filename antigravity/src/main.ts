@@ -47,6 +47,8 @@ class InudokuGame {
   private dailyBestTimeSecs: number = 0;
   private tournamentPoints: number = 0;
   private lives: number = 3;
+  private hintCount: number = 5;
+  private pendingDailyReward: boolean = false;
 
   // Settings
   private settings: GameSettings = {
@@ -81,6 +83,8 @@ class InudokuGame {
     this.bindEvents();
     this.renderTitleScreen();
     this.setupTitleMascot();
+    this.updateHintBadge();
+    this.checkAndShowDailyReward();
   }
 
   private loadSavedData() {
@@ -92,6 +96,9 @@ class InudokuGame {
     this.unlockedLevel = storage.getUnlockedLevel();
     this.completedLevels = storage.getCompletedLevels();
 
+    this.hintCount = storage.getHintCount();
+    this.checkDailySettlement();
+
     const daily = storage.getDailyScore();
     if (daily) {
       this.dailyBestScore = daily.score;
@@ -99,6 +106,53 @@ class InudokuGame {
     }
 
     this.tournamentPoints = storage.getDailyTournamentPoints();
+  }
+
+  private checkDailySettlement() {
+    const today = storage.getLocalDateString(new Date());
+    const lastSettlement = storage.getLastSettlementDate();
+    const lastActive = storage.getLastActiveDate();
+
+    if (!lastSettlement) {
+      // First launch ever
+      storage.setLastSettlementDate(today);
+      storage.setLastActiveDate(today);
+      return;
+    }
+
+    if (lastSettlement !== today) {
+      // Date has changed! Check if player reached 1st place on the previous active date
+      const targetDate = lastActive || '';
+      if (targetDate && storage.hasDailyFirstPlace(targetDate)) {
+        this.hintCount += 5;
+        storage.saveHintCount(this.hintCount);
+        this.pendingDailyReward = true;
+      }
+
+      // Settle and record today as new settlement date & active date
+      storage.setLastSettlementDate(today);
+      storage.setLastActiveDate(today);
+    } else {
+      storage.setLastActiveDate(today);
+    }
+  }
+
+  private checkAndShowDailyReward() {
+    if (this.pendingDailyReward) {
+      this.pendingDailyReward = false;
+      const modal = document.getElementById('modal-daily-reward');
+      if (modal) {
+        setTimeout(() => {
+          modal.classList.remove('hidden');
+          sounds.playBark();
+          confetti({
+            particleCount: 70,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+        }, 600);
+      }
+    }
   }
 
   private saveActiveGame() {
@@ -230,6 +284,8 @@ class InudokuGame {
     this.screenTitleEl.classList.remove('hidden');
     this.renderTitleScreen();
     this.setupTitleMascot();
+    this.updateHintBadge();
+    this.checkAndShowDailyReward();
   }
 
   public startGame(levelIndex?: number) {
@@ -249,6 +305,7 @@ class InudokuGame {
     this.currentStageIndex = targetIndex;
     this.screenTitleEl.classList.add('hidden');
     this.screenGameEl.classList.remove('hidden');
+    this.updateHintBadge();
 
     const targetPuzzle = getStageByLevel(targetIndex + 1);
 
@@ -747,6 +804,11 @@ class InudokuGame {
     this.tournamentPoints = rankUpData.newPoints;
     this.saveProgression();
 
+    if (rankUpData.newRank === 1) {
+      const today = storage.getLocalDateString(new Date());
+      storage.recordDailyFirstPlace(today);
+    }
+
     const overlay = document.getElementById('modal-rankup')!;
     overlay.classList.remove('hidden');
 
@@ -850,11 +912,18 @@ class InudokuGame {
                 spread: 60,
                 origin: { y: 0.7 },
               });
+
+              if (rankUpData.newRank === 1) {
+                this.showToast(t('msg.rank.firstPlaceReached'));
+              }
             }, 600);
           } else if (userCard) {
             // 1st place defense or closing in!
             userCard.style.boxShadow = '0 0 25px rgba(245, 158, 11, 0.7)';
             sounds.playBark();
+            if (rankUpData.newRank === 1) {
+              this.showToast(t('msg.rank.firstPlaceReached'));
+            }
           }
         }, 550);
       });
@@ -944,10 +1013,21 @@ class InudokuGame {
   public showHint() {
     if (this.isFinished) return;
 
+    if (this.hintCount <= 0) {
+      this.showToast(t('msg.hint.empty'));
+      sounds.playConflict();
+      return;
+    }
+
     if (this.hintTimeout !== null) {
       clearTimeout(this.hintTimeout);
       this.hintTimeout = null;
     }
+
+    // Decrement hint count and persist
+    this.hintCount--;
+    storage.saveHintCount(this.hintCount);
+    this.updateHintBadge();
 
     const currentDogs: Position[] = [];
     for (let r = 0; r < this.currentPuzzle.size; r++) {
@@ -998,6 +1078,18 @@ class InudokuGame {
       this.hintTimeout = null;
     }
     this.hintBubbleEl.classList.add('hidden');
+  }
+
+  public updateHintBadge() {
+    const badge = document.getElementById('hint-count-badge');
+    if (badge) {
+      badge.textContent = this.hintCount.toString();
+      if (this.hintCount === 0) {
+        badge.style.backgroundColor = '#9CA3AF';
+      } else {
+        badge.style.backgroundColor = '';
+      }
+    }
   }
 
   public showToast(msg: string) {
@@ -1851,6 +1943,8 @@ class InudokuGame {
         this.unlockedLevel = 1;
         this.completedLevels = {};
         this.tournamentPoints = 0;
+        this.hintCount = 5;
+        this.updateHintBadge();
         document.getElementById('modal-settings')?.classList.add('hidden');
         this.showTitleScreen();
         alert(t('msg.alert.resetDone'));

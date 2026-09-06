@@ -65,11 +65,21 @@ export const DICTIONARY: Record<SupportedLang, Record<string, string>> = {
     'msg.hint.conflict': 'ここにいる柴犬は他の柴犬とケンカしてしまう場所にあるワン！場所を見直してみよう。',
     'msg.hint.place': '{row}行目、{region} に柴犬を配置できるチャンスだワン！',
     'msg.hint.regionName': 'エリア {num}',
+    'msg.hint.empty': 'ヒントの残り回数が0回だワン！デイリーランキングで1位をとると、次の日にヒントが5回分増えるワン！🐾',
+    'msg.rank.firstPlaceReached': '👑 デイリーランキング1位到達！この順位で一日が終わると、明日ヒントが5回分増えるワン！🐾',
     'msg.toast.dog': 'マスをダブルタップ（Wクリック）で柴犬🐶を配置できるワン！',
     'msg.toast.cross': 'マスをタップまたはスライドで✕マークを配置できるワン！🐾',
     'msg.alert.jumpInvalid': '1 から 999,999 までのレベル番号を入力してくださいワン！',
     'msg.alert.resetConfirm': 'すべての進行状況を初期化しますか？この操作は元に戻せません。',
     'msg.alert.resetDone': '進捗データを初期化しましたワン！',
+
+    // Daily Reward Modal
+    'reward.modal.title': '🏆 前日1位達成ボーナス！',
+    'reward.modal.subtitle': '昨日のデイリーランキングで見事1位を獲得したワン！おめでとう！',
+    'reward.modal.bonus': '🎁 ボーナスとして ヒント +5回 を獲得しました！（現在のヒント: {count}回）',
+    'reward.modal.desc': '✨ 新しい日が始まりました。今日も最下位から1位を目指して挑戦しよう！',
+    'reward.modal.btn': '受け取って挑戦する 🐾',
+    'reward.modal.claim': '受け取る 🐾',
 
     // Rule Modal (modal-help)
     'rule.modal.title': '🐕 Shibadoku (柴独) の遊び方',
@@ -238,11 +248,21 @@ export const DICTIONARY: Record<SupportedLang, Record<string, string>> = {
     'msg.hint.conflict': 'This Shiba is conflicting with other dogs! Reconsider its placement, Woof.',
     'msg.hint.place': 'You can place a Shiba on row {row}, in {region}, Woof!',
     'msg.hint.regionName': 'Zone {num}',
+    'msg.hint.empty': 'No hints left, Woof! Finish in 1st place on the daily leaderboard to earn 5 hints tomorrow! 🐾',
+    'msg.rank.firstPlaceReached': '👑 Reached 1st place! Finish today in 1st to earn +5 hints tomorrow, Woof! 🐾',
     'msg.toast.dog': 'Double click or double tap to place a Shiba 🐶, Woof!',
     'msg.toast.cross': 'Click, tap, or drag to place a ✕ mark, Woof! 🐾',
     'msg.alert.jumpInvalid': 'Please enter a level number between 1 and 999,999, Woof!',
     'msg.alert.resetConfirm': 'Are you sure you want to reset all progress? This cannot be undone.',
     'msg.alert.resetDone': 'All game progress has been reset, Woof!',
+
+    // Daily Reward Modal
+    'reward.modal.title': '🏆 1st Place Daily Bonus!',
+    'reward.modal.subtitle': "You finished in 1st place on yesterday's daily leaderboard! Congratulations!",
+    'reward.modal.bonus': '🎁 You received +5 Hints as a reward! (Total hints: {count})',
+    'reward.modal.desc': '✨ A new day has begun. Climb back to 1st place from the bottom today!',
+    'reward.modal.btn': 'Claim & Play 🐾',
+    'reward.modal.claim': 'Claim 🐾',
 
     // Rule Modal (modal-help)
     'rule.modal.title': '🐕 How to Play Shibadoku',

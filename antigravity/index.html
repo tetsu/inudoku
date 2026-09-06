@@ -194,7 +194,7 @@
             <div class="hero-action-wrapper">
               <button id="btn-hint" class="hero-round-btn bulb-btn" title="ヒント">
                 <span class="hero-btn-avatar">💡</span>
-                <span class="hero-badge">∞</span>
+                <span class="hero-badge" id="hint-count-badge">5</span>
               </button>
               <span class="hero-btn-caption" data-i18n="game.btn.hint">ヒント</span>
             </div>
@@ -616,6 +616,22 @@
         <div class="gameover-actions">
           <button id="btn-gameover-home" class="secondary-btn" data-i18n="gameover.btn.home">タイトルへ</button>
           <button id="btn-gameover-retry" class="primary-btn" data-i18n="gameover.btn.retry">もう一度やり直す 🐾</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily Reward Modal (Yesterday 1st Place) -->
+    <div id="modal-daily-reward" class="modal-backdrop hidden">
+      <div class="modal-card reward-card" style="text-align: center; max-width: 360px;">
+        <div class="reward-icon" style="font-size: 3.5rem; margin-bottom: 8px;">🏆💡</div>
+        <h2 class="reward-title" style="color: #92400E; font-size: 1.4rem; font-weight: 800; margin-bottom: 8px;" data-i18n="reward.modal.title">🏆 昨日のデイリー1位報酬！</h2>
+        <p class="reward-subtitle" style="color: #B45309; font-size: 0.95rem; font-weight: 600; margin-bottom: 12px;" data-i18n="reward.modal.subtitle">おめでとうございます！昨日のトーナメントで1位を獲得したワン！</p>
+        <div style="background: rgba(254, 243, 199, 0.8); border: 2px dashed #F59E0B; border-radius: 16px; padding: 12px; margin-bottom: 16px;">
+          <div style="font-size: 1.6rem; font-weight: 900; color: #D97706; margin-bottom: 4px;">+5 HINTS!</div>
+          <p style="font-size: 0.85rem; color: #78350F; margin: 0;" data-i18n="reward.modal.desc">ボーナスとしてヒントを5回分プレゼント！今日のトーナメントも1位を目指そう！</p>
+        </div>
+        <div class="modal-footer" style="justify-content: center; padding: 0;">
+          <button id="btn-claim-reward" class="primary-btn" data-close-modal="modal-daily-reward" style="width: 100%; font-size: 1.05rem; padding: 10px 20px;" data-i18n="reward.modal.btn">受け取る 🐾</button>
         </div>
       </div>
     </div>

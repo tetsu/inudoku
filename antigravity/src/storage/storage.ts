@@ -19,6 +19,13 @@ export interface DailyScoreRecord {
   timeSecs: number;
 }
 
+export function getLocalDateString(d: Date = new Date()): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 /**
  * Storage keys with automatic backward-compatibility migration from legacy "inudoku_*" keys.
  */
@@ -29,6 +36,10 @@ export const STORAGE_KEYS = {
   ACTIVE_GAME: 'shibadoku_active_game',
   TOURNAMENT_POINTS: 'shibadoku_tournament_points',
   HAS_SEEN_RULES: 'shibadoku_has_seen_rules',
+  HINT_COUNT: 'shibadoku_hint_count',
+  LAST_SETTLEMENT_DATE: 'shibadoku_last_settlement_date',
+  LAST_ACTIVE_DATE: 'shibadoku_last_active_date',
+  FIRST_PLACE_PREFIX: 'shibadoku_first_place_',
   SCORE_PREFIX: 'shibadoku_score_',
   RIVALS_PREFIX: 'shibadoku_rivals_',
   TOURNAMENT_DAILY_PREFIX: 'shibadoku_tournament_points_',
@@ -56,6 +67,10 @@ export class StorageManager {
       StorageManager.instance = new StorageManager();
     }
     return StorageManager.instance;
+  }
+
+  public getLocalDateString(d: Date = new Date()): string {
+    return getLocalDateString(d);
   }
 
   /**
@@ -188,24 +203,23 @@ export class StorageManager {
 
   // --- Daily Tournament Points & Score ---
   public getDailyTournamentPoints(dateStr?: string): number {
-    const today = dateStr || new Date().toISOString().slice(0, 10);
+    const today = dateStr || getLocalDateString();
     const key = `${STORAGE_KEYS.TOURNAMENT_DAILY_PREFIX}${today}`;
     const legacyKey = `${STORAGE_KEYS.LEGACY_TOURNAMENT_DAILY_PREFIX}${today}`;
-    const raw = this.safeGetItem(key, legacyKey) || this.safeGetItem(STORAGE_KEYS.TOURNAMENT_POINTS, STORAGE_KEYS.LEGACY_TOURNAMENT_POINTS);
+    const raw = this.safeGetItem(key, legacyKey);
     if (!raw) return 0;
     const parsed = parseInt(raw, 10);
     return isNaN(parsed) || parsed < 0 ? 0 : parsed;
   }
 
   public saveDailyTournamentPoints(points: number, dateStr?: string): void {
-    const today = dateStr || new Date().toISOString().slice(0, 10);
+    const today = dateStr || getLocalDateString();
     const key = `${STORAGE_KEYS.TOURNAMENT_DAILY_PREFIX}${today}`;
     this.safeSetItem(key, String(points));
-    this.safeSetItem(STORAGE_KEYS.TOURNAMENT_POINTS, String(points));
   }
 
   public getDailyScore(dateStr?: string): DailyScoreRecord | null {
-    const today = dateStr || new Date().toISOString().slice(0, 10);
+    const today = dateStr || getLocalDateString();
     const key = `${STORAGE_KEYS.SCORE_PREFIX}${today}`;
     const legacyKey = `${STORAGE_KEYS.LEGACY_SCORE_PREFIX}${today}`;
     const raw = this.safeGetItem(key, legacyKey);
@@ -218,7 +232,7 @@ export class StorageManager {
   }
 
   public saveDailyScore(record: DailyScoreRecord, dateStr?: string): void {
-    const today = dateStr || new Date().toISOString().slice(0, 10);
+    const today = dateStr || getLocalDateString();
     const key = `${STORAGE_KEYS.SCORE_PREFIX}${today}`;
     this.safeSetItem(key, JSON.stringify(record));
   }
@@ -245,6 +259,44 @@ export class StorageManager {
     this.safeSetItem(STORAGE_KEYS.HAS_SEEN_RULES, String(seen));
   }
 
+  // --- Hints ---
+  public getHintCount(): number {
+    const raw = this.safeGetItem(STORAGE_KEYS.HINT_COUNT);
+    if (raw === null) return 5; // Default 5 hints
+    const parsed = parseInt(raw, 10);
+    return isNaN(parsed) || parsed < 0 ? 0 : parsed;
+  }
+
+  public saveHintCount(count: number): void {
+    this.safeSetItem(STORAGE_KEYS.HINT_COUNT, String(Math.max(0, count)));
+  }
+
+  // --- Daily Settlement & 1st Place Record ---
+  public recordDailyFirstPlace(dateStr?: string): void {
+    const date = dateStr || getLocalDateString();
+    this.safeSetItem(`${STORAGE_KEYS.FIRST_PLACE_PREFIX}${date}`, 'true');
+  }
+
+  public hasDailyFirstPlace(dateStr: string): boolean {
+    return this.safeGetItem(`${STORAGE_KEYS.FIRST_PLACE_PREFIX}${dateStr}`) === 'true';
+  }
+
+  public getLastSettlementDate(): string | null {
+    return this.safeGetItem(STORAGE_KEYS.LAST_SETTLEMENT_DATE);
+  }
+
+  public setLastSettlementDate(dateStr: string): void {
+    this.safeSetItem(STORAGE_KEYS.LAST_SETTLEMENT_DATE, dateStr);
+  }
+
+  public getLastActiveDate(): string | null {
+    return this.safeGetItem(STORAGE_KEYS.LAST_ACTIVE_DATE);
+  }
+
+  public setLastActiveDate(dateStr: string): void {
+    this.safeSetItem(STORAGE_KEYS.LAST_ACTIVE_DATE, dateStr);
+  }
+
   // --- Reset All Progress ---
   public resetAllProgress(): void {
     this.safeRemoveItem(STORAGE_KEYS.UNLOCKED_LEVEL, STORAGE_KEYS.LEGACY_UNLOCKED_LEVEL);
@@ -252,6 +304,9 @@ export class StorageManager {
     this.safeRemoveItem(STORAGE_KEYS.ACTIVE_GAME, STORAGE_KEYS.LEGACY_ACTIVE_GAME);
     this.safeRemoveItem(STORAGE_KEYS.TOURNAMENT_POINTS, STORAGE_KEYS.LEGACY_TOURNAMENT_POINTS);
     this.safeRemoveItem(STORAGE_KEYS.HAS_SEEN_RULES);
+    this.safeRemoveItem(STORAGE_KEYS.HINT_COUNT);
+    this.safeRemoveItem(STORAGE_KEYS.LAST_SETTLEMENT_DATE);
+    this.safeRemoveItem(STORAGE_KEYS.LAST_ACTIVE_DATE);
   }
 }
 
