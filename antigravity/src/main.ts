@@ -1184,15 +1184,27 @@ class InudokuGame {
       });
     }, 450);
 
-    // 7. Handle Tap to Continue
-    const handleTap = () => {
-      overlay.removeEventListener('click', handleTap);
+    // 7. Handle Tap or Key (Enter / Space) to Continue
+    const handleContinue = () => {
+      overlay.removeEventListener('click', handleContinue);
+      window.removeEventListener('keydown', handleKeyContinue);
       overlay.classList.add('hidden');
       // Advance to next level
       const nextIndex = Math.min(this.currentStageIndex + 1, MAX_STAGE_LEVEL - 1);
       this.startGame(nextIndex);
     };
-    overlay.addEventListener('click', handleTap);
+
+    const handleKeyContinue = (e: KeyboardEvent) => {
+      if (overlay.classList.contains('hidden')) return;
+      if (e.key === 'Enter' || e.key === ' ' || e.code === 'Space' || e.code === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleContinue();
+      }
+    };
+
+    overlay.addEventListener('click', handleContinue);
+    window.addEventListener('keydown', handleKeyContinue);
   }
 
 
@@ -1842,6 +1854,24 @@ class InudokuGame {
               this.updateHintBadge();
               this.pendingDailyReward = false;
             }
+          }
+        } else if (e.key === 'Enter' || e.key === ' ' || e.code === 'Space' || e.code === 'Enter') {
+          if (activeModal.id === 'modal-rankup') {
+            e.preventDefault();
+            activeModal.classList.add('hidden');
+            const nextIndex = Math.min(this.currentStageIndex + 1, MAX_STAGE_LEVEL - 1);
+            this.startGame(nextIndex);
+            return;
+          }
+          if (activeModal.id === 'modal-win') {
+            e.preventDefault();
+            document.getElementById('btn-win-next')?.click();
+            return;
+          }
+          if (activeModal.id === 'modal-leaderboard') {
+            e.preventDefault();
+            document.getElementById('btn-leaderboard-play')?.click();
+            return;
           }
         }
         return;
