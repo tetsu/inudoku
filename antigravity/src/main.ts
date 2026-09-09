@@ -26,7 +26,14 @@ class InudokuGame {
   private inputMode: 'dog' | 'mark' = 'mark';
   private focusedPos: Position | null = null;
   private hoveredPos: Position | null = null;
-  private inputDevice: 'pointer' | 'keyboard' = 'pointer';
+  private inputDevice: 'pointer' | 'keyboard' | 'gamepad' = 'pointer';
+
+  // Gamepad Controller Support
+  private isGamepadConnected: boolean = false;
+  private gamepadLoopId: number | null = null;
+  private prevGamepadButtons: boolean[] = [];
+  private gamepadDirActive: string = '';
+  private gamepadNextRepeatTime: number = 0;
 
   // Pointer, Drag, Double-Tap & Long-Press tracking
   private isPointerDown: boolean = false;
@@ -93,6 +100,7 @@ class InudokuGame {
     this.setupTitleMascot();
     this.updateHintBadge();
     this.checkAndShowDailyReward();
+    this.initGamepadSupport();
   }
 
   private loadSavedData() {
@@ -204,10 +212,13 @@ class InudokuGame {
     });
   }
 
-  public setFocusedCell(r: number, c: number) {
-    this.inputDevice = 'keyboard';
-    // Never show keyboard focus box on touch/mobile devices
-    if (window.matchMedia('(pointer: coarse), (hover: none)').matches) {
+  public setFocusedCell(r: number, c: number, device: 'keyboard' | 'gamepad' = 'keyboard') {
+    this.inputDevice = device;
+    if (device === 'gamepad') {
+      document.body.classList.add('gamepad-active');
+    }
+    // Never show keyboard focus box on touch/mobile devices unless gamepad is actively used
+    if (device !== 'gamepad' && window.matchMedia('(pointer: coarse), (hover: none)').matches) {
       return;
     }
 
@@ -232,6 +243,7 @@ class InudokuGame {
     }
     if (!keepDevice) {
       this.inputDevice = 'pointer';
+      document.body.classList.remove('gamepad-active');
     }
   }
 
@@ -651,8 +663,8 @@ class InudokuGame {
       }
     }
 
-    if (this.inputDevice === 'keyboard' && this.focusedPos) {
-      this.setFocusedCell(this.focusedPos.r, this.focusedPos.c);
+    if ((this.inputDevice === 'keyboard' || this.inputDevice === 'gamepad') && this.focusedPos) {
+      this.setFocusedCell(this.focusedPos.r, this.focusedPos.c, this.inputDevice);
     } else {
       this.clearFocusedCell(true);
     }
@@ -725,6 +737,8 @@ class InudokuGame {
   private vibrateLight(durationOrPattern: number | number[] = 35) {
     if (!this.settings.vibrationEnabled) return;
 
+    this.vibrateGamepad(durationOrPattern);
+
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator && typeof navigator.vibrate === 'function') {
       try {
         if (Array.isArray(durationOrPattern)) {
@@ -740,6 +754,43 @@ class InudokuGame {
 
     // iOS WebKit Taptic Engine fallback via switch control
     this.triggerIosHaptic();
+  }
+
+  private vibrateGamepad(durationOrPattern: number | number[] = 35) {
+    if (!this.settings.vibrationEnabled || typeof navigator === 'undefined' || !navigator.getGamepads) return;
+    const duration = Array.isArray(durationOrPattern) ? (durationOrPattern[0] || 40) : durationOrPattern;
+    try {
+      const gamepads = navigator.getGamepads();
+      for (let i = 0; i < gamepads.length; i++) {
+        const gp = gamepads[i];
+        if (!gp) continue;
+        const actuator = (gp as any).vibrationActuator;
+        if (actuator && typeof actuator.playEffect === 'function') {
+          actuator.playEffect('dual-rumble', {
+            startDelay: 0,
+            duration: Math.max(30, Math.min(duration, 200)),
+            weakMagnitude: 0.5,
+            strongMagnitude: 0.3,
+          }).catch(() => {});
+        } else if ((gp as any).hapticActuators && (gp as any).hapticActuators.length > 0) {
+          (gp as any).hapticActuators[0].pulse(0.6, duration).catch(() => {});
+        }
+      }
+    } catch {}
+  }
+
+  private eraseCell(r: number, c: number) {
+    if (this.isFinished) return;
+    const cell = this.grid[r][c];
+    if (cell.mark === 'empty') return;
+    const prevMark = cell.mark;
+    cell.mark = 'empty';
+    this.undoStack.push([{ r, c, prevMark, newMark: 'empty' }]);
+    sounds.playErase();
+    this.vibrateLight(25);
+    this.updateCellView(r, c);
+    this.saveActiveGame();
+    this.validateAndCheckWin();
   }
 
   private handleCellClick(r: number, c: number, forceMark?: 'dog' | 'cross' | 'question') {
@@ -1987,39 +2038,44 @@ class InudokuGame {
 
   private showControlsModal() {
     const isTouch = this.isTouchDevice();
+    const isGamepad = this.isGamepadConnected || this.inputDevice === 'gamepad';
     const badgePc = document.getElementById('badge-device-pc');
     const badgeMobile = document.getElementById('badge-device-mobile');
+    const badgeGamepad = document.getElementById('badge-device-gamepad');
 
-    if (isTouch) {
-      badgePc?.classList.add('hidden');
+    badgePc?.classList.add('hidden');
+    badgeMobile?.classList.add('hidden');
+    badgeGamepad?.classList.add('hidden');
+
+    if (isGamepad) {
+      badgeGamepad?.classList.remove('hidden');
+      this.switchControlsTab('gamepad');
+    } else if (isTouch) {
       badgeMobile?.classList.remove('hidden');
       this.switchControlsTab('mobile');
     } else {
       badgePc?.classList.remove('hidden');
-      badgeMobile?.classList.add('hidden');
       this.switchControlsTab('pc');
     }
 
     document.getElementById('modal-controls')?.classList.remove('hidden');
   }
 
-  private switchControlsTab(tab: 'pc' | 'mobile') {
+  private switchControlsTab(tab: 'pc' | 'mobile' | 'gamepad') {
     const tabPc = document.getElementById('tab-controls-pc');
     const tabMobile = document.getElementById('tab-controls-mobile');
+    const tabGamepad = document.getElementById('tab-controls-gamepad');
     const secPc = document.getElementById('controls-section-pc');
     const secMobile = document.getElementById('controls-section-mobile');
+    const secGamepad = document.getElementById('controls-section-gamepad');
 
-    if (tab === 'mobile') {
-      tabMobile?.classList.add('active');
-      tabPc?.classList.remove('active');
-      secMobile?.classList.remove('hidden');
-      secPc?.classList.add('hidden');
-    } else {
-      tabPc?.classList.add('active');
-      tabMobile?.classList.remove('active');
-      secPc?.classList.remove('hidden');
-      secMobile?.classList.add('hidden');
-    }
+    tabPc?.classList.toggle('active', tab === 'pc');
+    tabMobile?.classList.toggle('active', tab === 'mobile');
+    tabGamepad?.classList.toggle('active', tab === 'gamepad');
+
+    secPc?.classList.toggle('hidden', tab !== 'pc');
+    secMobile?.classList.toggle('hidden', tab !== 'mobile');
+    secGamepad?.classList.toggle('hidden', tab !== 'gamepad');
   }
 
   private bindModals() {
@@ -2040,6 +2096,9 @@ class InudokuGame {
     });
     document.getElementById('tab-controls-mobile')?.addEventListener('click', () => {
       this.switchControlsTab('mobile');
+    });
+    document.getElementById('tab-controls-gamepad')?.addEventListener('click', () => {
+      this.switchControlsTab('gamepad');
     });
 
     document.getElementById('btn-settings')?.addEventListener('click', () => {
@@ -2386,6 +2445,274 @@ class InudokuGame {
       modal?.classList.remove('hidden');
       this.vibrateLight(30);
     });
+  }
+
+  // Gamepad Controller Integration
+  private getActiveGamepad(): Gamepad | null {
+    if (typeof navigator === 'undefined' || !navigator.getGamepads) return null;
+    try {
+      const gamepads = navigator.getGamepads();
+      for (let i = 0; i < gamepads.length; i++) {
+        const gp = gamepads[i];
+        if (gp && gp.connected) return gp;
+      }
+    } catch {}
+    return null;
+  }
+
+  private updateGamepadBadge(connected: boolean) {
+    const badge = document.getElementById('badge-device-gamepad');
+    if (badge) {
+      if (connected) {
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+  }
+
+  private initGamepadSupport() {
+    window.addEventListener('gamepadconnected', () => {
+      this.isGamepadConnected = true;
+      this.updateGamepadBadge(true);
+      this.startGamepadLoop();
+    });
+
+    window.addEventListener('gamepaddisconnected', () => {
+      const gp = this.getActiveGamepad();
+      if (!gp) {
+        this.isGamepadConnected = false;
+        this.updateGamepadBadge(false);
+      }
+    });
+
+    // Start polling loop so controllers connected prior to window focus are captured
+    this.startGamepadLoop();
+  }
+
+  private startGamepadLoop() {
+    if (this.gamepadLoopId !== null) return;
+    const loop = () => {
+      this.pollGamepad();
+      this.gamepadLoopId = requestAnimationFrame(loop);
+    };
+    this.gamepadLoopId = requestAnimationFrame(loop);
+  }
+
+  private pollGamepad() {
+    const gp = this.getActiveGamepad();
+    if (!gp) {
+      this.prevGamepadButtons = [];
+      this.gamepadDirActive = '';
+      return;
+    }
+
+    if (!this.isGamepadConnected) {
+      this.isGamepadConnected = true;
+      this.updateGamepadBadge(true);
+    }
+
+    const isBtnDown = (btn?: GamepadButton | number): boolean => {
+      if (btn === undefined || btn === null) return false;
+      if (typeof btn === 'number') return btn > 0.5;
+      return Boolean(btn.pressed || btn.value > 0.5);
+    };
+
+    const justPressed = (btnIndex: number): boolean => {
+      const isDown = isBtnDown(gp.buttons[btnIndex]);
+      return isDown && !this.prevGamepadButtons[btnIndex];
+    };
+
+    // 1. Handle Active Modals
+    const activeModal = document.querySelector('.modal-backdrop:not(.hidden)') as HTMLElement | null;
+    if (activeModal) {
+      // B button (1): Back / Cancel / Close modal
+      if (justPressed(1)) {
+        if (activeModal.id === 'modal-dialog') {
+          const cancelBtn = document.getElementById('dialog-btn-cancel') as HTMLElement | null;
+          const confirmBtn = document.getElementById('dialog-btn-confirm') as HTMLElement | null;
+          if (cancelBtn && !cancelBtn.classList.contains('hidden')) {
+            cancelBtn.click();
+          } else if (confirmBtn) {
+            confirmBtn.click();
+          } else {
+            activeModal.classList.add('hidden');
+          }
+        } else {
+          const closeBtn = activeModal.querySelector('.modal-close, [data-close-modal]') as HTMLElement | null;
+          if (closeBtn) {
+            closeBtn.click();
+          } else {
+            activeModal.classList.add('hidden');
+          }
+        }
+      }
+
+      // A button (0) or Start (9): Confirm / Advance to next stage
+      if (justPressed(0) || justPressed(9)) {
+        if (activeModal.id === 'modal-rankup') {
+          activeModal.classList.add('hidden');
+          const nextIndex = Math.min(this.currentStageIndex + 1, MAX_STAGE_LEVEL - 1);
+          this.startGame(nextIndex);
+        } else if (activeModal.id === 'modal-win') {
+          document.getElementById('btn-win-next')?.click();
+        } else if (activeModal.id === 'modal-leaderboard') {
+          document.getElementById('btn-leaderboard-play')?.click();
+        } else if (activeModal.id === 'modal-reward') {
+          document.getElementById('btn-claim-reward')?.click();
+        } else if (activeModal.id === 'modal-dialog') {
+          document.getElementById('dialog-btn-confirm')?.click();
+        } else if (activeModal.id === 'modal-controls') {
+          activeModal.classList.add('hidden');
+        } else if (activeModal.id === 'modal-rules' || activeModal.id === 'modal-help') {
+          activeModal.classList.add('hidden');
+        }
+      }
+
+      // In Controls Modal: LB (4) / RB (5) or Left (14) / Right (15) cycle tabs
+      if (activeModal.id === 'modal-controls') {
+        const tabs: Array<'pc' | 'mobile' | 'gamepad'> = ['pc', 'mobile', 'gamepad'];
+        const currentActive = (activeModal.querySelector('.controls-tab-btn.active')?.getAttribute('data-tab') as 'pc' | 'mobile' | 'gamepad') || 'gamepad';
+        const currentIdx = tabs.indexOf(currentActive);
+
+        if (justPressed(4) || justPressed(14)) {
+          const nextTab = tabs[(currentIdx - 1 + tabs.length) % tabs.length];
+          this.switchControlsTab(nextTab);
+        } else if (justPressed(5) || justPressed(15)) {
+          const nextTab = tabs[(currentIdx + 1) % tabs.length];
+          this.switchControlsTab(nextTab);
+        }
+      }
+
+      // Update button cache & return early while modal is active
+      for (let i = 0; i < gp.buttons.length; i++) {
+        this.prevGamepadButtons[i] = isBtnDown(gp.buttons[i]);
+      }
+      return;
+    }
+
+    // 2. Handle Title Screen
+    if (!this.screenTitleEl.classList.contains('hidden')) {
+      if (justPressed(0) || justPressed(9)) {
+        document.getElementById('btn-start')?.click();
+      } else if (justPressed(8)) {
+        this.showControlsModal();
+      }
+      for (let i = 0; i < gp.buttons.length; i++) {
+        this.prevGamepadButtons[i] = isBtnDown(gp.buttons[i]);
+      }
+      return;
+    }
+
+    // 3. Handle Game Screen
+    if (this.screenGameEl.classList.contains('hidden') || this.isFinished) {
+      for (let i = 0; i < gp.buttons.length; i++) {
+        this.prevGamepadButtons[i] = isBtnDown(gp.buttons[i]);
+      }
+      return;
+    }
+
+    // Check any active input to activate gamepad mode
+    const axisX = gp.axes[0] !== undefined ? gp.axes[0] : 0;
+    const axisY = gp.axes[1] !== undefined ? gp.axes[1] : 0;
+    const isDpadUp = isBtnDown(gp.buttons[12]);
+    const isDpadDown = isBtnDown(gp.buttons[13]);
+    const isDpadLeft = isBtnDown(gp.buttons[14]);
+    const isDpadRight = isBtnDown(gp.buttons[15]);
+    const isAnyBtnPressed = gp.buttons.some(b => isBtnDown(b));
+    const isStickMoved = Math.abs(axisX) > 0.45 || Math.abs(axisY) > 0.45;
+
+    if (isAnyBtnPressed || isStickMoved) {
+      this.inputDevice = 'gamepad';
+      document.body.classList.add('gamepad-active');
+      if (!this.focusedPos) {
+        this.setFocusedCell(0, 0, 'gamepad');
+      }
+    }
+
+    // D-Pad / Stick Movement
+    const up = isDpadUp || axisY < -0.48;
+    const down = isDpadDown || axisY > 0.48;
+    const left = isDpadLeft || axisX < -0.48;
+    const right = isDpadRight || axisX > 0.48;
+    const dirKey = `${up ? 'U' : ''}${down ? 'D' : ''}${left ? 'L' : ''}${right ? 'R' : ''}`;
+    const now = performance.now();
+
+    if (dirKey === '') {
+      this.gamepadDirActive = '';
+      this.gamepadNextRepeatTime = 0;
+    } else {
+      let shouldMove = false;
+      if (dirKey !== this.gamepadDirActive) {
+        shouldMove = true;
+        this.gamepadDirActive = dirKey;
+        this.gamepadNextRepeatTime = now + 230; // initial hold delay
+      } else if (now >= this.gamepadNextRepeatTime) {
+        shouldMove = true;
+        this.gamepadNextRepeatTime = now + 95; // repeat interval
+      }
+
+      if (shouldMove && this.focusedPos) {
+        const size = this.currentPuzzle.size;
+        let newR = this.focusedPos.r;
+        let newC = this.focusedPos.c;
+        if (up) newR = Math.max(0, newR - 1);
+        if (down) newR = Math.min(size - 1, newR + 1);
+        if (left) newC = Math.max(0, newC - 1);
+        if (right) newC = Math.min(size - 1, newC + 1);
+        if (newR !== this.focusedPos.r || newC !== this.focusedPos.c) {
+          this.setFocusedCell(newR, newC, 'gamepad');
+        }
+      }
+    }
+
+    // Action buttons:
+    // A (0): Cross
+    if (justPressed(0)) {
+      if (this.focusedPos) {
+        this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
+      }
+    }
+    // B (1): Shiba (Dog)
+    if (justPressed(1)) {
+      if (this.focusedPos) {
+        this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'dog');
+      }
+    }
+    // X (2): Question mark
+    if (justPressed(2)) {
+      if (this.focusedPos) {
+        this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'question');
+      }
+    }
+    // Y (3): Erase
+    if (justPressed(3)) {
+      if (this.focusedPos) {
+        this.eraseCell(this.focusedPos.r, this.focusedPos.c);
+      }
+    }
+    // LB (4) or LT (6): Undo
+    if (justPressed(4) || justPressed(6)) {
+      this.undo();
+    }
+    // RB (5) or RT (7): Hint
+    if (justPressed(5) || justPressed(7)) {
+      this.showHint();
+    }
+    // Start (9): Settings
+    if (justPressed(9)) {
+      this.syncSettingsUI();
+      document.getElementById('modal-settings')?.classList.remove('hidden');
+    }
+    // Select (8): Controls Guide
+    if (justPressed(8)) {
+      this.showControlsModal();
+    }
+
+    // Store button states for next frame
+    for (let i = 0; i < gp.buttons.length; i++) {
+      this.prevGamepadButtons[i] = isBtnDown(gp.buttons[i]);
+    }
   }
 
   private syncSettingsUI() {

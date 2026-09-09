@@ -457,6 +457,10 @@
             <span data-i18n="ctrl.tab.mobile">📱 スマホ・タブレット</span>
             <span id="badge-device-mobile" class="device-active-badge hidden" data-i18n="ctrl.badge.current">現在</span>
           </button>
+          <button id="tab-controls-gamepad" class="controls-tab-btn" data-tab="gamepad">
+            <span data-i18n="ctrl.tab.gamepad">🎮 コントローラー</span>
+            <span id="badge-device-gamepad" class="device-active-badge hidden" data-i18n="ctrl.badge.current">現在</span>
+          </button>
         </div>
 
         <div class="modal-body controls-modal-body">
@@ -560,6 +564,56 @@
               💡 <strong>スマホで素早く解くコツ:</strong><br />
               ・指でスライドして置けないマスを一気に塗りつぶし、確定マスをダブルタップで柴犬🐶にするのがおすすめ！<br />
               ・✕マークがついているマスでも、ダブルタップすればそのまま柴犬🐶を置けます。
+            </div>
+          </div>
+
+          <!-- Gamepad Section -->
+          <div id="controls-section-gamepad" class="controls-section hidden">
+            <div class="controls-group">
+              <div class="controls-group-title" data-i18n="ctrl.gamepad.title">🎮 コントローラー操作</div>
+              <div class="control-row">
+                <span class="control-action"><span class="gamepad-badge dpad">十字キー / Lスティック</span></span>
+                <span class="control-desc" data-i18n="ctrl.gamepad.dpadDesc">枠を移動（長押しで高速移動）</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="gamepad-badge btn-a">A</span> <span data-i18n="ctrl.gamepad.btnA">A ボタン</span></span>
+                <span class="control-desc" data-i18n-html="ctrl.gamepad.btnADesc"><strong>✕ マーク</strong> を配置 / 削除</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="gamepad-badge btn-b">B</span> <span data-i18n="ctrl.gamepad.btnB">B ボタン</span></span>
+                <span class="control-desc" data-i18n-html="ctrl.gamepad.btnBDesc"><strong>柴犬（🐶）</strong> を配置 / 削除（メニューでは閉じる/キャンセル）</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="gamepad-badge btn-x">X</span> <span data-i18n="ctrl.gamepad.btnX">X ボタン</span></span>
+                <span class="control-desc" data-i18n-html="ctrl.gamepad.btnXDesc"><strong>？ 仮置きマーク</strong> を配置 / 削除</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="gamepad-badge btn-y">Y</span> <span data-i18n="ctrl.gamepad.btnY">Y ボタン</span></span>
+                <span class="control-desc" data-i18n-html="ctrl.gamepad.btnYDesc">マスを<strong>消去</strong>（クリア）</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="gamepad-badge btn-shoulder">LB / L1 / L2</span></span>
+                <span class="control-desc" data-i18n="ctrl.gamepad.shoulderLDesc">1手戻す（アンドゥ）</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="gamepad-badge btn-shoulder">RB / R1 / R2</span></span>
+                <span class="control-desc" data-i18n="ctrl.gamepad.shoulderRDesc">ヒントを見る</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="gamepad-badge btn-menu">START</span></span>
+                <span class="control-desc" data-i18n="ctrl.gamepad.startDesc">クリア画面で次のステージへ / 設定を開く</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><span class="gamepad-badge btn-menu">SELECT</span></span>
+                <span class="control-desc" data-i18n="ctrl.gamepad.selectDesc">操作ガイドを開く</span>
+              </div>
+            </div>
+
+            <div class="controls-tip-box" data-i18n-html="ctrl.gamepad.tip">
+              💡 <strong>コントローラーでの快適プレイ:</strong><br />
+              ・十字キーやLスティックを長押しすると連続でスムーズに移動できます。<br />
+              ・振動対応コントローラーでは、犬の配置やヒント使用時に心地よいハプティクスフィードバックがあります。<br />
+              ・Xbox、PlayStation、Nintendo Switch Proコンなどの一般的なゲームパッドに標準対応しています。
             </div>
           </div>
         </div>

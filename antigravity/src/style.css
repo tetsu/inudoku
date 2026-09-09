@@ -288,9 +288,9 @@ button {
   transform: scale(1.02);
 }
 
-/* Hide arrow-key focus frame completely on touch/smartphone devices */
+/* Hide arrow-key focus frame completely on touch/smartphone devices unless gamepad is active */
 @media (pointer: coarse), (hover: none) {
-  .grid-cell.cell-focused {
+  body:not(.gamepad-active) .grid-cell.cell-focused {
     outline: none !important;
     box-shadow: none !important;
     transform: none !important;
@@ -2228,6 +2228,75 @@ input:checked + .slider:before {
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: 0.3px;
+}
+
+/* Gamepad Controller Badges */
+.gamepad-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.8rem;
+  line-height: 1;
+  vertical-align: middle;
+  box-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.2);
+}
+
+.gamepad-badge.btn-a {
+  background: #10B981;
+  color: #FFFFFF;
+  border: 1.5px solid #059669;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+}
+
+.gamepad-badge.btn-b {
+  background: #EF4444;
+  color: #FFFFFF;
+  border: 1.5px solid #DC2626;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+}
+
+.gamepad-badge.btn-x {
+  background: #3B82F6;
+  color: #FFFFFF;
+  border: 1.5px solid #2563EB;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+}
+
+.gamepad-badge.btn-y {
+  background: #F59E0B;
+  color: #FFFFFF;
+  border: 1.5px solid #D97706;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+}
+
+.gamepad-badge.btn-shoulder,
+.gamepad-badge.btn-menu {
+  background: #4B5563;
+  color: #F9FAFB;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+}
+
+.gamepad-badge.dpad {
+  background: #374151;
+  color: #F3F4F6;
+  border: 1px solid #1F2937;
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: 0.72rem;
 }
 
 .controls-modal-body {
