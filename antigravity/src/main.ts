@@ -60,6 +60,10 @@ class InudokuGame {
     language: 'auto',
   };
 
+  // Tutorial / Help Modal
+  private currentTutorialSlide: number = 0;
+  private tutorialModalBound: boolean = false;
+
   // Timer
   private timerInterval: number | null = null;
   private elapsedSeconds: number = 0;
@@ -349,10 +353,198 @@ class InudokuGame {
     const helpModal = document.getElementById('modal-help');
     if (!helpModal) return;
     this.stopTimer();
+    this.setupTutorialModal();
+    this.renderTutorialVisuals();
+    this.switchTutorialSlide(0, false);
     helpModal.classList.remove('hidden');
     if (isInitial) {
       storage.setHasSeenRules(true);
     }
+  }
+
+  public setupTutorialModal() {
+    if (this.tutorialModalBound) return;
+    this.tutorialModalBound = true;
+
+    document.querySelectorAll('[data-tutorial-tab]').forEach((tab) => {
+      tab.addEventListener('click', (e) => {
+        const idx = Number((e.currentTarget as HTMLElement).dataset.tutorialTab);
+        if (!isNaN(idx)) {
+          this.switchTutorialSlide(idx);
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-tutorial-dot]').forEach((dot) => {
+      dot.addEventListener('click', (e) => {
+        const idx = Number((e.currentTarget as HTMLElement).dataset.tutorialDot);
+        if (!isNaN(idx)) {
+          this.switchTutorialSlide(idx);
+        }
+      });
+    });
+
+    document.getElementById('btn-tutorial-prev')?.addEventListener('click', () => {
+      if (this.currentTutorialSlide > 0) {
+        this.switchTutorialSlide(this.currentTutorialSlide - 1);
+      }
+    });
+
+    document.getElementById('btn-tutorial-next')?.addEventListener('click', () => {
+      if (this.currentTutorialSlide < 3) {
+        this.switchTutorialSlide(this.currentTutorialSlide + 1);
+      } else {
+        document.getElementById('modal-help')?.classList.add('hidden');
+        storage.setHasSeenRules(true);
+        if (!this.screenGameEl.classList.contains('hidden') && !this.isFinished) {
+          this.startTimer();
+        }
+      }
+    });
+  }
+
+  public switchTutorialSlide(idx: number, playSound: boolean = true) {
+    this.currentTutorialSlide = Math.max(0, Math.min(3, idx));
+    if (playSound) {
+      sounds.playPaw();
+    }
+
+    document.querySelectorAll('.tutorial-tab').forEach((tab, i) => {
+      tab.classList.toggle('active', i === this.currentTutorialSlide);
+    });
+
+    document.querySelectorAll('.tutorial-slide').forEach((slide, i) => {
+      slide.classList.toggle('active', i === this.currentTutorialSlide);
+    });
+
+    document.querySelectorAll('.tutorial-dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === this.currentTutorialSlide);
+    });
+
+    const btnPrev = document.getElementById('btn-tutorial-prev');
+    const btnNext = document.getElementById('btn-tutorial-next');
+    if (btnPrev) {
+      btnPrev.style.display = this.currentTutorialSlide === 0 ? 'none' : 'inline-flex';
+    }
+    if (btnNext) {
+      btnNext.textContent = this.currentTutorialSlide === 3 ? t('rule.btn.start') : t('rule.btn.next');
+    }
+  }
+
+  public renderTutorialVisuals() {
+    // 1. Board Area (3x3 with 2 color zones)
+    const boardArea = document.getElementById('tutorial-board-area');
+    if (boardArea) {
+      boardArea.innerHTML = '';
+      const colorA = REGION_COLORS[0]; // Meadow green
+      const colorB = REGION_COLORS[1]; // Sky cyan
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'mini-cell';
+          const isRegionA = (r === 0 && c === 0) || (r === 0 && c === 1) || (r === 1 && c === 0) || (r === 2 && c === 0);
+          cell.style.setProperty('--cell-bg', isRegionA ? colorA : colorB);
+
+          if (r === 0 && c === 0) {
+            cell.innerHTML = getShibaSvg(this.settings.shibaType, 'normal');
+          } else if (r === 2 && c === 2) {
+            cell.innerHTML = getShibaSvg(this.settings.shibaType, 'normal');
+          } else {
+            cell.innerHTML = getCrossSvg('#FFFFFF');
+          }
+          boardArea.appendChild(cell);
+        }
+      }
+    }
+
+    // 2. Board Lines (4x4 with 4 regions and row/col highlight)
+    const boardLine = document.getElementById('tutorial-board-line');
+    if (boardLine) {
+      boardLine.innerHTML = '';
+      const colors = [REGION_COLORS[0], REGION_COLORS[1], REGION_COLORS[3], REGION_COLORS[2]];
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'mini-cell';
+          const quadIndex = (r < 2 ? 0 : 2) + (c < 2 ? 0 : 1);
+          cell.style.setProperty('--cell-bg', colors[quadIndex]);
+
+          const isDog1 = r === 1 && c === 1;
+          const isDog2 = r === 3 && c === 3;
+          const isLine1 = r === 1 || c === 1;
+          const isLine2 = r === 3 || c === 3;
+
+          if (isDog1 || isDog2) {
+            cell.classList.add('cell-line-placed');
+            cell.innerHTML = getShibaSvg(this.settings.shibaType, 'normal');
+          } else if (isLine1 || isLine2) {
+            cell.classList.add('cell-line-highlight');
+            cell.innerHTML = getCrossSvg('#FFFFFF');
+          }
+          boardLine.appendChild(cell);
+        }
+      }
+    }
+
+    // 3. Board NG (3x3 conflict)
+    const boardNg = document.getElementById('tutorial-board-ng');
+    if (boardNg) {
+      boardNg.innerHTML = '';
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'mini-cell';
+          if ((r === 0 && c === 0) || (r === 1 && c === 1)) {
+            cell.classList.add('cell-conflict');
+            cell.innerHTML = getShibaSvg(this.settings.shibaType, 'conflict');
+          } else {
+            cell.style.setProperty('--cell-bg', '#FEE2E2');
+            if (r === 0 && c === 1) {
+              cell.innerHTML = '<span style="font-size:1.1rem;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.2));">💢</span>';
+            }
+          }
+          boardNg.appendChild(cell);
+        }
+      }
+    }
+
+    // 3. Board OK (3x3 safe)
+    const boardOk = document.getElementById('tutorial-board-ok');
+    if (boardOk) {
+      boardOk.innerHTML = '';
+      const colorA = REGION_COLORS[0]; // Meadow green
+      const colorB = REGION_COLORS[1]; // Sky cyan
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'mini-cell';
+          const isAreaA = r < 2 && c < 2;
+          cell.style.setProperty('--cell-bg', isAreaA ? colorA : colorB);
+
+          if (r === 0 && c === 0) {
+            cell.classList.add('cell-safe');
+            cell.innerHTML = getShibaSvg(this.settings.shibaType, 'happy');
+          } else if (r === 2 && c === 2) {
+            cell.classList.add('cell-safe');
+            cell.innerHTML = getShibaSvg(this.settings.shibaType, 'happy');
+          } else {
+            cell.innerHTML = getCrossSvg('#FFFFFF');
+          }
+          boardOk.appendChild(cell);
+        }
+      }
+    }
+
+    // 4. Action previews in Slide 3
+    document.querySelectorAll('.mini-cross-preview').forEach((el) => {
+      el.innerHTML = getCrossSvg('#FFFFFF');
+    });
+    document.querySelectorAll('.mini-shiba-preview').forEach((el) => {
+      el.innerHTML = getShibaSvg(this.settings.shibaType, 'normal');
+    });
+    document.querySelectorAll('.mini-question-preview').forEach((el) => {
+      el.innerHTML = getQuestionSvg('#FFFFFF');
+    });
   }
 
 
@@ -1801,6 +1993,7 @@ class InudokuGame {
   }
 
   private bindModals() {
+    this.setupTutorialModal();
     const openHelp = () => {
       this.showHelpModal();
     };
@@ -1996,6 +2189,7 @@ class InudokuGame {
         this.diffValEl.textContent = this.getDifficultyLabel(this.currentPuzzle.difficulty, this.currentPuzzle.size);
       }
       this.updateAutomarkBadge();
+      this.switchTutorialSlide(this.currentTutorialSlide, false);
     });
 
     const shibaBtns = document.querySelectorAll('.shiba-choice-btn');
@@ -2007,6 +2201,7 @@ class InudokuGame {
         this.saveSettings();
         this.setupTitleMascot();
         this.renderBoard();
+        this.renderTutorialVisuals();
       });
     });
 

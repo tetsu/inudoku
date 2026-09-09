@@ -173,17 +173,12 @@ export function getShibaSvg(
 /**
  * Returns the iconic white rounded Cross (❌) from Meowdoku / Zoodoku.
  */
-export function getCrossSvg(): string {
+export function getCrossSvg(color: string = '#FFFFFF'): string {
   return `
-    <svg viewBox="0 0 48 48" class="cross-svg">
-      <defs>
-        <filter id="cross-shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="1" flood-color="#000000" flood-opacity="0.18" />
-        </filter>
-      </defs>
-      <g filter="url(#cross-shadow)">
-        <line x1="12" y1="12" x2="36" y2="36" stroke="#FFFFFF" stroke-width="8.5" stroke-linecap="round" />
-        <line x1="36" y1="12" x2="12" y2="36" stroke="#FFFFFF" stroke-width="8.5" stroke-linecap="round" />
+    <svg viewBox="0 0 48 48" class="cross-svg" style="display: block; width: 100%; height: 100%;">
+      <g style="filter: drop-shadow(0 1.5px 1.5px rgba(0, 0, 0, 0.22));">
+        <line x1="12" y1="12" x2="36" y2="36" stroke="${color}" stroke-width="8.5" stroke-linecap="round" />
+        <line x1="36" y1="12" x2="12" y2="36" stroke="${color}" stroke-width="8.5" stroke-linecap="round" />
       </g>
     </svg>
   `;
@@ -199,24 +194,19 @@ export function getPawSvg(): string {
 /**
  * Returns the iconic white rounded Question Mark (❓) for tentative/hypothetical notes.
  */
-export function getQuestionSvg(): string {
+export function getQuestionSvg(color: string = '#FFFFFF'): string {
   return `
-    <svg viewBox="0 0 48 48" class="question-svg">
-      <defs>
-        <filter id="question-shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="1" flood-color="#000000" flood-opacity="0.22" />
-        </filter>
-      </defs>
-      <g filter="url(#question-shadow)">
+    <svg viewBox="0 0 48 48" class="question-svg" style="display: block; width: 100%; height: 100%;">
+      <g style="filter: drop-shadow(0 1.5px 1.5px rgba(0, 0, 0, 0.22));">
         <path
           d="M16 16 C16 10.5 20.5 8 24 8 C28 8 32 10.8 32 15.5 C32 19.5 28.5 22 25 24.5 C24 25.3 24 26.5 24 28.5"
           fill="none"
-          stroke="#FFFFFF"
+          stroke="${color}"
           stroke-width="7"
           stroke-linecap="round"
           stroke-linejoin="round"
         />
-        <circle cx="24" cy="38" r="2.2" fill="#FFFFFF" />
+        <circle cx="24" cy="38" r="2.2" fill="${color}" />
       </g>
     </svg>
   `;

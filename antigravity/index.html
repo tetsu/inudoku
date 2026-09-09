@@ -286,69 +286,155 @@
     </div>
 
 
-    <!-- Rule / Help Modal -->
+    <!-- Rule / Help Modal (Interactive Graphical Tutorial) -->
     <div id="modal-help" class="modal-backdrop hidden">
-      <div class="modal-card">
+      <div class="modal-card modal-tutorial-card">
         <div class="modal-header">
           <h2 data-i18n="rule.modal.title">🐕 Shibadoku (柴独) の遊び方</h2>
           <button class="modal-close" data-close-modal="modal-help">✕</button>
         </div>
 
-        <div class="modal-body help-content">
-          <p class="help-lead" data-i18n-html="rule.lead">
-            <strong>「柴犬たちのパーソナルスペースを守ろう！」</strong><br />
-            数独のように論理で解く、癒やしのパズルゲームです。
-          </p>
+        <!-- Navigation Tabs -->
+        <div class="tutorial-tabs" role="tablist">
+          <button class="tutorial-tab active" data-tutorial-tab="0" data-i18n="rule.tab.area">🎨 1. エリア</button>
+          <button class="tutorial-tab" data-tutorial-tab="1" data-i18n="rule.tab.line">↔️ 2. タテ・ヨコ</button>
+          <button class="tutorial-tab" data-tutorial-tab="2" data-i18n="rule.tab.space">🚫 3. 触れ合いNG</button>
+          <button class="tutorial-tab" data-tutorial-tab="3" data-i18n="rule.tab.controls">👆 4. 操作</button>
+        </div>
 
-          <div class="rule-card">
-            <div class="rule-icon">1️⃣</div>
-            <div class="rule-text">
-              <strong data-i18n="rule.card1.title">各エリアに1匹</strong>
-              <p data-i18n-html="rule.card1.desc">色で分かれた各ドッグラン（エリア）に、柴犬（🐶）を<strong>ちょうど1匹</strong>配置します。</p>
+        <div class="modal-body tutorial-body">
+          <!-- Slide 0: エリアに1匹 -->
+          <div class="tutorial-slide active" data-tutorial-slide="0">
+            <div class="tutorial-visual">
+              <div class="tutorial-board-wrap">
+                <div id="tutorial-board-area" class="tutorial-board mini-board-3x3"></div>
+                <div class="tutorial-badges">
+                  <span class="tutorial-badge badge-area-a" data-i18n="rule.slide1.badgeA">エリアA: 🐶 1匹</span>
+                  <span class="tutorial-badge badge-area-b" data-i18n="rule.slide1.badgeB">エリアB: 🐶 1匹</span>
+                </div>
+              </div>
+            </div>
+            <div class="tutorial-text-box">
+              <h3 data-i18n="rule.slide1.title">各エリアに柴犬1匹</h3>
+              <p data-i18n-html="rule.slide1.desc">色で分かれた各ドッグラン（エリア）に、柴犬（🐶）を<strong>ちょうど1匹</strong>配置します。配置が決まったら残りのマスは ✕ で除外しましょう。</p>
             </div>
           </div>
 
-          <div class="rule-card">
-            <div class="rule-icon">2️⃣</div>
-            <div class="rule-text">
-              <strong data-i18n="rule.card2.title">行と列に1匹ずつ</strong>
-              <p data-i18n-html="rule.card2.desc">タテ1列、ヨコ1列につき、柴犬（🐶）は<strong>1匹だけ</strong>入ることができます。</p>
+          <!-- Slide 1: タテ・ヨコ列に1匹 -->
+          <div class="tutorial-slide" data-tutorial-slide="1">
+            <div class="tutorial-visual">
+              <div class="tutorial-board-wrap">
+                <div id="tutorial-board-line" class="tutorial-board mini-board-4x4"></div>
+                <div class="tutorial-badges">
+                  <span class="tutorial-badge badge-warn" data-i18n="rule.slide2.badge">同じ行・列の重複NG！</span>
+                </div>
+              </div>
+            </div>
+            <div class="tutorial-text-box">
+              <h3 data-i18n="rule.slide2.title">タテ・ヨコ列に1匹ずつ</h3>
+              <p data-i18n-html="rule.slide2.desc">タテ1列、ヨコ1列につき、柴犬（🐶）は<strong>1匹だけ</strong>入ることができます。柴犬を置くと、その列と行の他のマスはすべて ✕ になります。</p>
             </div>
           </div>
 
-          <div class="rule-card rule-highlight">
-            <div class="rule-icon">🚫</div>
-            <div class="rule-text">
-              <strong data-i18n="rule.card3.title">触れ合いNG！（パーソナルスペース）</strong>
-              <p data-i18n-html="rule.card3.desc">柴犬同士は、<strong>縦・横・斜めの8方向すべてで隣り合ってはいけません</strong>。</p>
+          <!-- Slide 2: 触れ合いNG（パーソナルスペース） -->
+          <div class="tutorial-slide" data-tutorial-slide="2">
+            <div class="tutorial-visual tutorial-visual-compare">
+              <!-- NG Card -->
+              <div class="compare-card compare-ng">
+                <div class="compare-header">
+                  <span class="compare-title text-danger" data-i18n="rule.slide3.ngTitle">❌ 近すぎるワン！</span>
+                </div>
+                <div id="tutorial-board-ng" class="tutorial-board mini-board-3x3 mini-board-ng"></div>
+                <div class="compare-desc" data-i18n="rule.slide3.ngDesc">ナナメも接触NG！💢</div>
+              </div>
+
+              <!-- OK Card -->
+              <div class="compare-card compare-ok">
+                <div class="compare-header">
+                  <span class="compare-title text-success" data-i18n="rule.slide3.okTitle">⭕ いい距離感だワン！</span>
+                </div>
+                <div id="tutorial-board-ok" class="tutorial-board mini-board-3x3 mini-board-ok"></div>
+                <div class="compare-desc" data-i18n="rule.slide3.okDesc">全8方向1マス空ける ✨</div>
+              </div>
+            </div>
+            <div class="tutorial-text-box">
+              <h3 data-i18n="rule.slide3.title">触れ合いNG！（パーソナルスペース）</h3>
+              <p data-i18n-html="rule.slide3.desc">柴犬同士は<strong>タテ・ヨコ・ナナメの8方向すべて</strong>で隣り合ってはいけません。必ず最低1マス以上スペースを空けて配置します。</p>
             </div>
           </div>
 
-          <div class="rule-card" style="background: rgba(231, 139, 63, 0.08); border-color: rgba(231, 139, 63, 0.25);">
-            <div class="rule-icon">❓</div>
-            <div class="rule-text">
-              <strong data-i18n="rule.card4.title">仮置きマーク（？）</strong>
-              <p data-i18n-html="rule.card4.desc">いくつかの配置パターンを試すメモとして使えます。<br />
-              <strong>PC:</strong> 右クリック または <code>[N]</code> キー<br />
-              <strong>スマホ:</strong> マスを長押し<br />
-              ※柴犬（🐶）や✕マークでそのまま上書きできます。</p>
-            </div>
-          </div>
+          <!-- Slide 3: かんたん直感操作 -->
+          <div class="tutorial-slide" data-tutorial-slide="3">
+            <div class="tutorial-visual">
+              <div class="tutorial-actions-grid">
+                <div class="action-card">
+                  <div class="action-demo-cell cell-action-tap">
+                    <span class="action-finger">👆</span>
+                    <div class="action-icon mini-cross-preview"></div>
+                  </div>
+                  <div class="action-info">
+                    <strong data-i18n="rule.slide4.tapTitle">1タップ / クリック</strong>
+                    <span data-i18n-html="rule.slide4.tapDesc"><strong>✕ マーク</strong>（入れない場所）</span>
+                  </div>
+                </div>
 
-          <div class="rule-card" style="background: rgba(82, 182, 154, 0.09); border-color: rgba(82, 182, 154, 0.25);">
-            <div class="rule-icon">🐾</div>
-            <div class="rule-text">
-              <strong data-i18n="rule.card5.title">かんたん操作</strong>
-              <p data-i18n-html="rule.card5.desc">
-                <strong>クリック / タップ:</strong> ✕ マーク（柴犬が入れない場所）<br />
-                <strong>ダブルクリック / ダブルタップ:</strong> 柴犬（🐶）を配置！<br />
-                <strong>ドラッグ / スライド:</strong> 連続マーク＆Xマスからスライドで消去
-              </p>
+                <div class="action-card">
+                  <div class="action-demo-cell cell-action-dtap">
+                    <span class="action-finger">👆👆</span>
+                    <div class="action-icon mini-shiba-preview"></div>
+                  </div>
+                  <div class="action-info">
+                    <strong data-i18n="rule.slide4.dtapTitle">ダブルタップ / ダブルクリック</strong>
+                    <span data-i18n-html="rule.slide4.dtapDesc"><strong>柴犬 🐶 を配置！</strong></span>
+                  </div>
+                </div>
+
+                <div class="action-card">
+                  <div class="action-demo-cell cell-action-slide">
+                    <span class="action-finger">👉</span>
+                    <div class="action-slide-line">
+                      <div class="action-slide-tile" style="background:#7DCB66;"><div class="action-icon mini-cross-preview"></div></div>
+                      <div class="action-slide-tile" style="background:#3CAFD9;"><div class="action-icon mini-cross-preview"></div></div>
+                      <div class="action-slide-tile" style="background:#F68F55;"><div class="action-icon mini-cross-preview"></div></div>
+                    </div>
+                  </div>
+                  <div class="action-info">
+                    <strong data-i18n="rule.slide4.slideTitle">スライド / なぞる</strong>
+                    <span data-i18n-html="rule.slide4.slideDesc"><strong>連続 ✕ マーク</strong>（Xからなぞると消去）</span>
+                  </div>
+                </div>
+
+                <div class="action-card">
+                  <div class="action-demo-cell cell-action-hold">
+                    <span class="action-finger">⏱️</span>
+                    <div class="action-icon mini-question-preview"></div>
+                  </div>
+                  <div class="action-info">
+                    <strong data-i18n="rule.slide4.holdTitle">長押し / 右クリック</strong>
+                    <span data-i18n-html="rule.slide4.holdDesc"><strong>❓ 仮置きメモ</strong>（柴犬や✕で上書き可）</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tutorial-text-box">
+              <h3 data-i18n="rule.slide4.title">かんたん直感操作</h3>
+              <p data-i18n-html="rule.slide4.desc">空いているマスを<strong>ダブルタップ</strong>で柴犬配置！マスを<strong>なぞる（スライド）</strong>だけで連続で✕マークを引けます。</p>
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button class="primary-btn" data-close-modal="modal-help" data-i18n="rule.btn.close">わかったワン！</button>
+
+        <!-- Tutorial Footer -->
+        <div class="modal-footer tutorial-footer">
+          <div class="tutorial-dots" role="tablist">
+            <button class="tutorial-dot active" data-tutorial-dot="0" aria-label="Slide 1"></button>
+            <button class="tutorial-dot" data-tutorial-dot="1" aria-label="Slide 2"></button>
+            <button class="tutorial-dot" data-tutorial-dot="2" aria-label="Slide 3"></button>
+            <button class="tutorial-dot" data-tutorial-dot="3" aria-label="Slide 4"></button>
+          </div>
+          <div class="tutorial-nav-btns">
+            <button id="btn-tutorial-prev" class="secondary-btn" style="display: none;" data-i18n="rule.btn.prev">前へ</button>
+            <button id="btn-tutorial-next" class="primary-btn" data-i18n="rule.btn.next">次へ 🐾</button>
+          </div>
         </div>
       </div>
     </div>
