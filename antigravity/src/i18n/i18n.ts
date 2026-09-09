@@ -236,7 +236,7 @@ export const DICTIONARY: Record<SupportedLang, Record<string, string>> = {
 
     // Rank-Up Screen
     'rankup.title': 'ランキング',
-    'rankup.continue': 'タップ または [Enter / Space] でつづける',
+    'rankup.continue': 'タップ または [Enter / Space / 🎮 Aボタン] でつづける',
   },
 
   en: {
@@ -467,7 +467,7 @@ export const DICTIONARY: Record<SupportedLang, Record<string, string>> = {
 
     // Rank-Up Screen
     'rankup.title': 'Tournament',
-    'rankup.continue': 'Tap or press [Enter / Space] to continue',
+    'rankup.continue': 'Tap or press [Enter / Space / 🎮 A] to continue',
   },
 };
 

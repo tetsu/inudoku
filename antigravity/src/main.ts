@@ -34,6 +34,11 @@ class InudokuGame {
   private prevGamepadButtons: boolean[] = [];
   private gamepadDirActive: string = '';
   private gamepadNextRepeatTime: number = 0;
+  private titleFocusIdx: number = 0;
+  private stageFocusIdx: number = 0;
+  private settingsRowIdx: number = 0;
+  private dialogFocusBtn: 'confirm' | 'cancel' = 'confirm';
+  private leaderboardFocusBtn: 'play' | 'close' = 'play';
 
   // Pointer, Drag, Double-Tap & Long-Press tracking
   private isPointerDown: boolean = false;
@@ -2499,6 +2504,365 @@ class InudokuGame {
     this.gamepadLoopId = requestAnimationFrame(loop);
   }
 
+  private clearMenuFocus() {
+    document.querySelectorAll('.menu-focused').forEach(el => el.classList.remove('menu-focused'));
+  }
+
+  private handleGamepadTitleScreen(
+    justPressed: (b: number) => boolean,
+    up: boolean,
+    down: boolean,
+    left: boolean,
+    right: boolean
+  ) {
+    const titleButtons = [
+      document.getElementById('btn-title-play'),
+      document.getElementById('btn-title-stages'),
+      document.getElementById('btn-title-ranking'),
+      document.getElementById('btn-title-controls'),
+      document.getElementById('btn-title-help'),
+      document.getElementById('btn-title-settings'),
+    ].filter(Boolean) as HTMLElement[];
+
+    if (titleButtons.length === 0) return;
+
+    if (justPressed(9)) {
+      document.getElementById('btn-title-play')?.click();
+      return;
+    }
+
+    if (up) {
+      this.titleFocusIdx = 0;
+    } else if (down) {
+      if (this.titleFocusIdx === 0) {
+        this.titleFocusIdx = 1;
+      }
+    } else if (left) {
+      if (this.titleFocusIdx > 1) {
+        this.titleFocusIdx--;
+      }
+    } else if (right) {
+      if (this.titleFocusIdx === 0) {
+        this.titleFocusIdx = 1;
+      } else if (this.titleFocusIdx < titleButtons.length - 1) {
+        this.titleFocusIdx++;
+      }
+    }
+
+    titleButtons.forEach((btn, idx) => {
+      btn.classList.toggle('menu-focused', idx === this.titleFocusIdx);
+    });
+
+    if (justPressed(0)) {
+      titleButtons[this.titleFocusIdx]?.click();
+    }
+  }
+
+  private handleGamepadRankUpScreen(justPressed: (b: number) => boolean): boolean {
+    const overlay = document.getElementById('modal-rankup');
+    if (!overlay || overlay.classList.contains('hidden')) return false;
+
+    if (
+      justPressed(0) ||
+      justPressed(1) ||
+      justPressed(2) ||
+      justPressed(3) ||
+      justPressed(9) ||
+      justPressed(4) ||
+      justPressed(5)
+    ) {
+      overlay.click();
+    }
+    return true;
+  }
+
+  private handleGamepadStagesModal(
+    justPressed: (b: number) => boolean,
+    up: boolean,
+    down: boolean,
+    left: boolean,
+    right: boolean
+  ) {
+    const modal = document.getElementById('modal-stages');
+    if (!modal || modal.classList.contains('hidden')) return;
+
+    if (justPressed(1)) {
+      modal.classList.add('hidden');
+      this.clearMenuFocus();
+      return;
+    }
+
+    const cells = Array.from(modal.querySelectorAll('.level-cell')) as HTMLElement[];
+    const jumpBtn = document.getElementById('btn-jump-level') as HTMLElement | null;
+    const genBtn = document.getElementById('btn-generate-puzzle') as HTMLElement | null;
+    const totalItems = cells.length + (jumpBtn ? 1 : 0) + (genBtn ? 1 : 0);
+
+    if (totalItems === 0) return;
+
+    if (left) {
+      this.stageFocusIdx = Math.max(0, this.stageFocusIdx - 1);
+    } else if (right) {
+      this.stageFocusIdx = Math.min(totalItems - 1, this.stageFocusIdx + 1);
+    } else if (up) {
+      if (this.stageFocusIdx >= cells.length) {
+        this.stageFocusIdx = cells.length - 1;
+      } else {
+        this.stageFocusIdx = Math.max(0, this.stageFocusIdx - 3);
+      }
+    } else if (down) {
+      if (this.stageFocusIdx < cells.length - 3) {
+        this.stageFocusIdx += 3;
+      } else if (this.stageFocusIdx < cells.length) {
+        this.stageFocusIdx = cells.length;
+      } else if (this.stageFocusIdx === cells.length && genBtn) {
+        this.stageFocusIdx = cells.length + 1;
+      }
+    }
+
+    cells.forEach((c, idx) => {
+      const isFocused = idx === this.stageFocusIdx;
+      c.classList.toggle('menu-focused', isFocused);
+      if (isFocused) {
+        c.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    });
+
+    if (jumpBtn) {
+      const isFocused = this.stageFocusIdx === cells.length;
+      jumpBtn.classList.toggle('menu-focused', isFocused);
+      if (isFocused) jumpBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    if (genBtn) {
+      const isFocused = this.stageFocusIdx === cells.length + 1;
+      genBtn.classList.toggle('menu-focused', isFocused);
+      if (isFocused) genBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+
+    if (justPressed(0)) {
+      if (this.stageFocusIdx < cells.length) {
+        cells[this.stageFocusIdx]?.click();
+      } else if (this.stageFocusIdx === cells.length) {
+        jumpBtn?.click();
+      } else {
+        genBtn?.click();
+      }
+    }
+  }
+
+  private handleGamepadLeaderboardModal(
+    justPressed: (b: number) => boolean,
+    up: boolean,
+    down: boolean
+  ) {
+    const modal = document.getElementById('modal-leaderboard');
+    if (!modal || modal.classList.contains('hidden')) return;
+
+    if (justPressed(1)) {
+      modal.classList.add('hidden');
+      this.clearMenuFocus();
+      return;
+    }
+
+    const playBtn = document.getElementById('btn-leaderboard-play');
+    const closeBtn = modal.querySelector('.modal-close') as HTMLElement | null;
+
+    if (up || down) {
+      this.leaderboardFocusBtn = this.leaderboardFocusBtn === 'play' ? 'close' : 'play';
+    }
+
+    playBtn?.classList.toggle('menu-focused', this.leaderboardFocusBtn === 'play');
+    closeBtn?.classList.toggle('menu-focused', this.leaderboardFocusBtn === 'close');
+
+    if (justPressed(0) || justPressed(9)) {
+      if (this.leaderboardFocusBtn === 'play') {
+        playBtn?.click();
+      } else {
+        closeBtn?.click();
+      }
+    }
+  }
+
+  private handleGamepadSettingsModal(
+    justPressed: (b: number) => boolean,
+    up: boolean,
+    down: boolean,
+    left: boolean,
+    right: boolean
+  ) {
+    const modal = document.getElementById('modal-settings');
+    if (!modal || modal.classList.contains('hidden')) return;
+
+    if (justPressed(1) || justPressed(9)) {
+      modal.classList.add('hidden');
+      this.clearMenuFocus();
+      return;
+    }
+
+    const items = Array.from(modal.querySelectorAll('.setting-item')) as HTMLElement[];
+    const saveBtn = modal.querySelector('[data-close-modal="modal-settings"]') as HTMLElement | null;
+    const totalCount = items.length + (saveBtn ? 1 : 0);
+
+    if (up) {
+      this.settingsRowIdx = Math.max(0, this.settingsRowIdx - 1);
+    } else if (down) {
+      this.settingsRowIdx = Math.min(totalCount - 1, this.settingsRowIdx + 1);
+    }
+
+    items.forEach((item, idx) => {
+      const isFocused = idx === this.settingsRowIdx;
+      item.classList.toggle('menu-focused', isFocused);
+      if (isFocused) item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+
+    if (saveBtn) {
+      const isFocused = this.settingsRowIdx === items.length;
+      saveBtn.classList.toggle('menu-focused', isFocused);
+      if (isFocused) saveBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+
+    // Row 0: Language
+    if (this.settingsRowIdx === 0) {
+      const langSelect = document.getElementById('setting-language') as HTMLSelectElement | null;
+      if (langSelect && (left || right || justPressed(0))) {
+        const langs = ['auto', 'ja', 'en'];
+        let curIdx = langs.indexOf(langSelect.value);
+        if (curIdx === -1) curIdx = 0;
+        const nextIdx = left ? (curIdx - 1 + langs.length) % langs.length : (curIdx + 1) % langs.length;
+        langSelect.value = langs[nextIdx];
+        langSelect.dispatchEvent(new Event('change'));
+      }
+    }
+    // Row 1: Shiba Type
+    else if (this.settingsRowIdx === 1) {
+      const shibaBtns = Array.from(modal.querySelectorAll('.shiba-choice-btn')) as HTMLElement[];
+      if (shibaBtns.length > 0 && (left || right || justPressed(0))) {
+        let curIdx = shibaBtns.findIndex(b => b.classList.contains('active'));
+        if (curIdx === -1) curIdx = 0;
+        const nextIdx = left ? (curIdx - 1 + shibaBtns.length) % shibaBtns.length : (curIdx + 1) % shibaBtns.length;
+        shibaBtns[nextIdx]?.click();
+      }
+    }
+    // Row 2: Sound
+    else if (this.settingsRowIdx === 2) {
+      const toggle = document.getElementById('setting-sound') as HTMLInputElement | null;
+      if (toggle && (left || right || justPressed(0))) {
+        toggle.checked = !toggle.checked;
+        toggle.dispatchEvent(new Event('change'));
+      }
+    }
+    // Row 3: Vibration
+    else if (this.settingsRowIdx === 3) {
+      const toggle = document.getElementById('setting-vibration') as HTMLInputElement | null;
+      if (toggle && (left || right || justPressed(0))) {
+        toggle.checked = !toggle.checked;
+        toggle.dispatchEvent(new Event('change'));
+      }
+    }
+    // Row 4: AutoMark
+    else if (this.settingsRowIdx === 4) {
+      const toggle = document.getElementById('setting-automark') as HTMLInputElement | null;
+      if (toggle && (left || right || justPressed(0))) {
+        toggle.checked = !toggle.checked;
+        toggle.dispatchEvent(new Event('change'));
+      }
+    }
+    // Row 5: Reset Progress
+    else if (this.settingsRowIdx === 5) {
+      if (justPressed(0)) {
+        document.getElementById('btn-reset-progress')?.click();
+      }
+    }
+    // Row 6: Save & Close button
+    else if (this.settingsRowIdx === items.length) {
+      if (justPressed(0)) {
+        saveBtn?.click();
+      }
+    }
+  }
+
+  private handleGamepadTutorialModal(
+    justPressed: (b: number) => boolean,
+    left: boolean,
+    right: boolean
+  ) {
+    const modal = document.getElementById('modal-help');
+    if (!modal || modal.classList.contains('hidden')) return;
+
+    if (justPressed(1)) {
+      modal.classList.add('hidden');
+      return;
+    }
+
+    if (left || justPressed(4)) {
+      document.getElementById('btn-tutorial-prev')?.click();
+    } else if (right || justPressed(5) || justPressed(0)) {
+      document.getElementById('btn-tutorial-next')?.click();
+    }
+  }
+
+  private handleGamepadControlsModal(
+    justPressed: (b: number) => boolean,
+    left: boolean,
+    right: boolean
+  ) {
+    const modal = document.getElementById('modal-controls');
+    if (!modal || modal.classList.contains('hidden')) return;
+
+    if (justPressed(1) || justPressed(0)) {
+      modal.classList.add('hidden');
+      return;
+    }
+
+    const tabs: Array<'pc' | 'mobile' | 'gamepad'> = ['pc', 'mobile', 'gamepad'];
+    const currentActive = (modal.querySelector('.controls-tab-btn.active')?.getAttribute('data-tab') as 'pc' | 'mobile' | 'gamepad') || 'gamepad';
+    const currentIdx = tabs.indexOf(currentActive);
+
+    if (left || justPressed(4)) {
+      const nextTab = tabs[(currentIdx - 1 + tabs.length) % tabs.length];
+      this.switchControlsTab(nextTab);
+    } else if (right || justPressed(5)) {
+      const nextTab = tabs[(currentIdx + 1) % tabs.length];
+      this.switchControlsTab(nextTab);
+    }
+  }
+
+  private handleGamepadCustomDialog(
+    justPressed: (b: number) => boolean,
+    left: boolean,
+    right: boolean
+  ) {
+    const modal = document.getElementById('modal-dialog');
+    if (!modal || modal.classList.contains('hidden')) return;
+
+    const cancelBtn = document.getElementById('dialog-btn-cancel') as HTMLElement | null;
+    const confirmBtn = document.getElementById('dialog-btn-confirm') as HTMLElement | null;
+    const hasCancel = Boolean(cancelBtn && !cancelBtn.classList.contains('hidden'));
+
+    if (hasCancel && (left || right)) {
+      this.dialogFocusBtn = this.dialogFocusBtn === 'confirm' ? 'cancel' : 'confirm';
+    }
+
+    confirmBtn?.classList.toggle('menu-focused', this.dialogFocusBtn === 'confirm' || !hasCancel);
+    cancelBtn?.classList.toggle('menu-focused', hasCancel && this.dialogFocusBtn === 'cancel');
+
+    if (justPressed(1)) {
+      if (hasCancel) {
+        cancelBtn?.click();
+      } else {
+        confirmBtn?.click();
+      }
+      return;
+    }
+
+    if (justPressed(0) || justPressed(9)) {
+      if (hasCancel && this.dialogFocusBtn === 'cancel') {
+        cancelBtn?.click();
+      } else {
+        confirmBtn?.click();
+      }
+    }
+  }
+
   private pollGamepad() {
     const gp = this.getActiveGamepad();
     if (!gp) {
@@ -2523,88 +2887,106 @@ class InudokuGame {
       return isDown && !this.prevGamepadButtons[btnIndex];
     };
 
-    // 1. Handle Active Modals
+    // Calculate directional inputs (D-Pad + Left Analog Stick)
+    const axisX = gp.axes[0] !== undefined ? gp.axes[0] : 0;
+    const axisY = gp.axes[1] !== undefined ? gp.axes[1] : 0;
+    const isDpadUp = isBtnDown(gp.buttons[12]);
+    const isDpadDown = isBtnDown(gp.buttons[13]);
+    const isDpadLeft = isBtnDown(gp.buttons[14]);
+    const isDpadRight = isBtnDown(gp.buttons[15]);
+
+    const rawUp = isDpadUp || axisY < -0.48;
+    const rawDown = isDpadDown || axisY > 0.48;
+    const rawLeft = isDpadLeft || axisX < -0.48;
+    const rawRight = isDpadRight || axisX > 0.48;
+    const dirKey = `${rawUp ? 'U' : ''}${rawDown ? 'D' : ''}${rawLeft ? 'L' : ''}${rawRight ? 'R' : ''}`;
+    const now = performance.now();
+
+    let navStep = false;
+    if (dirKey === '') {
+      this.gamepadDirActive = '';
+      this.gamepadNextRepeatTime = 0;
+    } else if (dirKey !== this.gamepadDirActive) {
+      navStep = true;
+      this.gamepadDirActive = dirKey;
+      this.gamepadNextRepeatTime = now + 230; // initial hold delay
+    } else if (now >= this.gamepadNextRepeatTime) {
+      navStep = true;
+      this.gamepadNextRepeatTime = now + 110; // repeat rate
+    }
+
+    const stepUp = navStep && rawUp;
+    const stepDown = navStep && rawDown;
+    const stepLeft = navStep && rawLeft;
+    const stepRight = navStep && rawRight;
+
+    const isAnyBtnPressed = gp.buttons.some(b => isBtnDown(b));
+    const isStickMoved = Math.abs(axisX) > 0.45 || Math.abs(axisY) > 0.45;
+    if (isAnyBtnPressed || isStickMoved) {
+      this.inputDevice = 'gamepad';
+      document.body.classList.add('gamepad-active');
+    }
+
+    // 1. Check Rank-Up Overlay (Highest priority modal screen!)
+    if (this.handleGamepadRankUpScreen(justPressed)) {
+      for (let i = 0; i < gp.buttons.length; i++) {
+        this.prevGamepadButtons[i] = isBtnDown(gp.buttons[i]);
+      }
+      return;
+    }
+
+    // 2. Check Modals
     const activeModal = document.querySelector('.modal-backdrop:not(.hidden)') as HTMLElement | null;
     if (activeModal) {
-      // B button (1): Back / Cancel / Close modal
-      if (justPressed(1)) {
-        if (activeModal.id === 'modal-dialog') {
-          const cancelBtn = document.getElementById('dialog-btn-cancel') as HTMLElement | null;
-          const confirmBtn = document.getElementById('dialog-btn-confirm') as HTMLElement | null;
-          if (cancelBtn && !cancelBtn.classList.contains('hidden')) {
-            cancelBtn.click();
-          } else if (confirmBtn) {
-            confirmBtn.click();
-          } else {
-            activeModal.classList.add('hidden');
-          }
-        } else {
-          const closeBtn = activeModal.querySelector('.modal-close, [data-close-modal]') as HTMLElement | null;
-          if (closeBtn) {
-            closeBtn.click();
-          } else {
-            activeModal.classList.add('hidden');
-          }
-        }
-      }
-
-      // A button (0) or Start (9): Confirm / Advance to next stage
-      if (justPressed(0) || justPressed(9)) {
-        if (activeModal.id === 'modal-rankup') {
-          activeModal.classList.add('hidden');
-          const nextIndex = Math.min(this.currentStageIndex + 1, MAX_STAGE_LEVEL - 1);
-          this.startGame(nextIndex);
-        } else if (activeModal.id === 'modal-win') {
+      if (activeModal.id === 'modal-dialog') {
+        this.handleGamepadCustomDialog(justPressed, stepLeft, stepRight);
+      } else if (activeModal.id === 'modal-stages') {
+        this.handleGamepadStagesModal(justPressed, stepUp, stepDown, stepLeft, stepRight);
+      } else if (activeModal.id === 'modal-settings') {
+        this.handleGamepadSettingsModal(justPressed, stepUp, stepDown, stepLeft, stepRight);
+      } else if (activeModal.id === 'modal-leaderboard') {
+        this.handleGamepadLeaderboardModal(justPressed, stepUp, stepDown);
+      } else if (activeModal.id === 'modal-help') {
+        this.handleGamepadTutorialModal(justPressed, stepLeft, stepRight);
+      } else if (activeModal.id === 'modal-controls') {
+        this.handleGamepadControlsModal(justPressed, stepLeft, stepRight);
+      } else if (activeModal.id === 'modal-win') {
+        if (justPressed(0) || justPressed(9)) {
           document.getElementById('btn-win-next')?.click();
-        } else if (activeModal.id === 'modal-leaderboard') {
-          document.getElementById('btn-leaderboard-play')?.click();
-        } else if (activeModal.id === 'modal-reward') {
+        } else if (justPressed(1)) {
+          document.getElementById('btn-win-home')?.click();
+        }
+      } else if (activeModal.id === 'modal-daily-reward') {
+        if (justPressed(0) || justPressed(9)) {
           document.getElementById('btn-claim-reward')?.click();
-        } else if (activeModal.id === 'modal-dialog') {
-          document.getElementById('dialog-btn-confirm')?.click();
-        } else if (activeModal.id === 'modal-controls') {
+        } else if (justPressed(1)) {
           activeModal.classList.add('hidden');
-        } else if (activeModal.id === 'modal-rules' || activeModal.id === 'modal-help') {
+        }
+      } else {
+        if (justPressed(1)) {
           activeModal.classList.add('hidden');
+        } else if (justPressed(0) || justPressed(9)) {
+          const btn = activeModal.querySelector('.primary-btn, [data-close-modal]') as HTMLElement | null;
+          btn?.click();
         }
       }
 
-      // In Controls Modal: LB (4) / RB (5) or Left (14) / Right (15) cycle tabs
-      if (activeModal.id === 'modal-controls') {
-        const tabs: Array<'pc' | 'mobile' | 'gamepad'> = ['pc', 'mobile', 'gamepad'];
-        const currentActive = (activeModal.querySelector('.controls-tab-btn.active')?.getAttribute('data-tab') as 'pc' | 'mobile' | 'gamepad') || 'gamepad';
-        const currentIdx = tabs.indexOf(currentActive);
-
-        if (justPressed(4) || justPressed(14)) {
-          const nextTab = tabs[(currentIdx - 1 + tabs.length) % tabs.length];
-          this.switchControlsTab(nextTab);
-        } else if (justPressed(5) || justPressed(15)) {
-          const nextTab = tabs[(currentIdx + 1) % tabs.length];
-          this.switchControlsTab(nextTab);
-        }
-      }
-
-      // Update button cache & return early while modal is active
       for (let i = 0; i < gp.buttons.length; i++) {
         this.prevGamepadButtons[i] = isBtnDown(gp.buttons[i]);
       }
       return;
     }
 
-    // 2. Handle Title Screen
+    // 3. Handle Title Screen
     if (!this.screenTitleEl.classList.contains('hidden')) {
-      if (justPressed(0) || justPressed(9)) {
-        document.getElementById('btn-start')?.click();
-      } else if (justPressed(8)) {
-        this.showControlsModal();
-      }
+      this.handleGamepadTitleScreen(justPressed, stepUp, stepDown, stepLeft, stepRight);
       for (let i = 0; i < gp.buttons.length; i++) {
         this.prevGamepadButtons[i] = isBtnDown(gp.buttons[i]);
       }
       return;
     }
 
-    // 3. Handle Game Screen
+    // 4. Handle Game Screen
     if (this.screenGameEl.classList.contains('hidden') || this.isFinished) {
       for (let i = 0; i < gp.buttons.length; i++) {
         this.prevGamepadButtons[i] = isBtnDown(gp.buttons[i]);
@@ -2612,57 +2994,21 @@ class InudokuGame {
       return;
     }
 
-    // Check any active input to activate gamepad mode
-    const axisX = gp.axes[0] !== undefined ? gp.axes[0] : 0;
-    const axisY = gp.axes[1] !== undefined ? gp.axes[1] : 0;
-    const isDpadUp = isBtnDown(gp.buttons[12]);
-    const isDpadDown = isBtnDown(gp.buttons[13]);
-    const isDpadLeft = isBtnDown(gp.buttons[14]);
-    const isDpadRight = isBtnDown(gp.buttons[15]);
-    const isAnyBtnPressed = gp.buttons.some(b => isBtnDown(b));
-    const isStickMoved = Math.abs(axisX) > 0.45 || Math.abs(axisY) > 0.45;
-
-    if (isAnyBtnPressed || isStickMoved) {
-      this.inputDevice = 'gamepad';
-      document.body.classList.add('gamepad-active');
-      if (!this.focusedPos) {
-        this.setFocusedCell(0, 0, 'gamepad');
-      }
+    // In-Game Grid Cursor Navigation
+    if (!this.focusedPos) {
+      this.setFocusedCell(0, 0, 'gamepad');
     }
 
-    // D-Pad / Stick Movement
-    const up = isDpadUp || axisY < -0.48;
-    const down = isDpadDown || axisY > 0.48;
-    const left = isDpadLeft || axisX < -0.48;
-    const right = isDpadRight || axisX > 0.48;
-    const dirKey = `${up ? 'U' : ''}${down ? 'D' : ''}${left ? 'L' : ''}${right ? 'R' : ''}`;
-    const now = performance.now();
-
-    if (dirKey === '') {
-      this.gamepadDirActive = '';
-      this.gamepadNextRepeatTime = 0;
-    } else {
-      let shouldMove = false;
-      if (dirKey !== this.gamepadDirActive) {
-        shouldMove = true;
-        this.gamepadDirActive = dirKey;
-        this.gamepadNextRepeatTime = now + 230; // initial hold delay
-      } else if (now >= this.gamepadNextRepeatTime) {
-        shouldMove = true;
-        this.gamepadNextRepeatTime = now + 95; // repeat interval
-      }
-
-      if (shouldMove && this.focusedPos) {
-        const size = this.currentPuzzle.size;
-        let newR = this.focusedPos.r;
-        let newC = this.focusedPos.c;
-        if (up) newR = Math.max(0, newR - 1);
-        if (down) newR = Math.min(size - 1, newR + 1);
-        if (left) newC = Math.max(0, newC - 1);
-        if (right) newC = Math.min(size - 1, newC + 1);
-        if (newR !== this.focusedPos.r || newC !== this.focusedPos.c) {
-          this.setFocusedCell(newR, newC, 'gamepad');
-        }
+    if (navStep && this.focusedPos) {
+      const size = this.currentPuzzle.size;
+      let newR = this.focusedPos.r;
+      let newC = this.focusedPos.c;
+      if (rawUp) newR = Math.max(0, newR - 1);
+      if (rawDown) newR = Math.min(size - 1, newR + 1);
+      if (rawLeft) newC = Math.max(0, newC - 1);
+      if (rawRight) newC = Math.min(size - 1, newC + 1);
+      if (newR !== this.focusedPos.r || newC !== this.focusedPos.c) {
+        this.setFocusedCell(newR, newC, 'gamepad');
       }
     }
 
@@ -2707,6 +3053,14 @@ class InudokuGame {
     // Select (8): Controls Guide
     if (justPressed(8)) {
       this.showControlsModal();
+    }
+    // L3 (10): Return to Title screen
+    if (justPressed(10)) {
+      this.showTitleScreen();
+    }
+    // R3 (11): Reset Puzzle
+    if (justPressed(11)) {
+      document.getElementById('btn-reset')?.click();
     }
 
     // Store button states for next frame
