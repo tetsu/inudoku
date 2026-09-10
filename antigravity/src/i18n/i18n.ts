@@ -18,8 +18,11 @@ import { fr } from './locales/fr';
 import { es } from './locales/es';
 import { de } from './locales/de';
 import { ru } from './locales/ru';
+import { uk } from './locales/uk';
+import { pl } from './locales/pl';
+import { it } from './locales/it';
 
-export type SupportedLang = 'ja' | 'en' | 'zh' | 'fr' | 'es' | 'de' | 'ru';
+export type SupportedLang = 'ja' | 'en' | 'zh' | 'fr' | 'es' | 'de' | 'ru' | 'uk' | 'pl' | 'it';
 export type LangSetting = 'auto' | SupportedLang;
 
 export const DICTIONARY: Record<SupportedLang, Record<string, string>> = {
@@ -30,6 +33,9 @@ export const DICTIONARY: Record<SupportedLang, Record<string, string>> = {
   es,
   de,
   ru,
+  uk,
+  pl,
+  it,
 };
 
 class I18nManager {
@@ -56,6 +62,9 @@ class I18nManager {
         if (l.startsWith('es')) return 'es';
         if (l.startsWith('de')) return 'de';
         if (l.startsWith('ru')) return 'ru';
+        if (l.startsWith('uk')) return 'uk';
+        if (l.startsWith('pl')) return 'pl';
+        if (l.startsWith('it')) return 'it';
         if (l.startsWith('en')) return 'en';
       }
     }

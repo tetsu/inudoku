@@ -25,6 +25,9 @@ const LOCALE_MAP: Record<SupportedLang, string> = {
   es: 'es-ES',
   de: 'de-DE',
   ru: 'ru-RU',
+  uk: 'uk-UA',
+  pl: 'pl-PL',
+  it: 'it-IT',
 };
 
 class InudokuGame {
@@ -2900,7 +2903,9 @@ class InudokuGame {
     else if (this.settingsRowIdx === 1) {
       const langSelect = document.getElementById('setting-language') as HTMLSelectElement | null;
       if (langSelect && (left || right || action)) {
-        const langs: LangSetting[] = ['auto', 'ja', 'en', 'zh', 'fr', 'es', 'de', 'ru'];
+        const langs: LangSetting[] = Array.from(langSelect.options).map(
+          (opt) => opt.value as LangSetting
+        );
         let curIdx = langs.indexOf(langSelect.value as LangSetting);
         if (curIdx === -1) curIdx = 0;
         const nextIdx = left ? (curIdx - 1 + langs.length) % langs.length : (curIdx + 1) % langs.length;
