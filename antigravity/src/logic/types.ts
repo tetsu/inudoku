@@ -41,6 +41,8 @@ export interface MoveAction {
 export interface GameSettings {
   autoMark: boolean; // Auto-cross cells around placed dog
   soundEnabled: boolean;
+  bgmEnabled: boolean; // Smooth-jazz background music
+  bgmVolume: number; // 0..1, independent of the sound-effect toggle
   vibrationEnabled: boolean;
   shibaType: 'aka' | 'kuro' | 'shiro'; // 赤柴, 黒柴, 白柴
   highContrast: boolean;

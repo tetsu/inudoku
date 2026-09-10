@@ -27,6 +27,15 @@ export function getLocalDateString(d: Date = new Date()): string {
 }
 
 /**
+ * Coerces a persisted volume into 0..1, falling back for missing or corrupt values.
+ */
+function clampVolume(value: unknown, fallback: number): number {
+  const num = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return Math.min(1, Math.max(0, num));
+}
+
+/**
  * Storage keys with automatic backward-compatibility migration from legacy "inudoku_*" keys.
  */
 export const STORAGE_KEYS = {
@@ -152,6 +161,8 @@ export class StorageManager {
         ...parsed,
         autoMark: parsed.autoMark !== undefined ? Boolean(parsed.autoMark) : true,
         vibrationEnabled: parsed.vibrationEnabled !== undefined ? Boolean(parsed.vibrationEnabled) : true,
+        bgmEnabled: parsed.bgmEnabled !== undefined ? Boolean(parsed.bgmEnabled) : defaults.bgmEnabled,
+        bgmVolume: clampVolume(parsed.bgmVolume, defaults.bgmVolume),
         userName: typeof parsed.userName === 'string' ? parsed.userName : (defaults.userName || ''),
       };
     } catch {

@@ -2,27 +2,15 @@
  * Web Audio API based procedural sound effects for Inudoku.
  * Zero external asset dependencies, instant playback, zero latency.
  */
-class SoundEngine {
-  private ctx: AudioContext | null = null;
-  private enabled: boolean = true;
+import { getSharedAudioContext } from './context';
 
-  constructor() {
-    // AudioContext will be initialized on first user interaction
-  }
+class SoundEngine {
+  private enabled: boolean = true;
 
   private getContext(): AudioContext | null {
     if (!this.enabled) return null;
-    if (!this.ctx) {
-      const AudioContextClass =
-        window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (AudioContextClass) {
-        this.ctx = new AudioContextClass();
-      }
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
-    }
-    return this.ctx;
+    // Shared with the BGM engine; created lazily on first real playback.
+    return getSharedAudioContext();
   }
 
   public setEnabled(enabled: boolean) {

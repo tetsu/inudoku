@@ -718,6 +718,38 @@
 
           <div class="setting-item">
             <div class="setting-label-group">
+              <span class="setting-name" data-i18n="set.bgm.name">🎷 BGM (スムースジャズ)</span>
+              <span class="setting-desc" data-i18n="set.bgm.desc">ゆったりしたジャズ風のBGMを再生</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="setting-bgm" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-label-group">
+              <span class="setting-name" data-i18n="set.bgmvol.name">🎚️ BGM音量</span>
+              <span class="setting-desc" data-i18n="set.bgmvol.desc">BGMの大きさを調整します</span>
+            </div>
+            <div class="volume-control">
+              <input
+                type="range"
+                id="setting-bgm-volume"
+                class="range-styled"
+                min="0"
+                max="100"
+                step="1"
+                value="35"
+                aria-label="BGM volume"
+                data-i18n-title="set.bgmvol.name"
+              />
+              <span id="setting-bgm-volume-value" class="volume-value">35%</span>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-label-group">
               <span class="setting-name" data-i18n="set.vibration.name">📳 振動 (バイブレーション)</span>
               <span class="setting-desc" data-i18n="set.vibration.desc">マーク配置時の触覚フィードバック（対応端末のみ）</span>
             </div>

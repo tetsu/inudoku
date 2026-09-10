@@ -1261,6 +1261,72 @@ button {
   background: #FFF7ED;
 }
 
+/* BGM Volume Slider */
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.volume-value {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #92400E;
+  min-width: 38px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.range-styled {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 120px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: #EBD9C0;
+  outline: none;
+  cursor: pointer;
+}
+
+.range-styled:focus-visible {
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+}
+
+.range-styled::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #E78B3F;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(120, 53, 15, 0.35);
+  cursor: pointer;
+  transition: transform var(--transition-snappy);
+}
+
+.range-styled::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+}
+
+/* Firefox needs its own thumb/track rules; it cannot share the WebKit ones. */
+.range-styled::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #E78B3F;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(120, 53, 15, 0.35);
+  cursor: pointer;
+}
+
+.range-styled::-moz-range-track {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: #EBD9C0;
+}
+
 /* Toggle Switch */
 .toggle-switch {
   position: relative;

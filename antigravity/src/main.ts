@@ -12,6 +12,7 @@ import { getAutoCrossCells, validateGrid } from './logic/validator';
 import { getNextHint } from './logic/solver';
 import { generateUniquePuzzle } from './logic/generator';
 import { sounds } from './audio/sound';
+import { bgm } from './audio/bgm';
 import { getCrossSvg, getQuestionSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
 import { calculateRankUp, getDailyLeaderboard, PodiumEntry, simulateRivalPoints } from './logic/leaderboard';
 import { storage } from './storage/storage';
@@ -81,6 +82,8 @@ class InudokuGame {
   private settings: GameSettings = {
     autoMark: true,
     soundEnabled: true,
+    bgmEnabled: true,
+    bgmVolume: 0.35,
     vibrationEnabled: true,
     shibaType: 'aka',
     highContrast: false,
@@ -140,11 +143,41 @@ class InudokuGame {
     this.updateHintBadge();
     this.checkAndShowDailyReward();
     this.initGamepadSupport();
+    this.initBgm();
+  }
+
+  /**
+   * Browsers refuse to start audio until the user has interacted with the page,
+   * so the music waits for the first tap/click/keypress. Also pauses while the
+   * tab is hidden - both to be polite and because background tabs throttle the
+   * scheduler's timer.
+   */
+  private initBgm() {
+    const startOnce = () => {
+      if (this.settings.bgmEnabled) {
+        bgm.start();
+      }
+      window.removeEventListener('pointerdown', startOnce);
+      window.removeEventListener('keydown', startOnce);
+    };
+    window.addEventListener('pointerdown', startOnce);
+    window.addEventListener('keydown', startOnce);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        bgm.stop();
+      } else if (this.settings.bgmEnabled) {
+        bgm.start();
+      }
+    });
   }
 
   private loadSavedData() {
     this.settings = storage.getSettings(this.settings);
     sounds.setEnabled(this.settings.soundEnabled);
+    // Volume/enabled only; playback waits for the first user gesture below.
+    bgm.setVolume(this.settings.bgmVolume);
+    bgm.setEnabled(this.settings.bgmEnabled);
     i18n.setSetting(this.settings.language || 'auto');
     i18n.applyTranslations();
     this.updatePlayerNameDisplays();
@@ -239,6 +272,8 @@ class InudokuGame {
   private saveSettings() {
     storage.saveSettings(this.settings);
     sounds.setEnabled(this.settings.soundEnabled);
+    bgm.setVolume(this.settings.bgmVolume);
+    bgm.setEnabled(this.settings.bgmEnabled);
     this.updateAutomarkBadge();
   }
 
@@ -2444,6 +2479,13 @@ class InudokuGame {
     }
   }
 
+  private updateBgmVolumeLabel() {
+    const label = document.getElementById('setting-bgm-volume-value');
+    if (label) {
+      label.textContent = `${Math.round(this.settings.bgmVolume * 100)}%`;
+    }
+  }
+
   private setupSettingsModal() {
     const usernameInput = document.getElementById('setting-username') as HTMLInputElement | null;
     if (usernameInput) {
@@ -2493,6 +2535,30 @@ class InudokuGame {
       this.settings.soundEnabled = soundToggle.checked;
       this.saveSettings();
     });
+
+    const bgmToggle = document.getElementById('setting-bgm') as HTMLInputElement;
+    bgmToggle?.addEventListener('change', () => {
+      this.settings.bgmEnabled = bgmToggle.checked;
+      this.saveSettings();
+      // Flipping the switch is itself a user gesture, so it is safe to start here.
+      if (this.settings.bgmEnabled) {
+        bgm.start();
+      }
+    });
+
+    const bgmVolumeSlider = document.getElementById('setting-bgm-volume') as HTMLInputElement;
+    if (bgmVolumeSlider) {
+      // "input" fires continuously while dragging: update the audio and the label
+      // live, but hold the localStorage write until the drag settles on "change".
+      bgmVolumeSlider.addEventListener('input', () => {
+        this.settings.bgmVolume = Number(bgmVolumeSlider.value) / 100;
+        bgm.setVolume(this.settings.bgmVolume);
+        this.updateBgmVolumeLabel();
+      });
+      bgmVolumeSlider.addEventListener('change', () => {
+        this.saveSettings();
+      });
+    }
 
     const vibrationToggle = document.getElementById('setting-vibration') as HTMLInputElement;
     vibrationToggle?.addEventListener('change', () => {
@@ -2931,29 +2997,49 @@ class InudokuGame {
         toggle.dispatchEvent(new Event('change'));
       }
     }
-    // Row 4: Vibration
+    // Row 4: BGM
     else if (this.settingsRowIdx === 4) {
+      const toggle = document.getElementById('setting-bgm') as HTMLInputElement | null;
+      if (toggle && (left || right || action)) {
+        toggle.checked = !toggle.checked;
+        toggle.dispatchEvent(new Event('change'));
+      }
+    }
+    // Row 5: BGM Volume
+    else if (this.settingsRowIdx === 5) {
+      const slider = document.getElementById('setting-bgm-volume') as HTMLInputElement | null;
+      if (slider && (left || right)) {
+        const current = Number(slider.value);
+        const next = Math.min(100, Math.max(0, current + (left ? -5 : 5)));
+        slider.value = String(next);
+        // "input" drives the audio + label, "change" persists it.
+        slider.dispatchEvent(new Event('input'));
+        slider.dispatchEvent(new Event('change'));
+      }
+    }
+    // Row 6: Vibration
+    else if (this.settingsRowIdx === 6) {
       const toggle = document.getElementById('setting-vibration') as HTMLInputElement | null;
       if (toggle && (left || right || action)) {
         toggle.checked = !toggle.checked;
         toggle.dispatchEvent(new Event('change'));
       }
     }
-    // Row 5: AutoMark
-    else if (this.settingsRowIdx === 5) {
+    // Row 7: AutoMark
+    else if (this.settingsRowIdx === 7) {
       const toggle = document.getElementById('setting-automark') as HTMLInputElement | null;
       if (toggle && (left || right || action)) {
         toggle.checked = !toggle.checked;
         toggle.dispatchEvent(new Event('change'));
       }
     }
-    // Row 6: Reset Progress
-    else if (this.settingsRowIdx === 6) {
+    // Row 8: Reset Progress
+    else if (this.settingsRowIdx === 8) {
       if (action) {
         document.getElementById('btn-reset-progress')?.click();
       }
     }
-    // Row 7: Save & Close button
+    // Last row: Save & Close button
     else if (this.settingsRowIdx === items.length) {
       if (action) {
         saveBtn?.click();
@@ -3366,6 +3452,13 @@ class InudokuGame {
 
     const soundToggle = document.getElementById('setting-sound') as HTMLInputElement;
     if (soundToggle) soundToggle.checked = this.settings.soundEnabled;
+
+    const bgmToggle = document.getElementById('setting-bgm') as HTMLInputElement;
+    if (bgmToggle) bgmToggle.checked = this.settings.bgmEnabled;
+
+    const bgmVolumeSlider = document.getElementById('setting-bgm-volume') as HTMLInputElement;
+    if (bgmVolumeSlider) bgmVolumeSlider.value = String(Math.round(this.settings.bgmVolume * 100));
+    this.updateBgmVolumeLabel();
 
     const vibrationToggle = document.getElementById('setting-vibration') as HTMLInputElement;
     if (vibrationToggle) vibrationToggle.checked = this.settings.vibrationEnabled;
