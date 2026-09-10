@@ -235,6 +235,7 @@ button {
 }
 
 .board-outer-frame {
+  position: relative; /* Positioning context for the hint/error bubble */
   width: 100%;
   max-width: min(94vw, calc(100dvh - 275px), 430px);
   aspect-ratio: 1 / 1;
@@ -422,9 +423,12 @@ button {
 /* Hint Bubble (Toast style) */
 .hint-bubble {
   position: absolute;
-  top: 10px;
-  left: 14px;
-  right: 14px;
+  /* Sits directly above the grid and grows upward, so a mistake message never
+     covers the cells the player is looking at. Long text expands over the
+     reference cards above the board rather than onto the board itself. */
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
   background: #FFFFFF;
   border: 2px solid #F59E0B;
   border-radius: var(--radius-md);

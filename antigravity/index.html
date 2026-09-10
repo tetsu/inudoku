@@ -164,11 +164,12 @@
             <div id="grid-board" class="grid-board" role="grid" aria-label="パズル盤面">
               <!-- Grid cells generated dynamically with clean white gaps -->
             </div>
-          </div>
-          <div id="hint-bubble" class="hint-bubble hidden">
-            <span class="hint-shiba-icon">🐕</span>
-            <span id="hint-bubble-text" class="hint-text"></span>
-            <button id="btn-close-hint" class="hint-close">✕</button>
+            <!-- Anchored to the board frame so it can sit above the grid, never over it -->
+            <div id="hint-bubble" class="hint-bubble hidden">
+              <span class="hint-shiba-icon">🐕</span>
+              <span id="hint-bubble-text" class="hint-text"></span>
+              <button id="btn-close-hint" class="hint-close">✕</button>
+            </div>
           </div>
         </main>
 
