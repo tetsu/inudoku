@@ -201,6 +201,9 @@ export const DICTIONARY: Record<SupportedLang, Record<string, string>> = {
 
     // Settings Modal
     'set.modal.title': '⚙️ ゲーム設定',
+    'set.username.name': '👤 ユーザーネーム',
+    'set.username.desc': 'ランキング画面に表示されるあなたの名前',
+    'set.username.placeholder': 'あなた (柴犬マスター)',
     'set.lang.name': '🌐 言語 (Language)',
     'set.lang.desc': '表示言語を切り替えます',
     'set.lang.auto': '自動 (Auto: 日本語)',
@@ -435,6 +438,9 @@ export const DICTIONARY: Record<SupportedLang, Record<string, string>> = {
 
     // Settings Modal
     'set.modal.title': '⚙️ Game Settings',
+    'set.username.name': '👤 Username',
+    'set.username.desc': 'Your display name shown on ranking screens',
+    'set.username.placeholder': 'You (Shiba Master)',
     'set.lang.name': '🌐 Language',
     'set.lang.desc': 'Change the display language',
     'set.lang.auto': 'Auto (System: English)',

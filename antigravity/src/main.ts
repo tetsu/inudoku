@@ -72,7 +72,26 @@ class InudokuGame {
     shibaType: 'aka',
     highContrast: false,
     language: 'auto',
+    userName: '',
   };
+
+  public getPlayerName(): string {
+    const name = this.settings.userName?.trim();
+    return name && name.length > 0 ? name : t('lead.user.name');
+  }
+
+  public updatePlayerNameDisplays(): void {
+    const name = this.getPlayerName();
+    const myUserNameEl = document.getElementById('my-user-name');
+    if (myUserNameEl) {
+      if (this.settings.userName && this.settings.userName.trim().length > 0) {
+        myUserNameEl.removeAttribute('data-i18n');
+      } else {
+        myUserNameEl.setAttribute('data-i18n', 'lead.user.name');
+      }
+      myUserNameEl.textContent = name;
+    }
+  }
 
   // Tutorial / Help Modal
   private currentTutorialSlide: number = 0;
@@ -115,6 +134,7 @@ class InudokuGame {
     sounds.setEnabled(this.settings.soundEnabled);
     i18n.setSetting(this.settings.language || 'auto');
     i18n.applyTranslations();
+    this.updatePlayerNameDisplays();
 
     this.unlockedLevel = storage.getUnlockedLevel();
     this.completedLevels = storage.getCompletedLevels();
@@ -1115,7 +1135,7 @@ class InudokuGame {
 
   private showRankUpScreen(earnedPoints: number) {
     const prevPoints = this.tournamentPoints;
-    const rankUpData = calculateRankUp(prevPoints, earnedPoints);
+    const rankUpData = calculateRankUp(prevPoints, earnedPoints, this.getPlayerName());
     this.tournamentPoints = rankUpData.newPoints;
     this.saveProgression();
 
@@ -1473,7 +1493,8 @@ class InudokuGame {
   }
 
   public showLeaderboard() {
-    const leaderboard = getDailyLeaderboard(this.dailyBestScore, this.dailyBestTimeSecs);
+    const leaderboard = getDailyLeaderboard(this.dailyBestScore, this.dailyBestTimeSecs, this.getPlayerName());
+    this.updatePlayerNameDisplays();
     const listEl = document.getElementById('leaderboard-list');
     const myRankEl = document.getElementById('my-rank-badge');
     const mySummaryEl = document.getElementById('my-stats-summary');
@@ -2415,6 +2436,20 @@ class InudokuGame {
   }
 
   private setupSettingsModal() {
+    const usernameInput = document.getElementById('setting-username') as HTMLInputElement | null;
+    if (usernameInput) {
+      usernameInput.addEventListener('input', () => {
+        this.settings.userName = usernameInput.value;
+        this.saveSettings();
+        this.updatePlayerNameDisplays();
+      });
+      usernameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          usernameInput.blur();
+        }
+      });
+    }
+
     const langSelect = document.getElementById('setting-language') as HTMLSelectElement;
     langSelect?.addEventListener('change', () => {
       const selected = (langSelect.value as 'auto' | 'ja' | 'en') || 'auto';
@@ -2422,6 +2457,7 @@ class InudokuGame {
       i18n.setSetting(selected);
       i18n.applyTranslations();
       this.saveSettings();
+      this.updatePlayerNameDisplays();
       this.renderTitleScreen();
       if (this.diffValEl && this.currentPuzzle) {
         this.diffValEl.textContent = this.getDifficultyLabel(this.currentPuzzle.difficulty, this.currentPuzzle.size);
@@ -2482,7 +2518,9 @@ class InudokuGame {
         this.hintCount = 5;
         this.settings.autoMark = true;
         this.settings.vibrationEnabled = true;
+        this.settings.userName = '';
         this.saveSettings();
+        this.updatePlayerNameDisplays();
         this.updateHintBadge();
         document.getElementById('modal-settings')?.classList.add('hidden');
         this.showTitleScreen();
@@ -2845,8 +2883,15 @@ class InudokuGame {
       if (isFocused) saveBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
 
-    // Row 0: Language
+    // Row 0: Username
     if (this.settingsRowIdx === 0) {
+      const usernameInput = document.getElementById('setting-username') as HTMLInputElement | null;
+      if (usernameInput && action) {
+        usernameInput.focus();
+      }
+    }
+    // Row 1: Language
+    else if (this.settingsRowIdx === 1) {
       const langSelect = document.getElementById('setting-language') as HTMLSelectElement | null;
       if (langSelect && (left || right || action)) {
         const langs = ['auto', 'ja', 'en'];
@@ -2857,8 +2902,8 @@ class InudokuGame {
         langSelect.dispatchEvent(new Event('change'));
       }
     }
-    // Row 1: Shiba Type
-    else if (this.settingsRowIdx === 1) {
+    // Row 2: Shiba Type
+    else if (this.settingsRowIdx === 2) {
       const shibaBtns = Array.from(modal.querySelectorAll('.shiba-choice-btn')) as HTMLElement[];
       if (shibaBtns.length > 0 && (left || right || action)) {
         let curIdx = shibaBtns.findIndex(b => b.classList.contains('active'));
@@ -2867,37 +2912,37 @@ class InudokuGame {
         shibaBtns[nextIdx]?.click();
       }
     }
-    // Row 2: Sound
-    else if (this.settingsRowIdx === 2) {
+    // Row 3: Sound
+    else if (this.settingsRowIdx === 3) {
       const toggle = document.getElementById('setting-sound') as HTMLInputElement | null;
       if (toggle && (left || right || action)) {
         toggle.checked = !toggle.checked;
         toggle.dispatchEvent(new Event('change'));
       }
     }
-    // Row 3: Vibration
-    else if (this.settingsRowIdx === 3) {
+    // Row 4: Vibration
+    else if (this.settingsRowIdx === 4) {
       const toggle = document.getElementById('setting-vibration') as HTMLInputElement | null;
       if (toggle && (left || right || action)) {
         toggle.checked = !toggle.checked;
         toggle.dispatchEvent(new Event('change'));
       }
     }
-    // Row 4: AutoMark
-    else if (this.settingsRowIdx === 4) {
+    // Row 5: AutoMark
+    else if (this.settingsRowIdx === 5) {
       const toggle = document.getElementById('setting-automark') as HTMLInputElement | null;
       if (toggle && (left || right || action)) {
         toggle.checked = !toggle.checked;
         toggle.dispatchEvent(new Event('change'));
       }
     }
-    // Row 5: Reset Progress
-    else if (this.settingsRowIdx === 5) {
+    // Row 6: Reset Progress
+    else if (this.settingsRowIdx === 6) {
       if (action) {
         document.getElementById('btn-reset-progress')?.click();
       }
     }
-    // Row 6: Save & Close button
+    // Row 7: Save & Close button
     else if (this.settingsRowIdx === items.length) {
       if (action) {
         saveBtn?.click();
@@ -3290,6 +3335,11 @@ class InudokuGame {
   }
 
   private syncSettingsUI() {
+    const usernameInput = document.getElementById('setting-username') as HTMLInputElement;
+    if (usernameInput) {
+      usernameInput.value = this.settings.userName || '';
+    }
+
     const langSelect = document.getElementById('setting-language') as HTMLSelectElement;
     if (langSelect) {
       langSelect.value = this.settings.language || 'auto';

@@ -645,6 +645,24 @@
           <button class="modal-close" data-close-modal="modal-settings">✕</button>
         </div>
         <div class="modal-body settings-list">
+          <!-- Username Setting -->
+          <div class="setting-item">
+            <div class="setting-label-group">
+              <span class="setting-name" data-i18n="set.username.name">👤 ユーザーネーム</span>
+              <span class="setting-desc" data-i18n="set.username.desc">ランキング画面に表示されるあなたの名前</span>
+            </div>
+            <div class="username-input-wrap">
+              <input
+                type="text"
+                id="setting-username"
+                class="input-styled"
+                maxlength="16"
+                data-i18n-placeholder="set.username.placeholder"
+                placeholder="あなた (柴犬マスター)"
+              />
+            </div>
+          </div>
+
           <!-- Language Setting -->
           <div class="setting-item">
             <div class="setting-label-group">

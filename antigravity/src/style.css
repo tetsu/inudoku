@@ -1184,6 +1184,39 @@ button {
   color: #92400E;
 }
 
+.username-input-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.input-styled {
+  background: white;
+  border: 1.5px solid #D97706;
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #78350F;
+  outline: none;
+  width: 175px;
+  max-width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  transition: border-color var(--transition-snappy), box-shadow var(--transition-snappy);
+}
+
+.input-styled::placeholder {
+  color: #D97706;
+  opacity: 0.55;
+  font-weight: 500;
+}
+
+.input-styled:focus {
+  border-color: #F59E0B;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+}
+
 /* Settings List */
 .settings-list {
   gap: 20px;

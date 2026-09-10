@@ -152,6 +152,7 @@ export class StorageManager {
         ...parsed,
         autoMark: parsed.autoMark !== undefined ? Boolean(parsed.autoMark) : true,
         vibrationEnabled: parsed.vibrationEnabled !== undefined ? Boolean(parsed.vibrationEnabled) : true,
+        userName: typeof parsed.userName === 'string' ? parsed.userName : (defaults.userName || ''),
       };
     } catch {
       return defaults;

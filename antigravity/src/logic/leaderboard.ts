@@ -197,7 +197,11 @@ export function simulateRivalPoints(): void {
  * Calculates rank and surrounding competitors dynamically based on user's real points.
  * Fully supports 1st place Champion status and defense.
  */
-export function calculateRankUp(prevUserPoints: number, earnedPoints: number): RankUpResult {
+export function calculateRankUp(
+  prevUserPoints: number,
+  earnedPoints: number,
+  userName: string = 'あなた'
+): RankUpResult {
   const newUserPoints = prevUserPoints + earnedPoints;
   const rawCompetitors = getDailyTournamentCompetitors();
 
@@ -231,7 +235,7 @@ export function calculateRankUp(prevUserPoints: number, earnedPoints: number): R
       },
       {
         rank: 1,
-        name: 'あなた 👑',
+        name: `${userName} 👑`,
         avatar: '🐕',
         avatarBg: '#FEF3C7',
         points: newUserPoints,
@@ -252,7 +256,7 @@ export function calculateRankUp(prevUserPoints: number, earnedPoints: number): R
     top3 = [
       {
         rank: 2,
-        name: 'あなた',
+        name: userName,
         avatar: '🐕',
         avatarBg: '#FEF3C7',
         points: newUserPoints,
@@ -297,7 +301,7 @@ export function calculateRankUp(prevUserPoints: number, earnedPoints: number): R
       },
       {
         rank: 3,
-        name: 'あなた',
+        name: userName,
         avatar: '🐕',
         avatarBg: '#FEF3C7',
         points: newUserPoints,
@@ -345,7 +349,7 @@ export function calculateRankUp(prevUserPoints: number, earnedPoints: number): R
 
     displayList.push({
       rank: 1,
-      name: 'あなた (👑 チャンピオン防衛中！)',
+      name: `${userName} (👑 チャンピオン防衛中！)`,
       avatar: '🐕',
       avatarBg: '#FEF3C7',
       points: newUserPoints,
@@ -422,7 +426,7 @@ export function calculateRankUp(prevUserPoints: number, earnedPoints: number): R
 
   displayList.push({
     rank: prevRank,
-    name: 'あなた (柴犬マスター)',
+    name: userName,
     avatar: '🐕',
     avatarBg: '#FED7AA',
     points: prevUserPoints,
@@ -448,7 +452,11 @@ export function calculateRankUp(prevUserPoints: number, earnedPoints: number): R
 /**
  * Generate daily leaderboard for the given date (backward compatibility).
  */
-export function getDailyLeaderboard(userScore: number = 0, userTimeSecs: number = 0): LeaderboardEntry[] {
+export function getDailyLeaderboard(
+  userScore: number = 0,
+  userTimeSecs: number = 0,
+  userName: string = 'あなた (柴犬マスター)'
+): LeaderboardEntry[] {
   const dateSeed = getDateSeed();
   const rng = mulberry32(dateSeed);
 
@@ -476,7 +484,7 @@ export function getDailyLeaderboard(userScore: number = 0, userTimeSecs: number 
 
   if (userScore > 0) {
     allEntries.push({
-      name: 'あなた (柴犬マスター)',
+      name: userName,
       avatar: '🐕',
       score: userScore,
       timeSecs: userTimeSecs,
