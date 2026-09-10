@@ -14,7 +14,7 @@ export const ru: Record<string, string> = {
   'title.btn.controls': 'Управление',
   'title.btn.rules': 'Правила',
   'title.btn.settings': 'Настройки',
-  'title.footer.cleared': 'Пройдено: {completed} / {total}',
+  'title.footer.cleared': 'Пройдено: {completed}',
 
   // Gameplay Header & Subbar
   'game.header.home': 'В главное меню',

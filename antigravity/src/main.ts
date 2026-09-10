@@ -338,7 +338,7 @@ class InudokuGame {
     const progressEl = document.getElementById('title-progress-text');
     if (progressEl) {
       const completedCount = Object.keys(this.completedLevels).length;
-      progressEl.textContent = t('title.footer.cleared', { completed: completedCount, total: 15 });
+      progressEl.textContent = t('title.footer.cleared', { completed: completedCount });
     }
   }
 

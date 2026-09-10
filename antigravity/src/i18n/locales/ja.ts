@@ -14,7 +14,7 @@ export const ja: Record<string, string> = {
   'title.btn.controls': '操作ガイド',
   'title.btn.rules': 'ルール',
   'title.btn.settings': '設定',
-  'title.footer.cleared': 'クリア達成: {completed} / {total}',
+  'title.footer.cleared': 'クリア達成: {completed}',
 
   // Gameplay Header & Subbar
   'game.header.home': 'タイトルへ戻る',

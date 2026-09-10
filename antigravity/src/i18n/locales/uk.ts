@@ -14,7 +14,7 @@ export const uk: Record<string, string> = {
   'title.btn.controls': 'Керування',
   'title.btn.rules': 'Правила',
   'title.btn.settings': 'Налаштування',
-  'title.footer.cleared': 'Пройдено: {completed} / {total}',
+  'title.footer.cleared': 'Пройдено: {completed}',
 
   // Gameplay Header & Subbar
   'game.header.home': 'На головну',

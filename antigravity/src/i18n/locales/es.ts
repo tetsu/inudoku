@@ -14,7 +14,7 @@ export const es: Record<string, string> = {
   'title.btn.controls': 'Controles',
   'title.btn.rules': 'Reglas',
   'title.btn.settings': 'Ajustes',
-  'title.footer.cleared': 'Completado: {completed} / {total}',
+  'title.footer.cleared': 'Completado: {completed}',
 
   // Gameplay Header & Subbar
   'game.header.home': 'Volver al título',

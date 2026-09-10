@@ -14,7 +14,7 @@ export const zh: Record<string, string> = {
   'title.btn.controls': '操作指南',
   'title.btn.rules': '游戏规则',
   'title.btn.settings': '设置',
-  'title.footer.cleared': '通关成就: {completed} / {total}',
+  'title.footer.cleared': '通关成就: {completed}',
 
   // Gameplay Header & Subbar
   'game.header.home': '返回标题',
