@@ -15,7 +15,17 @@ import { sounds } from './audio/sound';
 import { getCrossSvg, getQuestionSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
 import { calculateRankUp, getDailyLeaderboard, PodiumEntry, simulateRivalPoints } from './logic/leaderboard';
 import { storage } from './storage/storage';
-import { i18n, t } from './i18n/i18n';
+import { i18n, t, SupportedLang, LangSetting } from './i18n/i18n';
+
+const LOCALE_MAP: Record<SupportedLang, string> = {
+  ja: 'ja-JP',
+  en: 'en-US',
+  zh: 'zh-CN',
+  fr: 'fr-FR',
+  es: 'es-ES',
+  de: 'de-DE',
+  ru: 'ru-RU',
+};
 
 class InudokuGame {
   private currentPuzzle: PuzzleDefinition = getStageByLevel(1);
@@ -314,10 +324,11 @@ class InudokuGame {
     const todayDateEl = document.getElementById('title-today-date');
     if (todayDateEl) {
       const now = new Date();
-      if (i18n.getResolvedLang() === 'ja') {
+      const lang = i18n.getResolvedLang();
+      if (lang === 'ja') {
         todayDateEl.textContent = `${now.getFullYear()}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')}`;
       } else {
-        todayDateEl.textContent = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        todayDateEl.textContent = now.toLocaleDateString(LOCALE_MAP[lang] || 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       }
     }
 
@@ -1502,10 +1513,11 @@ class InudokuGame {
 
     const now = new Date();
     if (dateEl) {
-      if (i18n.getResolvedLang() === 'ja') {
+      const lang = i18n.getResolvedLang();
+      if (lang === 'ja') {
         dateEl.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
       } else {
-        dateEl.textContent = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        dateEl.textContent = now.toLocaleDateString(LOCALE_MAP[lang] || 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       }
     }
 
@@ -1514,15 +1526,9 @@ class InudokuGame {
       myRankEl.textContent = userEntry ? `#${userEntry.rank}` : '# -';
     }
     if (mySummaryEl) {
-      if (i18n.getResolvedLang() === 'ja') {
-        mySummaryEl.textContent = userEntry
-          ? `スコア: ${userEntry.score} 点 (${userEntry.time})`
-          : '今日のスコア: まだ未挑戦';
-      } else {
-        mySummaryEl.textContent = userEntry
-          ? `Score: ${userEntry.score} pts (${userEntry.time})`
-          : "Today's score: Not played yet";
-      }
+      mySummaryEl.textContent = userEntry
+        ? t('lead.user.score', { score: userEntry.score, time: userEntry.time })
+        : t('lead.user.notplayed');
     }
 
     const userAvatarEl = document.getElementById('my-user-shiba-avatar');
@@ -2452,7 +2458,7 @@ class InudokuGame {
 
     const langSelect = document.getElementById('setting-language') as HTMLSelectElement;
     langSelect?.addEventListener('change', () => {
-      const selected = (langSelect.value as 'auto' | 'ja' | 'en') || 'auto';
+      const selected = (langSelect.value as LangSetting) || 'auto';
       this.settings.language = selected;
       i18n.setSetting(selected);
       i18n.applyTranslations();
@@ -2894,8 +2900,8 @@ class InudokuGame {
     else if (this.settingsRowIdx === 1) {
       const langSelect = document.getElementById('setting-language') as HTMLSelectElement | null;
       if (langSelect && (left || right || action)) {
-        const langs = ['auto', 'ja', 'en'];
-        let curIdx = langs.indexOf(langSelect.value);
+        const langs: LangSetting[] = ['auto', 'ja', 'en', 'zh', 'fr', 'es', 'de', 'ru'];
+        let curIdx = langs.indexOf(langSelect.value as LangSetting);
         if (curIdx === -1) curIdx = 0;
         const nextIdx = left ? (curIdx - 1 + langs.length) % langs.length : (curIdx + 1) % langs.length;
         langSelect.value = langs[nextIdx];
