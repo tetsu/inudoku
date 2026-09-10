@@ -50,7 +50,7 @@ const SHIBA_NAMES = [
   '茶々丸',
 ];
 
-const AVATARS = ['🐕', '🐕‍🦺', '🤍', '🐶', '🐾', '🌾', '🦊', '🦴'];
+const AVATARS = ['🦊', '🐱', '🐼', '🦁', '🐊', '🐻', '🐰', '🐨', '🐯'];
 
 export interface PodiumEntry {
   rank: number;
@@ -59,6 +59,7 @@ export interface PodiumEntry {
   avatarBg: string;
   points: number;
   cylinderColor: string;
+  isUser?: boolean;
 }
 
 export interface TournamentEntry {
@@ -84,7 +85,7 @@ export interface RankUpResult {
 
 const RIVAL_PROFILES = [
   { name: 'RJEA3M', avatar: '🦁', bg: '#FED7AA' },
-  { name: 'VBB7VC', avatar: '🐶', bg: '#BFDBFE' },
+  { name: 'VBB7VC', avatar: '🦊', bg: '#BFDBFE' },
   { name: 'xenW', avatar: '🐊', bg: '#BBF7D0' },
   { name: 'B94N36', avatar: '🐊', bg: '#DCFCE7' },
   { name: 'Tomoko', avatar: '🐼', bg: '#E2E8F0' },
@@ -121,7 +122,7 @@ export function getDailyTournamentCompetitors(): TournamentEntry[] {
 
   // Top 3 fixed baseline
   competitors.push({ rank: 1, name: 'RJEA3M', avatar: '🦁', avatarBg: '#FED7AA', points: 30 + Math.floor(rng() * 3) });
-  competitors.push({ rank: 2, name: 'VBB7VC', avatar: '🐶', avatarBg: '#BFDBFE', points: 27 + Math.floor(rng() * 2) });
+  competitors.push({ rank: 2, name: 'VBB7VC', avatar: '🦊', avatarBg: '#BFDBFE', points: 27 + Math.floor(rng() * 2) });
   competitors.push({ rank: 3, name: 'xenW', avatar: '🐊', avatarBg: '#BBF7D0', points: 25 + Math.floor(rng() * 2) });
 
   // Ranks 4 to 50 smoothly distributed from 24 pts down to 0 pts
@@ -231,15 +232,16 @@ export function calculateRankUp(prevUserPoints: number, earnedPoints: number): R
       {
         rank: 1,
         name: 'あなた 👑',
-        avatar: '🐶',
+        avatar: '🐕',
         avatarBg: '#FEF3C7',
         points: newUserPoints,
         cylinderColor: 'var(--podium-gold)',
+        isUser: true,
       },
       {
         rank: 3,
         name: rawCompetitors[1]?.name || 'VBB7VC',
-        avatar: rawCompetitors[1]?.avatar || '🐶',
+        avatar: rawCompetitors[1]?.avatar || '🦊',
         avatarBg: rawCompetitors[1]?.avatarBg || '#BFDBFE',
         points: rawCompetitors[1]?.points || 27,
         cylinderColor: 'var(--podium-bronze)',
@@ -251,10 +253,11 @@ export function calculateRankUp(prevUserPoints: number, earnedPoints: number): R
       {
         rank: 2,
         name: 'あなた',
-        avatar: '🐶',
+        avatar: '🐕',
         avatarBg: '#FEF3C7',
         points: newUserPoints,
         cylinderColor: 'var(--podium-silver)',
+        isUser: true,
       },
       {
         rank: 1,
@@ -267,10 +270,39 @@ export function calculateRankUp(prevUserPoints: number, earnedPoints: number): R
       {
         rank: 3,
         name: rawCompetitors[1]?.name || 'VBB7VC',
-        avatar: rawCompetitors[1]?.avatar || '🐶',
+        avatar: rawCompetitors[1]?.avatar || '🦊',
         avatarBg: rawCompetitors[1]?.avatarBg || '#BFDBFE',
         points: rawCompetitors[1]?.points || 27,
         cylinderColor: 'var(--podium-bronze)',
+      },
+    ];
+  } else if (newRank === 3) {
+    // User is 3rd Place!
+    top3 = [
+      {
+        rank: 2,
+        name: rawCompetitors[1]?.name || 'VBB7VC',
+        avatar: rawCompetitors[1]?.avatar || '🦊',
+        avatarBg: rawCompetitors[1]?.avatarBg || '#BFDBFE',
+        points: rawCompetitors[1]?.points || 27,
+        cylinderColor: 'var(--podium-silver)',
+      },
+      {
+        rank: 1,
+        name: rawCompetitors[0]?.name || 'RJEA3M',
+        avatar: rawCompetitors[0]?.avatar || '🦁',
+        avatarBg: rawCompetitors[0]?.avatarBg || '#FED7AA',
+        points: rawCompetitors[0]?.points || 30,
+        cylinderColor: 'var(--podium-gold)',
+      },
+      {
+        rank: 3,
+        name: 'あなた',
+        avatar: '🐕',
+        avatarBg: '#FEF3C7',
+        points: newUserPoints,
+        cylinderColor: 'var(--podium-bronze)',
+        isUser: true,
       },
     ];
   } else {
@@ -279,7 +311,7 @@ export function calculateRankUp(prevUserPoints: number, earnedPoints: number): R
       {
         rank: 2,
         name: rawCompetitors[1]?.name || 'VBB7VC',
-        avatar: rawCompetitors[1]?.avatar || '🐶',
+        avatar: rawCompetitors[1]?.avatar || '🦊',
         avatarBg: rawCompetitors[1]?.avatarBg || '#BFDBFE',
         points: rawCompetitors[1]?.points || 27,
         cylinderColor: 'var(--podium-silver)',
@@ -309,12 +341,12 @@ export function calculateRankUp(prevUserPoints: number, earnedPoints: number): R
   if (newRank === 1) {
     // User is defending 1st place!
     const rival2nd = rawCompetitors[0] || { name: 'RJEA3M', avatar: '🦁', avatarBg: '#FED7AA', points: 30 };
-    const rival3rd = rawCompetitors[1] || { name: 'VBB7VC', avatar: '🐶', avatarBg: '#BFDBFE', points: 27 };
+    const rival3rd = rawCompetitors[1] || { name: 'VBB7VC', avatar: '🦊', avatarBg: '#BFDBFE', points: 27 };
 
     displayList.push({
       rank: 1,
       name: 'あなた (👑 チャンピオン防衛中！)',
-      avatar: '🐶',
+      avatar: '🐕',
       avatarBg: '#FEF3C7',
       points: newUserPoints,
       isUser: true,
@@ -391,7 +423,7 @@ export function calculateRankUp(prevUserPoints: number, earnedPoints: number): R
   displayList.push({
     rank: prevRank,
     name: 'あなた (柴犬マスター)',
-    avatar: '🐶',
+    avatar: '🐕',
     avatarBg: '#FED7AA',
     points: prevUserPoints,
     isUser: true,
@@ -445,7 +477,7 @@ export function getDailyLeaderboard(userScore: number = 0, userTimeSecs: number 
   if (userScore > 0) {
     allEntries.push({
       name: 'あなた (柴犬マスター)',
-      avatar: '🐶',
+      avatar: '🐕',
       score: userScore,
       timeSecs: userTimeSecs,
       isUser: true,

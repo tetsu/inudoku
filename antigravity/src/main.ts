@@ -13,7 +13,7 @@ import { getNextHint } from './logic/solver';
 import { generateUniquePuzzle } from './logic/generator';
 import { sounds } from './audio/sound';
 import { getCrossSvg, getQuestionSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
-import { calculateRankUp, getDailyLeaderboard, simulateRivalPoints } from './logic/leaderboard';
+import { calculateRankUp, getDailyLeaderboard, PodiumEntry, simulateRivalPoints } from './logic/leaderboard';
 import { storage } from './storage/storage';
 import { i18n, t } from './i18n/i18n';
 
@@ -39,6 +39,8 @@ class InudokuGame {
   private settingsRowIdx: number = 0;
   private dialogFocusBtn: 'confirm' | 'cancel' = 'confirm';
   private leaderboardFocusBtn: 'play' | 'close' = 'play';
+  private winModalFocusIdx: number = 2;
+  private gameOverFocusIdx: number = 1;
 
   // Pointer, Drag, Double-Tap & Long-Press tracking
   private isPointerDown: boolean = false;
@@ -315,6 +317,9 @@ class InudokuGame {
     this.setupTitleMascot();
     this.updateHintBadge();
     this.checkAndShowDailyReward();
+    this.titleFocusIdx = 0;
+    this.clearMenuFocus();
+    document.getElementById('btn-title-play')?.classList.add('menu-focused');
   }
 
   public startGame(levelIndex?: number) {
@@ -1148,15 +1153,25 @@ class InudokuGame {
     const bronzeName = document.querySelector('.podium-bronze .podium-name');
     const bronzeScore = document.querySelector('.podium-bronze .score-num');
 
-    if (goldAvatar && rankUpData.top3[1]) goldAvatar.textContent = rankUpData.top3[1].avatar;
-    if (goldName && rankUpData.top3[1]) goldName.textContent = rankUpData.top3[1].name;
-    if (goldScore && rankUpData.top3[1]) goldScore.textContent = String(rankUpData.top3[1].points);
-    if (silverAvatar && rankUpData.top3[0]) silverAvatar.textContent = rankUpData.top3[0].avatar;
-    if (silverName && rankUpData.top3[0]) silverName.textContent = rankUpData.top3[0].name;
-    if (silverScore && rankUpData.top3[0]) silverScore.textContent = String(rankUpData.top3[0].points);
-    if (bronzeAvatar && rankUpData.top3[2]) bronzeAvatar.textContent = rankUpData.top3[2].avatar;
-    if (bronzeName && rankUpData.top3[2]) bronzeName.textContent = rankUpData.top3[2].name;
-    if (bronzeScore && rankUpData.top3[2]) bronzeScore.textContent = String(rankUpData.top3[2].points);
+    const updatePodiumSlot = (
+      avatarEl: Element | null,
+      nameEl: Element | null,
+      scoreEl: Element | null,
+      entry?: PodiumEntry
+    ) => {
+      if (!avatarEl || !nameEl || !scoreEl || !entry) return;
+      if (entry.isUser) {
+        avatarEl.innerHTML = `<div class="podium-shiba-svg-wrap">${getShibaSvg(this.settings.shibaType, 'happy')}</div>`;
+      } else {
+        avatarEl.textContent = entry.avatar;
+      }
+      nameEl.textContent = entry.name;
+      scoreEl.textContent = String(entry.points);
+    };
+
+    updatePodiumSlot(silverAvatar, silverName, silverScore, rankUpData.top3[0]);
+    updatePodiumSlot(goldAvatar, goldName, goldScore, rankUpData.top3[1]);
+    updatePodiumSlot(bronzeAvatar, bronzeName, bronzeScore, rankUpData.top3[2]);
 
     // 3. Render Cards List in initial state
     const container = document.getElementById('rankup-cards-container')!;
@@ -1167,10 +1182,14 @@ class InudokuGame {
       card.className = `rankup-card ${entry.isUser ? 'is-user-card' : ''}`;
       card.id = `rankup-card-${idx}`;
 
+      const avatarContent = entry.isUser
+        ? `<div class="shiba-avatar-svg-wrap">${getShibaSvg(this.settings.shibaType, 'happy')}</div>`
+        : `<span>${entry.avatar}</span>`;
+
       card.innerHTML = `
         <div class="card-rank-num" id="rank-num-${idx}">${entry.rank}</div>
-        <div class="card-avatar-box" style="background: ${entry.avatarBg}">
-          <span>${entry.avatar}</span>
+        <div class="card-avatar-box ${entry.isUser ? 'is-user-avatar' : ''}" style="background: ${entry.avatarBg}">
+          ${avatarContent}
         </div>
         <div class="card-user-name">${entry.name}</div>
         <div class="card-score-pill">
@@ -1485,6 +1504,11 @@ class InudokuGame {
       }
     }
 
+    const userAvatarEl = document.getElementById('my-user-shiba-avatar');
+    if (userAvatarEl) {
+      userAvatarEl.innerHTML = getShibaSvg(this.settings.shibaType, 'happy');
+    }
+
     if (listEl) {
       listEl.innerHTML = '';
       leaderboard.forEach((e) => {
@@ -1496,10 +1520,14 @@ class InudokuGame {
         else if (e.rank === 2) rankMedal = '🥈';
         else if (e.rank === 3) rankMedal = '🥉';
 
+        const avatarHtml = e.isUser
+          ? `<span class="item-avatar is-user-avatar">${getShibaSvg(this.settings.shibaType, 'happy')}</span>`
+          : `<span class="item-avatar">${e.avatar}</span>`;
+
         itemEl.innerHTML = `
           <div class="item-left">
             <span class="item-rank rank-${e.rank}">${rankMedal}</span>
-            <span class="item-avatar">${e.avatar}</span>
+            ${avatarHtml}
             <span class="item-name">${e.name}</span>
           </div>
           <div class="item-right">
@@ -1522,9 +1550,17 @@ class InudokuGame {
     document.getElementById('btn-title-stages')?.addEventListener('click', () => {
       this.renderStageList();
       document.getElementById('modal-stages')?.classList.remove('hidden');
+      this.stageFocusIdx = Math.min(this.unlockedLevel - 1, MAX_STAGE_LEVEL - 1);
+      const cells = Array.from(document.querySelectorAll('#modal-stages .level-cell')) as HTMLElement[];
+      cells.forEach((c, idx) => {
+        c.classList.toggle('menu-focused', idx === this.stageFocusIdx);
+        if (idx === this.stageFocusIdx) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
     });
     document.getElementById('btn-title-ranking')?.addEventListener('click', () => {
+      this.leaderboardFocusBtn = 'play';
       this.showLeaderboard();
+      document.getElementById('btn-leaderboard-play')?.classList.add('menu-focused');
     });
     document.getElementById('btn-title-help')?.addEventListener('click', () => {
       this.showHelpModal();
@@ -1532,6 +1568,11 @@ class InudokuGame {
     document.getElementById('btn-title-settings')?.addEventListener('click', () => {
       this.syncSettingsUI();
       document.getElementById('modal-settings')?.classList.remove('hidden');
+      this.settingsRowIdx = 0;
+      const items = Array.from(document.querySelectorAll('#modal-settings .setting-item')) as HTMLElement[];
+      items.forEach((item, idx) => {
+        item.classList.toggle('menu-focused', idx === 0);
+      });
     });
 
     // Game Top Bar Actions
@@ -1887,152 +1928,255 @@ class InudokuGame {
     window.addEventListener('keydown', (e) => {
       const targetTag = (document.activeElement?.tagName || '').toUpperCase();
       if (['INPUT', 'SELECT', 'TEXTAREA'].includes(targetTag)) {
-        return;
-      }
-
-      // Check if any modal is currently visible
-      const activeModal = document.querySelector('.modal-backdrop:not(.hidden), .rankup-overlay:not(.hidden), .modal-overlay:not(.hidden)');
-      if (activeModal) {
         if (e.key === 'Escape') {
-          activeModal.classList.add('hidden');
-          if (activeModal.id === 'modal-help') {
-            storage.setHasSeenRules(true);
-            if (!this.screenGameEl.classList.contains('hidden') && !this.isFinished) {
-              this.startTimer();
-            }
-          }
-          if (activeModal.id === 'modal-daily-reward') {
-            const today = storage.getLocalDateString(new Date());
-            if (!storage.hasDailyRewardClaimed(today)) {
-              storage.setDailyRewardClaimed(today, true);
-              this.hintCount += 5;
-              storage.saveHintCount(this.hintCount);
-              this.updateHintBadge();
-              this.pendingDailyReward = false;
-            }
-          }
-        } else if (e.key === 'Enter' || e.key === ' ' || e.code === 'Space' || e.code === 'Enter') {
-          if (activeModal.id === 'modal-rankup') {
-            e.preventDefault();
-            activeModal.classList.add('hidden');
-            const nextIndex = Math.min(this.currentStageIndex + 1, MAX_STAGE_LEVEL - 1);
-            this.startGame(nextIndex);
-            return;
-          }
-          if (activeModal.id === 'modal-win') {
-            e.preventDefault();
-            document.getElementById('btn-win-next')?.click();
-            return;
-          }
-          if (activeModal.id === 'modal-leaderboard') {
-            e.preventDefault();
-            document.getElementById('btn-leaderboard-play')?.click();
-            return;
-          }
+          (document.activeElement as HTMLElement).blur();
         }
         return;
       }
 
-      // Only active when playing on the game screen
+      const up = e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W';
+      const down = e.key === 'ArrowDown' || e.key === 's' || e.key === 'S';
+      const left = e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A';
+      const right = e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D';
+      const isAction = e.key === 'Enter' || e.key === ' ' || e.code === 'Space' || e.code === 'Enter';
+      const isCancel = e.key === 'Escape';
+      const isTab = e.key === 'Tab';
+
+      // 1. Rank-Up Overlay (Highest priority modal screen!)
+      const rankUp = document.getElementById('modal-rankup');
+      if (rankUp && !rankUp.classList.contains('hidden')) {
+        e.preventDefault();
+        this.handleRankUpScreen();
+        return;
+      }
+
+      // 2. Check if any modal is currently visible
+      const activeModal = document.querySelector('.modal-backdrop:not(.hidden), .modal-overlay:not(.hidden)') as HTMLElement | null;
+      if (activeModal) {
+        if (activeModal.id === 'modal-dialog') {
+          if (left || right || up || down || isAction || isCancel || isTab) {
+            e.preventDefault();
+            this.handleCustomDialogNav(left || (isTab && e.shiftKey), right || (isTab && !e.shiftKey), isAction, isCancel);
+          }
+          return;
+        }
+        if (activeModal.id === 'modal-stages') {
+          if (up || down || left || right || isAction || isCancel) {
+            e.preventDefault();
+            this.handleStagesModalNav(up, down, left, right, isAction, isCancel);
+          }
+          return;
+        }
+        if (activeModal.id === 'modal-settings') {
+          if (up || down || left || right || isAction || isCancel) {
+            e.preventDefault();
+            this.handleSettingsModalNav(up, down, left, right, isAction, isCancel);
+          }
+          return;
+        }
+        if (activeModal.id === 'modal-leaderboard') {
+          if (up || down || left || right || isAction || isCancel || isTab) {
+            e.preventDefault();
+            this.handleLeaderboardModalNav(up || left, down || right || isTab, isAction, isCancel);
+          }
+          return;
+        }
+        if (activeModal.id === 'modal-help') {
+          if (left || right || up || down || isAction || isCancel) {
+            e.preventDefault();
+            this.handleTutorialModalNav(left || up, right || down, isAction, isCancel);
+          }
+          return;
+        }
+        if (activeModal.id === 'modal-controls') {
+          if (left || right || isAction || isCancel || isTab) {
+            e.preventDefault();
+            this.handleControlsModalNav(left || (isTab && e.shiftKey), right || (isTab && !e.shiftKey), isAction, isCancel);
+          }
+          return;
+        }
+        if (activeModal.id === 'modal-win') {
+          if (left || right || isAction || isCancel || isTab) {
+            e.preventDefault();
+            this.handleWinModalNav(left || (isTab && e.shiftKey), right || (isTab && !e.shiftKey), isAction, isCancel);
+          }
+          return;
+        }
+        if (activeModal.id === 'modal-gameover') {
+          if (left || right || isAction || isCancel || isTab) {
+            e.preventDefault();
+            this.handleGameOverModalNav(left || (isTab && e.shiftKey), right || (isTab && !e.shiftKey), isAction, isCancel);
+          }
+          return;
+        }
+        if (activeModal.id === 'modal-daily-reward') {
+          if (isAction || isCancel) {
+            e.preventDefault();
+            this.handleDailyRewardModalNav(isAction, isCancel);
+          }
+          return;
+        }
+        if (isCancel) {
+          e.preventDefault();
+          activeModal.classList.add('hidden');
+          this.clearMenuFocus();
+          return;
+        }
+        return;
+      }
+
+      // 3. Title Screen Navigation
+      if (!this.screenTitleEl.classList.contains('hidden')) {
+        if (up || down || left || right || isAction || isTab) {
+          e.preventDefault();
+          this.handleTitleScreenNav(
+            up || (isTab && e.shiftKey),
+            down || (isTab && !e.shiftKey),
+            left,
+            right,
+            isAction,
+            false
+          );
+        }
+        return;
+      }
+
+      // 4. Gameplay Screen Active
       if (this.screenGameEl.classList.contains('hidden') || this.isFinished) {
         return;
       }
 
       const size = this.currentPuzzle.size;
 
-      switch (e.key) {
-        case 'ArrowUp':
-        case 'KeyW':
-        case 'w':
-        case 'W':
-          e.preventDefault();
-          this.inputDevice = 'keyboard';
-          if (!this.focusedPos) {
-            this.setFocusedCell(0, 0);
-          } else {
-            this.setFocusedCell(Math.max(0, this.focusedPos.r - 1), this.focusedPos.c);
+      // In-game Grid Navigation (Arrows & WASD)
+      if (up || down || left || right) {
+        e.preventDefault();
+        this.inputDevice = 'keyboard';
+        if (!this.focusedPos) {
+          this.setFocusedCell(0, 0, 'keyboard');
+        } else if (up) {
+          this.setFocusedCell(Math.max(0, this.focusedPos.r - 1), this.focusedPos.c, 'keyboard');
+        } else if (down) {
+          this.setFocusedCell(Math.min(size - 1, this.focusedPos.r + 1), this.focusedPos.c, 'keyboard');
+        } else if (left) {
+          this.setFocusedCell(this.focusedPos.r, Math.max(0, this.focusedPos.c - 1), 'keyboard');
+        } else if (right) {
+          this.setFocusedCell(this.focusedPos.r, Math.min(size - 1, this.focusedPos.c + 1), 'keyboard');
+        }
+        return;
+      }
+
+      // Grid Tab navigation
+      if (isTab) {
+        e.preventDefault();
+        this.inputDevice = 'keyboard';
+        if (!this.focusedPos) {
+          this.setFocusedCell(0, 0, 'keyboard');
+        } else {
+          let nextC = this.focusedPos.c + (e.shiftKey ? -1 : 1);
+          let nextR = this.focusedPos.r;
+          if (nextC >= size) {
+            nextC = 0;
+            nextR = (nextR + 1) % size;
+          } else if (nextC < 0) {
+            nextC = size - 1;
+            nextR = (nextR - 1 + size) % size;
           }
-          break;
-        case 'ArrowDown':
-        case 'KeyS':
-        case 's':
-        case 'S':
+          this.setFocusedCell(nextR, nextC, 'keyboard');
+        }
+        return;
+      }
+
+      // Space / Enter: Place or Toggle Dog (🐶)
+      if (isAction) {
+        e.preventDefault();
+        this.inputDevice = 'keyboard';
+        if (this.focusedPos) {
+          this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'dog');
+        }
+        return;
+      }
+
+      // X / M: Place or Toggle Cross (✕)
+      if (e.key === 'x' || e.key === 'X' || e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        this.inputDevice = 'keyboard';
+        if (this.focusedPos) {
+          this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
+        }
+        return;
+      }
+
+      // N: Place or Toggle Question Mark (？)
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        this.inputDevice = 'keyboard';
+        const targetPos = this.focusedPos || this.hoveredPos;
+        if (targetPos) {
+          this.handleCellClick(targetPos.r, targetPos.c, 'question');
+        }
+        return;
+      }
+
+      // Backspace / Delete / E / 0: Erase Cell
+      if (
+        e.key === 'Backspace' ||
+        e.key === 'Delete' ||
+        e.key === 'e' ||
+        e.key === 'E' ||
+        e.key === '0'
+      ) {
+        e.preventDefault();
+        this.inputDevice = 'keyboard';
+        if (this.focusedPos) {
+          this.eraseCell(this.focusedPos.r, this.focusedPos.c);
+        }
+        return;
+      }
+
+      // Z / U: Undo
+      if (e.key === 'z' || e.key === 'Z' || e.key === 'u' || e.key === 'U') {
+        if (!e.repeat) {
           e.preventDefault();
-          this.inputDevice = 'keyboard';
-          if (!this.focusedPos) {
-            this.setFocusedCell(0, 0);
-          } else {
-            this.setFocusedCell(Math.min(size - 1, this.focusedPos.r + 1), this.focusedPos.c);
-          }
-          break;
-        case 'ArrowLeft':
-        case 'KeyA':
-        case 'a':
-        case 'A':
-          e.preventDefault();
-          this.inputDevice = 'keyboard';
-          if (!this.focusedPos) {
-            this.setFocusedCell(0, 0);
-          } else {
-            this.setFocusedCell(this.focusedPos.r, Math.max(0, this.focusedPos.c - 1));
-          }
-          break;
-        case 'ArrowRight':
-        case 'KeyD':
-        case 'd':
-        case 'D':
-          e.preventDefault();
-          this.inputDevice = 'keyboard';
-          if (!this.focusedPos) {
-            this.setFocusedCell(0, 0);
-          } else {
-            this.setFocusedCell(this.focusedPos.r, Math.min(size - 1, this.focusedPos.c + 1));
-          }
-          break;
-        case ' ':
-        case 'Enter':
-          e.preventDefault();
-          if (this.inputDevice === 'keyboard' && this.focusedPos) {
-            this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'dog');
-          }
-          break;
-        case 'x':
-        case 'X':
-        case 'm':
-        case 'M':
-          e.preventDefault();
-          if (this.inputDevice === 'keyboard' && this.focusedPos) {
-            this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
-          }
-          break;
-        case 'n':
-        case 'N':
-          e.preventDefault();
-          {
-            const targetPos =
-              this.inputDevice === 'keyboard' && this.focusedPos
-                ? this.focusedPos
-                : (this.hoveredPos || this.focusedPos);
-            if (targetPos) {
-              this.handleCellClick(targetPos.r, targetPos.c, 'question');
-            }
-          }
-          break;
-        case 'z':
-        case 'Z':
-          if (!e.repeat) {
-            e.preventDefault();
-            this.undo();
-          }
-          break;
-        case 'h':
-        case 'H':
-          e.preventDefault();
-          this.showHint();
-          break;
-        case 'Escape':
-          this.showTitleScreen();
-          break;
+          this.undo();
+        }
+        return;
+      }
+
+      // H: Hint
+      if (e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        this.showHint();
+        return;
+      }
+
+      // R: Restart Stage
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        document.getElementById('btn-reset')?.click();
+        return;
+      }
+
+      // O: Options / Settings Modal
+      if (e.key === 'o' || e.key === 'O') {
+        e.preventDefault();
+        this.syncSettingsUI();
+        document.getElementById('modal-settings')?.classList.remove('hidden');
+        return;
+      }
+
+      // C / ?: Controls Guide Modal
+      if (e.key === 'c' || e.key === 'C' || e.key === '?') {
+        e.preventDefault();
+        this.showControlsModal();
+        return;
+      }
+
+      // Escape: Return to Title Screen
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        this.showTitleScreen();
+        return;
       }
     });
   }
@@ -2508,12 +2652,13 @@ class InudokuGame {
     document.querySelectorAll('.menu-focused').forEach(el => el.classList.remove('menu-focused'));
   }
 
-  private handleGamepadTitleScreen(
-    justPressed: (b: number) => boolean,
+  private handleTitleScreenNav(
     up: boolean,
     down: boolean,
     left: boolean,
-    right: boolean
+    right: boolean,
+    action: boolean,
+    start: boolean = false
   ) {
     const titleButtons = [
       document.getElementById('btn-title-play'),
@@ -2526,67 +2671,45 @@ class InudokuGame {
 
     if (titleButtons.length === 0) return;
 
-    if (justPressed(9)) {
+    if (start) {
       document.getElementById('btn-title-play')?.click();
       return;
     }
 
-    if (up) {
-      this.titleFocusIdx = 0;
-    } else if (down) {
-      if (this.titleFocusIdx === 0) {
-        this.titleFocusIdx = 1;
-      }
-    } else if (left) {
-      if (this.titleFocusIdx > 1) {
-        this.titleFocusIdx--;
-      }
-    } else if (right) {
-      if (this.titleFocusIdx === 0) {
-        this.titleFocusIdx = 1;
-      } else if (this.titleFocusIdx < titleButtons.length - 1) {
-        this.titleFocusIdx++;
-      }
+    if (up || left) {
+      this.titleFocusIdx = (this.titleFocusIdx - 1 + titleButtons.length) % titleButtons.length;
+    } else if (down || right) {
+      this.titleFocusIdx = (this.titleFocusIdx + 1) % titleButtons.length;
     }
 
     titleButtons.forEach((btn, idx) => {
       btn.classList.toggle('menu-focused', idx === this.titleFocusIdx);
     });
 
-    if (justPressed(0)) {
+    if (action) {
       titleButtons[this.titleFocusIdx]?.click();
     }
   }
 
-  private handleGamepadRankUpScreen(justPressed: (b: number) => boolean): boolean {
+  private handleRankUpScreen(): boolean {
     const overlay = document.getElementById('modal-rankup');
     if (!overlay || overlay.classList.contains('hidden')) return false;
-
-    if (
-      justPressed(0) ||
-      justPressed(1) ||
-      justPressed(2) ||
-      justPressed(3) ||
-      justPressed(9) ||
-      justPressed(4) ||
-      justPressed(5)
-    ) {
-      overlay.click();
-    }
+    overlay.click();
     return true;
   }
 
-  private handleGamepadStagesModal(
-    justPressed: (b: number) => boolean,
+  private handleStagesModalNav(
     up: boolean,
     down: boolean,
     left: boolean,
-    right: boolean
+    right: boolean,
+    action: boolean,
+    cancel: boolean
   ) {
     const modal = document.getElementById('modal-stages');
     if (!modal || modal.classList.contains('hidden')) return;
 
-    if (justPressed(1)) {
+    if (cancel) {
       modal.classList.add('hidden');
       this.clearMenuFocus();
       return;
@@ -2638,7 +2761,7 @@ class InudokuGame {
       if (isFocused) genBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
 
-    if (justPressed(0)) {
+    if (action) {
       if (this.stageFocusIdx < cells.length) {
         cells[this.stageFocusIdx]?.click();
       } else if (this.stageFocusIdx === cells.length) {
@@ -2649,15 +2772,16 @@ class InudokuGame {
     }
   }
 
-  private handleGamepadLeaderboardModal(
-    justPressed: (b: number) => boolean,
+  private handleLeaderboardModalNav(
     up: boolean,
-    down: boolean
+    down: boolean,
+    action: boolean,
+    cancel: boolean
   ) {
     const modal = document.getElementById('modal-leaderboard');
     if (!modal || modal.classList.contains('hidden')) return;
 
-    if (justPressed(1)) {
+    if (cancel) {
       modal.classList.add('hidden');
       this.clearMenuFocus();
       return;
@@ -2673,7 +2797,7 @@ class InudokuGame {
     playBtn?.classList.toggle('menu-focused', this.leaderboardFocusBtn === 'play');
     closeBtn?.classList.toggle('menu-focused', this.leaderboardFocusBtn === 'close');
 
-    if (justPressed(0) || justPressed(9)) {
+    if (action) {
       if (this.leaderboardFocusBtn === 'play') {
         playBtn?.click();
       } else {
@@ -2682,17 +2806,18 @@ class InudokuGame {
     }
   }
 
-  private handleGamepadSettingsModal(
-    justPressed: (b: number) => boolean,
+  private handleSettingsModalNav(
     up: boolean,
     down: boolean,
     left: boolean,
-    right: boolean
+    right: boolean,
+    action: boolean,
+    cancel: boolean
   ) {
     const modal = document.getElementById('modal-settings');
     if (!modal || modal.classList.contains('hidden')) return;
 
-    if (justPressed(1) || justPressed(9)) {
+    if (cancel) {
       modal.classList.add('hidden');
       this.clearMenuFocus();
       return;
@@ -2723,7 +2848,7 @@ class InudokuGame {
     // Row 0: Language
     if (this.settingsRowIdx === 0) {
       const langSelect = document.getElementById('setting-language') as HTMLSelectElement | null;
-      if (langSelect && (left || right || justPressed(0))) {
+      if (langSelect && (left || right || action)) {
         const langs = ['auto', 'ja', 'en'];
         let curIdx = langs.indexOf(langSelect.value);
         if (curIdx === -1) curIdx = 0;
@@ -2735,7 +2860,7 @@ class InudokuGame {
     // Row 1: Shiba Type
     else if (this.settingsRowIdx === 1) {
       const shibaBtns = Array.from(modal.querySelectorAll('.shiba-choice-btn')) as HTMLElement[];
-      if (shibaBtns.length > 0 && (left || right || justPressed(0))) {
+      if (shibaBtns.length > 0 && (left || right || action)) {
         let curIdx = shibaBtns.findIndex(b => b.classList.contains('active'));
         if (curIdx === -1) curIdx = 0;
         const nextIdx = left ? (curIdx - 1 + shibaBtns.length) % shibaBtns.length : (curIdx + 1) % shibaBtns.length;
@@ -2745,7 +2870,7 @@ class InudokuGame {
     // Row 2: Sound
     else if (this.settingsRowIdx === 2) {
       const toggle = document.getElementById('setting-sound') as HTMLInputElement | null;
-      if (toggle && (left || right || justPressed(0))) {
+      if (toggle && (left || right || action)) {
         toggle.checked = !toggle.checked;
         toggle.dispatchEvent(new Event('change'));
       }
@@ -2753,7 +2878,7 @@ class InudokuGame {
     // Row 3: Vibration
     else if (this.settingsRowIdx === 3) {
       const toggle = document.getElementById('setting-vibration') as HTMLInputElement | null;
-      if (toggle && (left || right || justPressed(0))) {
+      if (toggle && (left || right || action)) {
         toggle.checked = !toggle.checked;
         toggle.dispatchEvent(new Event('change'));
       }
@@ -2761,75 +2886,82 @@ class InudokuGame {
     // Row 4: AutoMark
     else if (this.settingsRowIdx === 4) {
       const toggle = document.getElementById('setting-automark') as HTMLInputElement | null;
-      if (toggle && (left || right || justPressed(0))) {
+      if (toggle && (left || right || action)) {
         toggle.checked = !toggle.checked;
         toggle.dispatchEvent(new Event('change'));
       }
     }
     // Row 5: Reset Progress
     else if (this.settingsRowIdx === 5) {
-      if (justPressed(0)) {
+      if (action) {
         document.getElementById('btn-reset-progress')?.click();
       }
     }
     // Row 6: Save & Close button
     else if (this.settingsRowIdx === items.length) {
-      if (justPressed(0)) {
+      if (action) {
         saveBtn?.click();
       }
     }
   }
 
-  private handleGamepadTutorialModal(
-    justPressed: (b: number) => boolean,
+  private handleTutorialModalNav(
     left: boolean,
-    right: boolean
+    right: boolean,
+    action: boolean,
+    cancel: boolean
   ) {
     const modal = document.getElementById('modal-help');
     if (!modal || modal.classList.contains('hidden')) return;
 
-    if (justPressed(1)) {
+    if (cancel) {
       modal.classList.add('hidden');
+      storage.setHasSeenRules(true);
+      if (!this.screenGameEl.classList.contains('hidden') && !this.isFinished) {
+        this.startTimer();
+      }
       return;
     }
 
-    if (left || justPressed(4)) {
+    if (left) {
       document.getElementById('btn-tutorial-prev')?.click();
-    } else if (right || justPressed(5) || justPressed(0)) {
+    } else if (right || action) {
       document.getElementById('btn-tutorial-next')?.click();
     }
   }
 
-  private handleGamepadControlsModal(
-    justPressed: (b: number) => boolean,
+  private handleControlsModalNav(
     left: boolean,
-    right: boolean
+    right: boolean,
+    action: boolean,
+    cancel: boolean
   ) {
     const modal = document.getElementById('modal-controls');
     if (!modal || modal.classList.contains('hidden')) return;
 
-    if (justPressed(1) || justPressed(0)) {
+    if (cancel || action) {
       modal.classList.add('hidden');
       return;
     }
 
     const tabs: Array<'pc' | 'mobile' | 'gamepad'> = ['pc', 'mobile', 'gamepad'];
-    const currentActive = (modal.querySelector('.controls-tab-btn.active')?.getAttribute('data-tab') as 'pc' | 'mobile' | 'gamepad') || 'gamepad';
+    const currentActive = (modal.querySelector('.controls-tab-btn.active')?.getAttribute('data-tab') as 'pc' | 'mobile' | 'gamepad') || 'pc';
     const currentIdx = tabs.indexOf(currentActive);
 
-    if (left || justPressed(4)) {
+    if (left) {
       const nextTab = tabs[(currentIdx - 1 + tabs.length) % tabs.length];
       this.switchControlsTab(nextTab);
-    } else if (right || justPressed(5)) {
+    } else if (right) {
       const nextTab = tabs[(currentIdx + 1) % tabs.length];
       this.switchControlsTab(nextTab);
     }
   }
 
-  private handleGamepadCustomDialog(
-    justPressed: (b: number) => boolean,
+  private handleCustomDialogNav(
     left: boolean,
-    right: boolean
+    right: boolean,
+    action: boolean,
+    cancel: boolean
   ) {
     const modal = document.getElementById('modal-dialog');
     if (!modal || modal.classList.contains('hidden')) return;
@@ -2838,14 +2970,7 @@ class InudokuGame {
     const confirmBtn = document.getElementById('dialog-btn-confirm') as HTMLElement | null;
     const hasCancel = Boolean(cancelBtn && !cancelBtn.classList.contains('hidden'));
 
-    if (hasCancel && (left || right)) {
-      this.dialogFocusBtn = this.dialogFocusBtn === 'confirm' ? 'cancel' : 'confirm';
-    }
-
-    confirmBtn?.classList.toggle('menu-focused', this.dialogFocusBtn === 'confirm' || !hasCancel);
-    cancelBtn?.classList.toggle('menu-focused', hasCancel && this.dialogFocusBtn === 'cancel');
-
-    if (justPressed(1)) {
+    if (cancel) {
       if (hasCancel) {
         cancelBtn?.click();
       } else {
@@ -2854,12 +2979,103 @@ class InudokuGame {
       return;
     }
 
-    if (justPressed(0) || justPressed(9)) {
+    if (hasCancel && (left || right)) {
+      this.dialogFocusBtn = this.dialogFocusBtn === 'confirm' ? 'cancel' : 'confirm';
+    }
+
+    confirmBtn?.classList.toggle('menu-focused', this.dialogFocusBtn === 'confirm' || !hasCancel);
+    cancelBtn?.classList.toggle('menu-focused', hasCancel && this.dialogFocusBtn === 'cancel');
+
+    if (action) {
       if (hasCancel && this.dialogFocusBtn === 'cancel') {
         cancelBtn?.click();
       } else {
         confirmBtn?.click();
       }
+    }
+  }
+
+  private handleWinModalNav(
+    left: boolean,
+    right: boolean,
+    action: boolean,
+    cancel: boolean
+  ) {
+    const modal = document.getElementById('modal-win');
+    if (!modal || modal.classList.contains('hidden')) return;
+
+    if (cancel) {
+      modal.classList.add('hidden');
+      this.showTitleScreen();
+      return;
+    }
+
+    const replayBtn = document.getElementById('btn-win-replay');
+    const rankBtn = document.getElementById('btn-win-ranking');
+    const nextBtn = document.getElementById('btn-win-next');
+    const btns = [replayBtn, rankBtn, nextBtn].filter(Boolean) as HTMLElement[];
+
+    if (left) {
+      this.winModalFocusIdx = Math.max(0, this.winModalFocusIdx - 1);
+    } else if (right) {
+      this.winModalFocusIdx = Math.min(btns.length - 1, this.winModalFocusIdx + 1);
+    }
+
+    btns.forEach((b, idx) => {
+      b.classList.toggle('menu-focused', idx === this.winModalFocusIdx);
+    });
+
+    if (action) {
+      btns[this.winModalFocusIdx]?.click();
+    }
+  }
+
+  private handleGameOverModalNav(
+    left: boolean,
+    right: boolean,
+    action: boolean,
+    cancel: boolean
+  ) {
+    const modal = document.getElementById('modal-gameover');
+    if (!modal || modal.classList.contains('hidden')) return;
+
+    if (cancel) {
+      modal.classList.add('hidden');
+      this.showTitleScreen();
+      return;
+    }
+
+    const homeBtn = document.getElementById('btn-gameover-home');
+    const retryBtn = document.getElementById('btn-gameover-retry');
+    const btns = [homeBtn, retryBtn].filter(Boolean) as HTMLElement[];
+
+    if (left || right) {
+      this.gameOverFocusIdx = this.gameOverFocusIdx === 0 ? 1 : 0;
+    }
+
+    btns.forEach((b, idx) => {
+      b.classList.toggle('menu-focused', idx === this.gameOverFocusIdx);
+    });
+
+    if (action) {
+      btns[this.gameOverFocusIdx]?.click();
+    }
+  }
+
+  private handleDailyRewardModalNav(action: boolean, cancel: boolean) {
+    const modal = document.getElementById('modal-daily-reward');
+    if (!modal || modal.classList.contains('hidden')) return;
+
+    if (action || cancel) {
+      const today = storage.getLocalDateString(new Date());
+      if (!storage.hasDailyRewardClaimed(today)) {
+        storage.setDailyRewardClaimed(today, true);
+        this.hintCount += 5;
+        storage.saveHintCount(this.hintCount);
+        this.updateHintBadge();
+        this.pendingDailyReward = false;
+      }
+      modal.classList.add('hidden');
     }
   }
 
@@ -2928,40 +3144,44 @@ class InudokuGame {
     }
 
     // 1. Check Rank-Up Overlay (Highest priority modal screen!)
-    if (this.handleGamepadRankUpScreen(justPressed)) {
-      for (let i = 0; i < gp.buttons.length; i++) {
-        this.prevGamepadButtons[i] = isBtnDown(gp.buttons[i]);
+    if (
+      justPressed(0) ||
+      justPressed(1) ||
+      justPressed(2) ||
+      justPressed(3) ||
+      justPressed(9) ||
+      justPressed(4) ||
+      justPressed(5)
+    ) {
+      if (this.handleRankUpScreen()) {
+        for (let i = 0; i < gp.buttons.length; i++) {
+          this.prevGamepadButtons[i] = isBtnDown(gp.buttons[i]);
+        }
+        return;
       }
-      return;
     }
 
     // 2. Check Modals
     const activeModal = document.querySelector('.modal-backdrop:not(.hidden)') as HTMLElement | null;
     if (activeModal) {
       if (activeModal.id === 'modal-dialog') {
-        this.handleGamepadCustomDialog(justPressed, stepLeft, stepRight);
+        this.handleCustomDialogNav(stepLeft, stepRight, justPressed(0) || justPressed(9), justPressed(1));
       } else if (activeModal.id === 'modal-stages') {
-        this.handleGamepadStagesModal(justPressed, stepUp, stepDown, stepLeft, stepRight);
+        this.handleStagesModalNav(stepUp, stepDown, stepLeft, stepRight, justPressed(0), justPressed(1));
       } else if (activeModal.id === 'modal-settings') {
-        this.handleGamepadSettingsModal(justPressed, stepUp, stepDown, stepLeft, stepRight);
+        this.handleSettingsModalNav(stepUp, stepDown, stepLeft, stepRight, justPressed(0), justPressed(1) || justPressed(9));
       } else if (activeModal.id === 'modal-leaderboard') {
-        this.handleGamepadLeaderboardModal(justPressed, stepUp, stepDown);
+        this.handleLeaderboardModalNav(stepUp || stepLeft, stepDown || stepRight, justPressed(0) || justPressed(9), justPressed(1));
       } else if (activeModal.id === 'modal-help') {
-        this.handleGamepadTutorialModal(justPressed, stepLeft, stepRight);
+        this.handleTutorialModalNav(stepLeft || justPressed(4), stepRight || justPressed(5), justPressed(0), justPressed(1));
       } else if (activeModal.id === 'modal-controls') {
-        this.handleGamepadControlsModal(justPressed, stepLeft, stepRight);
+        this.handleControlsModalNav(stepLeft || justPressed(4), stepRight || justPressed(5), justPressed(0) || justPressed(1), justPressed(1));
       } else if (activeModal.id === 'modal-win') {
-        if (justPressed(0) || justPressed(9)) {
-          document.getElementById('btn-win-next')?.click();
-        } else if (justPressed(1)) {
-          document.getElementById('btn-win-home')?.click();
-        }
+        this.handleWinModalNav(stepLeft, stepRight, justPressed(0) || justPressed(9), justPressed(1));
+      } else if (activeModal.id === 'modal-gameover') {
+        this.handleGameOverModalNav(stepLeft, stepRight, justPressed(0) || justPressed(9), justPressed(1));
       } else if (activeModal.id === 'modal-daily-reward') {
-        if (justPressed(0) || justPressed(9)) {
-          document.getElementById('btn-claim-reward')?.click();
-        } else if (justPressed(1)) {
-          activeModal.classList.add('hidden');
-        }
+        this.handleDailyRewardModalNav(justPressed(0) || justPressed(9), justPressed(1));
       } else {
         if (justPressed(1)) {
           activeModal.classList.add('hidden');
@@ -2979,7 +3199,7 @@ class InudokuGame {
 
     // 3. Handle Title Screen
     if (!this.screenTitleEl.classList.contains('hidden')) {
-      this.handleGamepadTitleScreen(justPressed, stepUp, stepDown, stepLeft, stepRight);
+      this.handleTitleScreenNav(stepUp, stepDown, stepLeft, stepRight, justPressed(0), justPressed(9));
       for (let i = 0; i < gp.buttons.length; i++) {
         this.prevGamepadButtons[i] = isBtnDown(gp.buttons[i]);
       }

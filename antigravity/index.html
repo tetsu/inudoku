@@ -219,6 +219,7 @@
           <div class="leaderboard-user-banner" id="leaderboard-user-card">
             <div class="user-card-left">
               <span class="user-rank-badge" id="my-rank-badge"># -</span>
+              <div class="user-avatar-shiba" id="my-user-shiba-avatar"></div>
               <div class="user-info">
                 <strong id="my-user-name" data-i18n="lead.user.name">あなた (柴犬マスター)</strong>
                 <span id="my-stats-summary">今日のベストスコア: - 点</span>
@@ -505,12 +506,24 @@
                 <span class="control-desc" data-i18n-html="ctrl.pc.keyQuestion"><strong>？ 仮置きマーク</strong>を配置</span>
               </div>
               <div class="control-row">
-                <span class="control-action"><kbd>Z</kbd></span>
+                <span class="control-action"><kbd>Backspace</kbd> / <kbd>Delete</kbd> / <kbd>E</kbd></span>
+                <span class="control-desc" data-i18n="ctrl.pc.keyErase">マスを消去</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><kbd>Z</kbd> / <kbd>U</kbd></span>
                 <span class="control-desc" data-i18n="ctrl.pc.keyUndo">1手戻す（アンドゥ）</span>
               </div>
               <div class="control-row">
                 <span class="control-action"><kbd>H</kbd></span>
                 <span class="control-desc" data-i18n="ctrl.pc.keyHint">ヒントを見る</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><kbd>R</kbd></span>
+                <span class="control-desc" data-i18n="ctrl.pc.keyReset">最初からやり直す</span>
+              </div>
+              <div class="control-row">
+                <span class="control-action"><kbd>↑↓←→</kbd> / <kbd>Tab</kbd> / <kbd>Enter</kbd> / <kbd>Esc</kbd></span>
+                <span class="control-desc" data-i18n="ctrl.pc.keyMenu">メニュー・ダイアログの操作</span>
               </div>
               <div class="control-row">
                 <span class="control-action"><kbd>Esc</kbd></span>
@@ -798,7 +811,7 @@
           <div class="podium-column podium-silver">
             <div class="podium-avatar-box">
               <div class="avatar-ring">
-                <span class="avatar-emoji">🐶</span>
+                <span class="avatar-emoji">🦊</span>
               </div>
             </div>
             <div class="podium-pillar pillar-silver">
