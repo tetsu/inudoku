@@ -895,17 +895,36 @@ class InudokuGame {
     return false;
   }
 
+  public isAdjacentToConfirmedDog(r: number, c: number): boolean {
+    if (!this.grid || this.grid.length === 0) return false;
+    const size = this.currentPuzzle?.size || this.grid.length;
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = r + dr;
+        const nc = c + dc;
+        if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+          if (this.grid[nr]?.[nc]?.mark === 'dog') {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   public isCellLocked(r: number, c: number): boolean {
     if (!this.settings.lockConfirmed) return false;
     const cell = this.grid?.[r]?.[c];
     if (!cell) return false;
     // Any cell with a confirmed Shiba dog is locked
     if (cell.mark === 'dog') return true;
-    // Any cell in a region, row, or column where a Shiba dog is already confirmed is locked
+    // Any cell in a region, row, column, or surrounding 8 cells of a confirmed Shiba dog is locked
     return (
       this.isRegionConfirmed(cell.region) ||
       this.isRowConfirmed(r) ||
-      this.isColConfirmed(c)
+      this.isColConfirmed(c) ||
+      this.isAdjacentToConfirmedDog(r, c)
     );
   }
 
