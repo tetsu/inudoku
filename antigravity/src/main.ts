@@ -2551,6 +2551,7 @@ class InudokuGame {
     const openHelp = () => {
       this.showHelpModal();
     };
+    document.getElementById('btn-game-rules')?.addEventListener('click', openHelp);
     document.querySelector('.mini-rules-bar')?.addEventListener('click', openHelp);
 
     document.getElementById('btn-controls')?.addEventListener('click', () => {
