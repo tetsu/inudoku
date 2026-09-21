@@ -226,6 +226,8 @@ export const ru: Record<string, string> = {
   'set.automark.desc': 'Автоматически ставить ✕ на недоступные клетки рядом с собачкой',
   'set.lockConfirmed.name': '🔒 Блокировка подтвержденных клеток',
   'set.lockConfirmed.desc': 'Защита найденных сиба-ину и завершенных цветных зон от случайных изменений',
+  'set.colorblind.name': '👁️ Режим для дальтоников',
+  'set.colorblind.desc': 'Универсальная CUD-палитра и четкие границы зон',
   'set.reset.name': '🗑️ Сбросить прогресс',
   'set.reset.desc': 'Очистить пройденные уровни и сохраненные данные',
   'set.reset.btn': 'Сбросить',

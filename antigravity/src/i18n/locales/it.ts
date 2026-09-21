@@ -226,6 +226,8 @@ export const it: Record<string, string> = {
   'set.automark.desc': 'Metti automaticamente le ✕ attorno agli Shiba piazzati',
   'set.lockConfirmed.name': '🔒 Blocca caselle confermate',
   'set.lockConfirmed.desc': 'Evita modifiche accidentali a Shiba posizionati e aree completate',
+  'set.colorblind.name': '👁️ Modalità daltonici',
+  'set.colorblind.desc': 'Colori accessibili CUD e confini delle aree ben visibili',
   'set.reset.name': '🗑️ Ripristina progressi',
   'set.reset.desc': 'Cancella i livelli completati e lo stato salvato',
   'set.reset.btn': 'Ripristina',

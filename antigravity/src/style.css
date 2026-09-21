@@ -298,12 +298,29 @@ button {
   }
 }
 
-/* NO BLACK BORDERS AT ALL (Overridden and removed per user request) */
+/* Default: No borders in regular vibrant pastel mode */
 .border-top-region,
 .border-bottom-region,
 .border-left-region,
 .border-right-region {
   border: none !important;
+}
+
+/* Colorblind Support Mode (CUD) Region Boundaries: Clear 3.5px border separating regions */
+.grid-board.colorblind-mode .grid-cell.border-top-region {
+  border-top: 3.5px solid rgba(0, 0, 0, 0.65) !important;
+}
+
+.grid-board.colorblind-mode .grid-cell.border-bottom-region {
+  border-bottom: 3.5px solid rgba(0, 0, 0, 0.65) !important;
+}
+
+.grid-board.colorblind-mode .grid-cell.border-left-region {
+  border-left: 3.5px solid rgba(0, 0, 0, 0.65) !important;
+}
+
+.grid-board.colorblind-mode .grid-cell.border-right-region {
+  border-right: 3.5px solid rgba(0, 0, 0, 0.65) !important;
 }
 
 /* Shiba Inu Mascot in Tile */

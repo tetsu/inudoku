@@ -226,6 +226,8 @@ export const de: Record<string, string> = {
   'set.automark.desc': 'Ungültige Felder nach Shiba-Platzierung automatisch mit ✕ versehen',
   'set.lockConfirmed.name': '🔒 Bestätigte Felder sperren',
   'set.lockConfirmed.desc': 'Verhindert versehentliches Ändern platzierter Shibas & Zonen',
+  'set.colorblind.name': '👁️ Farbenblind-Modus',
+  'set.colorblind.desc': 'Barrierefreie CUD-Palette und sichtbare Zonengrenzen',
   'set.reset.name': '🗑️ Spielstand zurücksetzen',
   'set.reset.desc': 'Abgeschlossene Level und Zwischenspeicher löschen',
   'set.reset.btn': 'Zurücksetzen',

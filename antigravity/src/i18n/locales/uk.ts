@@ -226,6 +226,8 @@ export const uk: Record<string, string> = {
   'set.automark.desc': 'Автоматично закреслювати ✕ недоступні клітинки навколо сіба',
   'set.lockConfirmed.name': '🔒 Блокування підтверджених клітинок',
   'set.lockConfirmed.desc': 'Захист знайдених сіба та завершених зон від випадкових змін',
+  'set.colorblind.name': '👁️ Режим для дальтоніків',
+  'set.colorblind.desc': 'Доступна CUD-палітра та чіткі межі кольорових зон',
   'set.reset.name': '🗑️ Скинути прогрес',
   'set.reset.desc': 'Очистити пройдені рівні та збережений стан гри',
   'set.reset.btn': 'Скинути',

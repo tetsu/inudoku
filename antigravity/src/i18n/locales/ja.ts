@@ -226,6 +226,8 @@ export const ja: Record<string, string> = {
   'set.automark.desc': '柴犬配置時に置けないマスを自動で✕マーク',
   'set.lockConfirmed.name': '🔒 確定マス・柴犬の保護',
   'set.lockConfirmed.desc': '柴犬が見つかったマスや確定エリア・縦横ラインの誤操作を防止',
+  'set.colorblind.name': '👁️ 色覚サポートモード',
+  'set.colorblind.desc': '色覚多様性に対応した配色とエリア境界線を表示',
   'set.reset.name': '🗑️ 進捗データ初期化',
   'set.reset.desc': 'クリアしたレベルやキャッシュを消去',
   'set.reset.btn': 'リセット',

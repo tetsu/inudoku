@@ -13,7 +13,7 @@ import { getNextHint } from './logic/solver';
 import { generateUniquePuzzle } from './logic/generator';
 import { sounds } from './audio/sound';
 import { bgm } from './audio/bgm';
-import { getCrossSvg, getQuestionSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
+import { CUD_REGION_COLORS, getCrossSvg, getQuestionSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
 import { calculateRankUp, getDailyLeaderboard, PodiumEntry, simulateRivalPoints } from './logic/leaderboard';
 import { storage } from './storage/storage';
 import { i18n, t, SupportedLang, LangSetting } from './i18n/i18n';
@@ -82,6 +82,7 @@ class InudokuGame {
   private settings: GameSettings = {
     autoMark: true,
     lockConfirmed: true,
+    colorblindMode: false,
     soundEnabled: true,
     bgmEnabled: true,
     bgmVolume: 0.35,
@@ -722,6 +723,9 @@ class InudokuGame {
     this.gridBoardEl.innerHTML = '';
     this.gridBoardEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
     this.gridBoardEl.style.gridTemplateRows = `repeat(${size}, 1fr)`;
+    this.gridBoardEl.classList.toggle('colorblind-mode', this.settings.colorblindMode);
+
+    const palette = this.settings.colorblindMode ? CUD_REGION_COLORS : REGION_COLORS;
 
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
@@ -732,11 +736,23 @@ class InudokuGame {
         cellEl.dataset.c = String(c);
         cellEl.id = `cell-${r}-${c}`;
 
-        // Region color (Solid vibrant pastel matching screenshot)
-        const color = REGION_COLORS[cell.region % REGION_COLORS.length];
+        // Region color (Solid vibrant pastel or CUD accessible palette)
+        const color = palette[cell.region % palette.length];
         cellEl.style.setProperty('--cell-bg', color);
 
-        // No black borders! Pure colorful rounded tiles separated by clean white gaps
+        // Region boundary borders (visible in colorblind mode)
+        if (r === 0 || this.grid[r - 1]?.[c]?.region !== cell.region) {
+          cellEl.classList.add('border-top-region');
+        }
+        if (r === size - 1 || this.grid[r + 1]?.[c]?.region !== cell.region) {
+          cellEl.classList.add('border-bottom-region');
+        }
+        if (c === 0 || this.grid[r]?.[c - 1]?.region !== cell.region) {
+          cellEl.classList.add('border-left-region');
+        }
+        if (c === size - 1 || this.grid[r]?.[c + 1]?.region !== cell.region) {
+          cellEl.classList.add('border-right-region');
+        }
 
         this.renderCellContent(cellEl, cell);
         this.gridBoardEl.appendChild(cellEl);
@@ -2711,6 +2727,13 @@ class InudokuGame {
       this.updateAllLockedStates();
     });
 
+    const colorblindToggle = document.getElementById('setting-colorblind') as HTMLInputElement;
+    colorblindToggle?.addEventListener('change', () => {
+      this.settings.colorblindMode = colorblindToggle.checked;
+      this.saveSettings();
+      this.renderBoard();
+    });
+
     const resetProgressBtn = document.getElementById('btn-reset-progress');
     resetProgressBtn?.addEventListener('click', async () => {
       const ok = await this.showConfirm({
@@ -2729,6 +2752,7 @@ class InudokuGame {
         this.hintCount = 5;
         this.settings.autoMark = true;
         this.settings.lockConfirmed = true;
+        this.settings.colorblindMode = false;
         this.settings.vibrationEnabled = true;
         this.settings.userName = '';
         this.saveSettings();
@@ -3178,8 +3202,16 @@ class InudokuGame {
         toggle.dispatchEvent(new Event('change'));
       }
     }
-    // Row 9: Reset Progress
+    // Row 9: Colorblind Mode
     else if (this.settingsRowIdx === 9) {
+      const toggle = document.getElementById('setting-colorblind') as HTMLInputElement | null;
+      if (toggle && (left || right || action)) {
+        toggle.checked = !toggle.checked;
+        toggle.dispatchEvent(new Event('change'));
+      }
+    }
+    // Row 10: Reset Progress
+    else if (this.settingsRowIdx === 10) {
       if (action) {
         document.getElementById('btn-reset-progress')?.click();
       }
@@ -3613,6 +3645,9 @@ class InudokuGame {
 
     const lockConfirmedToggle = document.getElementById('setting-lock-confirmed') as HTMLInputElement;
     if (lockConfirmedToggle) lockConfirmedToggle.checked = this.settings.lockConfirmed;
+
+    const colorblindToggle = document.getElementById('setting-colorblind') as HTMLInputElement;
+    if (colorblindToggle) colorblindToggle.checked = this.settings.colorblindMode;
   }
 }
 

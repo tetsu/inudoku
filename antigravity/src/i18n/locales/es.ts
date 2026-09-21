@@ -226,6 +226,8 @@ export const es: Record<string, string> = {
   'set.automark.desc': 'Pone ✕ automáticamente en casillas inválidas al colocar un Shiba',
   'set.lockConfirmed.name': '🔒 Bloquear casillas confirmadas',
   'set.lockConfirmed.desc': 'Evita modificar accidentalmente Shibas colocados y zonas completadas',
+  'set.colorblind.name': '👁️ Modo para daltónicos',
+  'set.colorblind.desc': 'Paleta accesible CUD y bordes de zona delimitados',
   'set.reset.name': '🗑️ Reiniciar progreso',
   'set.reset.desc': 'Borrar niveles completados y datos en caché',
   'set.reset.btn': 'Reiniciar',

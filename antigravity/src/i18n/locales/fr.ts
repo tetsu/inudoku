@@ -226,6 +226,8 @@ export const fr: Record<string, string> = {
   'set.automark.desc': 'Met automatiquement des ✕ sur les cases invalides',
   'set.lockConfirmed.name': '🔒 Verrouiller les zones confirmées',
   'set.lockConfirmed.desc': 'Empêche de modifier par erreur les Shibas placés et zones terminées',
+  'set.colorblind.name': '👁️ Mode daltonisme',
+  'set.colorblind.desc': 'Palette accessible CUD et bordures de zones distinctes',
   'set.reset.name': '🗑️ Réinitialiser les données',
   'set.reset.desc': 'Effacer les niveaux terminés et les données en cache',
   'set.reset.btn': 'Réinitialiser',

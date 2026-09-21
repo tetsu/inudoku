@@ -226,6 +226,8 @@ export const zh: Record<string, string> = {
   'set.automark.desc': '放置柴犬时自动将不可落子的格子划上 ✕',
   'set.lockConfirmed.name': '🔒 锁定已确定位置与领地',
   'set.lockConfirmed.desc': '防止误触覆盖已找到的柴犬与已完成领地',
+  'set.colorblind.name': '👁️ 色觉关怀模式',
+  'set.colorblind.desc': '采用无障碍通用色彩并高亮显示领地分界线',
   'set.reset.name': '🗑️ 重置游戏进度',
   'set.reset.desc': '清除已通关数据与本地缓存状态',
   'set.reset.btn': '重置',

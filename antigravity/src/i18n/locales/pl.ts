@@ -226,6 +226,8 @@ export const pl: Record<string, string> = {
   'set.automark.desc': 'Automatycznie stawiaj znaki ✕ wokół postawionej Shiby',
   'set.lockConfirmed.name': '🔒 Blokuj potwierdzone pola',
   'set.lockConfirmed.desc': 'Chroń znalezione Shiby i ukończone strefy przed przypadkową zmianą',
+  'set.colorblind.name': '👁️ Tryb dla daltonistów',
+  'set.colorblind.desc': 'Dostępna paleta CUD i wyraźne granice stref',
   'set.reset.name': '🗑️ Zresetuj postęp',
   'set.reset.desc': 'Wyczyść ukończone poziomy i zapisany stan gry',
   'set.reset.btn': 'Resetuj',

@@ -228,3 +228,21 @@ export const REGION_COLORS = [
   '#F8CD77', // 8: Sunny Cream Yellow
   '#2E8854', // 9: Forest Green
 ];
+
+/**
+ * Color Universal Design (CUD) / Okabe-Ito accessible palette:
+ * Optimized for Protanopia, Deuteranopia, and Tritanopia with distinct lightness/chroma.
+ */
+export const CUD_REGION_COLORS = [
+  '#E69F00', // 0: Orange / Warm Amber
+  '#56B4E9', // 1: Sky Blue
+  '#009E73', // 2: Bluish Green
+  '#F0E442', // 3: Yellow
+  '#0072B2', // 4: Blue
+  '#D55E00', // 5: Vermilion
+  '#CC79A7', // 6: Reddish Purple
+  '#888888', // 7: Neutral Grey
+  '#332288', // 8: Indigo
+  '#117733', // 9: Deep Green
+];
+
