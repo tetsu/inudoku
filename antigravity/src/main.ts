@@ -56,6 +56,12 @@ class InudokuGame {
   private winModalFocusIdx: number = 2;
   private gameOverFocusIdx: number = 1;
 
+  // Continuous Cross (✕) Brush Mode (Keyboard & Gamepad)
+  private isHoldingCrossKey: boolean = false;
+  private keyboardCrossGroup: MoveAction[] = [];
+  private isHoldingGamepadCross: boolean = false;
+  private gamepadCrossGroup: MoveAction[] = [];
+
   // Pointer, Drag, Double-Tap & Long-Press tracking
   private isPointerDown: boolean = false;
   private pointerDownPos: { x: number; y: number } | null = null;
@@ -969,6 +975,32 @@ class InudokuGame {
         }
       }
     }
+  }
+
+  private applyBrushCross(r: number, c: number, targetGroup: MoveAction[]) {
+    if (this.isFinished) return;
+    if (this.isCellLocked(r, c)) return;
+    const cell = this.grid[r]?.[c];
+    if (!cell) return;
+    if (cell.mark === 'dog' || cell.mark === 'cross') return;
+    const prevMark = cell.mark;
+    cell.mark = 'cross';
+    targetGroup.push({ r, c, prevMark, newMark: 'cross' });
+    sounds.playPaw();
+    this.vibrateLight(25);
+    this.updateCellView(r, c);
+  }
+
+  private commitBrushCross(targetGroup: MoveAction[]) {
+    if (targetGroup.length === 0) return;
+    if (this.undoStack.length > 0) {
+      const lastAction = this.undoStack[this.undoStack.length - 1];
+      lastAction.push(...targetGroup);
+    } else {
+      this.undoStack.push([...targetGroup]);
+    }
+    this.saveActiveGame();
+    this.validateAndCheckWin();
   }
 
   private eraseCell(r: number, c: number) {
@@ -2371,16 +2403,22 @@ class InudokuGame {
       if (up || down || left || right) {
         e.preventDefault();
         this.inputDevice = 'keyboard';
+        let targetR = this.focusedPos ? this.focusedPos.r : 0;
+        let targetC = this.focusedPos ? this.focusedPos.c : 0;
         if (!this.focusedPos) {
-          this.setFocusedCell(0, 0, 'keyboard');
+          // target is 0, 0
         } else if (up) {
-          this.setFocusedCell(Math.max(0, this.focusedPos.r - 1), this.focusedPos.c, 'keyboard');
+          targetR = Math.max(0, this.focusedPos.r - 1);
         } else if (down) {
-          this.setFocusedCell(Math.min(size - 1, this.focusedPos.r + 1), this.focusedPos.c, 'keyboard');
+          targetR = Math.min(size - 1, this.focusedPos.r + 1);
         } else if (left) {
-          this.setFocusedCell(this.focusedPos.r, Math.max(0, this.focusedPos.c - 1), 'keyboard');
+          targetC = Math.max(0, this.focusedPos.c - 1);
         } else if (right) {
-          this.setFocusedCell(this.focusedPos.r, Math.min(size - 1, this.focusedPos.c + 1), 'keyboard');
+          targetC = Math.min(size - 1, this.focusedPos.c + 1);
+        }
+        this.setFocusedCell(targetR, targetC, 'keyboard');
+        if (this.isHoldingCrossKey) {
+          this.applyBrushCross(targetR, targetC, this.keyboardCrossGroup);
         }
         return;
       }
@@ -2391,6 +2429,9 @@ class InudokuGame {
         this.inputDevice = 'keyboard';
         if (!this.focusedPos) {
           this.setFocusedCell(0, 0, 'keyboard');
+          if (this.isHoldingCrossKey) {
+            this.applyBrushCross(0, 0, this.keyboardCrossGroup);
+          }
         } else {
           let nextC = this.focusedPos.c + (e.shiftKey ? -1 : 1);
           let nextR = this.focusedPos.r;
@@ -2402,6 +2443,9 @@ class InudokuGame {
             nextR = (nextR - 1 + size) % size;
           }
           this.setFocusedCell(nextR, nextC, 'keyboard');
+          if (this.isHoldingCrossKey) {
+            this.applyBrushCross(nextR, nextC, this.keyboardCrossGroup);
+          }
         }
         return;
       }
@@ -2420,8 +2464,12 @@ class InudokuGame {
       if (e.key === 'x' || e.key === 'X' || e.key === 'm' || e.key === 'M') {
         e.preventDefault();
         this.inputDevice = 'keyboard';
-        if (this.focusedPos) {
-          this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
+        if (!e.repeat) {
+          this.isHoldingCrossKey = true;
+          this.keyboardCrossGroup = [];
+          if (this.focusedPos) {
+            this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
+          }
         }
         return;
       }
@@ -2496,6 +2544,35 @@ class InudokuGame {
         e.preventDefault();
         this.showTitleScreen();
         return;
+      }
+    });
+
+    window.addEventListener('keyup', (e: KeyboardEvent) => {
+      if (e.key === 'x' || e.key === 'X' || e.key === 'm' || e.key === 'M') {
+        if (this.isHoldingCrossKey) {
+          this.isHoldingCrossKey = false;
+          if (this.keyboardCrossGroup.length > 0) {
+            this.commitBrushCross(this.keyboardCrossGroup);
+            this.keyboardCrossGroup = [];
+          }
+        }
+      }
+    });
+
+    window.addEventListener('blur', () => {
+      if (this.isHoldingCrossKey) {
+        this.isHoldingCrossKey = false;
+        if (this.keyboardCrossGroup.length > 0) {
+          this.commitBrushCross(this.keyboardCrossGroup);
+          this.keyboardCrossGroup = [];
+        }
+      }
+      if (this.isHoldingGamepadCross) {
+        this.isHoldingGamepadCross = false;
+        if (this.gamepadCrossGroup.length > 0) {
+          this.commitBrushCross(this.gamepadCrossGroup);
+          this.gamepadCrossGroup = [];
+        }
       }
     });
   }
@@ -3648,6 +3725,26 @@ class InudokuGame {
       this.setFocusedCell(0, 0, 'gamepad');
     }
 
+    const isADown = isBtnDown(gp.buttons[0]);
+    const aJustPressed = justPressed(0);
+    const aReleased = !isADown && Boolean(this.prevGamepadButtons[0]);
+
+    if (aJustPressed) {
+      this.isHoldingGamepadCross = true;
+      this.gamepadCrossGroup = [];
+      if (this.focusedPos) {
+        this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
+      }
+    }
+
+    if (aReleased && this.isHoldingGamepadCross) {
+      this.isHoldingGamepadCross = false;
+      if (this.gamepadCrossGroup.length > 0) {
+        this.commitBrushCross(this.gamepadCrossGroup);
+        this.gamepadCrossGroup = [];
+      }
+    }
+
     if (navStep && this.focusedPos) {
       const size = this.currentPuzzle.size;
       let newR = this.focusedPos.r;
@@ -3658,16 +3755,14 @@ class InudokuGame {
       if (rawRight) newC = Math.min(size - 1, newC + 1);
       if (newR !== this.focusedPos.r || newC !== this.focusedPos.c) {
         this.setFocusedCell(newR, newC, 'gamepad');
+        if (isADown && this.isHoldingGamepadCross) {
+          this.applyBrushCross(newR, newC, this.gamepadCrossGroup);
+        }
       }
     }
 
     // Action buttons:
-    // A (0): Cross
-    if (justPressed(0)) {
-      if (this.focusedPos) {
-        this.handleCellClick(this.focusedPos.r, this.focusedPos.c, 'cross');
-      }
-    }
+    // (A (0): Handled above for continuous brush support)
     // B (1): Shiba (Dog)
     if (justPressed(1)) {
       if (this.focusedPos) {
