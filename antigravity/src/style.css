@@ -420,6 +420,32 @@ button {
   100% { opacity: 1; }
 }
 
+/* Confirmed / Locked Cell (Protection against accidental clicks) */
+.grid-cell.cell-locked {
+  cursor: default;
+}
+
+.grid-cell.cell-locked:hover {
+  filter: brightness(1.01);
+}
+
+.grid-cell.cell-locked:active {
+  transform: none;
+}
+
+.grid-cell.cell-locked .cell-dog {
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.18));
+}
+
+.grid-cell.cell-locked.cell-locked-tap {
+  animation: lockedTap 0.22s ease;
+}
+
+@keyframes lockedTap {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.96); }
+}
+
 /* Hint Bubble (Toast style) */
 .hint-bubble {
   position: absolute;

@@ -224,6 +224,8 @@ export const it: Record<string, string> = {
   'set.vibration.desc': 'Feedback aptico durante il gioco (solo dispositivi supportati)',
   'set.automark.name': '⚡ Auto ✕',
   'set.automark.desc': 'Metti automaticamente le ✕ attorno agli Shiba piazzati',
+  'set.lockConfirmed.name': '🔒 Blocca caselle confermate',
+  'set.lockConfirmed.desc': 'Evita modifiche accidentali a Shiba posizionati e aree completate',
   'set.reset.name': '🗑️ Ripristina progressi',
   'set.reset.desc': 'Cancella i livelli completati e lo stato salvato',
   'set.reset.btn': 'Ripristina',

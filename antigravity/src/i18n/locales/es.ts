@@ -224,6 +224,8 @@ export const es: Record<string, string> = {
   'set.vibration.desc': 'Respuesta háptica al marcar (dispositivos compatibles)',
   'set.automark.name': '⚡ Marcado automático',
   'set.automark.desc': 'Pone ✕ automáticamente en casillas inválidas al colocar un Shiba',
+  'set.lockConfirmed.name': '🔒 Bloquear casillas confirmadas',
+  'set.lockConfirmed.desc': 'Evita modificar accidentalmente Shibas colocados y zonas completadas',
   'set.reset.name': '🗑️ Reiniciar progreso',
   'set.reset.desc': 'Borrar niveles completados y datos en caché',
   'set.reset.btn': 'Reiniciar',

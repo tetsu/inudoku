@@ -224,6 +224,8 @@ export const zh: Record<string, string> = {
   'set.vibration.desc': '标记格子时的触觉震动反馈（仅限支持设备）',
   'set.automark.name': '⚡ 自动标记 (Auto-Mark)',
   'set.automark.desc': '放置柴犬时自动将不可落子的格子划上 ✕',
+  'set.lockConfirmed.name': '🔒 锁定已确定位置与领地',
+  'set.lockConfirmed.desc': '防止误触覆盖已找到的柴犬与已完成领地',
   'set.reset.name': '🗑️ 重置游戏进度',
   'set.reset.desc': '清除已通关数据与本地缓存状态',
   'set.reset.btn': '重置',

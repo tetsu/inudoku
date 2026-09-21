@@ -46,6 +46,8 @@ export interface GameSettings {
   vibrationEnabled: boolean;
   shibaType: 'aka' | 'kuro' | 'shiro'; // 赤柴, 黒柴, 白柴
   highContrast: boolean;
+  lockConfirmed: boolean; // Prevent accidental overwrite on confirmed dogs & color areas
   language?: 'auto' | 'ja' | 'en' | 'zh' | 'fr' | 'es' | 'de' | 'ru' | 'uk' | 'pl' | 'it';
   userName?: string;
 }
+

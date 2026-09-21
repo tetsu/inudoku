@@ -160,6 +160,7 @@ export class StorageManager {
         ...defaults,
         ...parsed,
         autoMark: parsed.autoMark !== undefined ? Boolean(parsed.autoMark) : true,
+        lockConfirmed: parsed.lockConfirmed !== undefined ? Boolean(parsed.lockConfirmed) : true,
         vibrationEnabled: parsed.vibrationEnabled !== undefined ? Boolean(parsed.vibrationEnabled) : true,
         bgmEnabled: parsed.bgmEnabled !== undefined ? Boolean(parsed.bgmEnabled) : defaults.bgmEnabled,
         bgmVolume: clampVolume(parsed.bgmVolume, defaults.bgmVolume),

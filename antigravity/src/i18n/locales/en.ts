@@ -224,6 +224,8 @@ export const en: Record<string, string> = {
   'set.vibration.desc': 'Haptic vibration feedback when marking (supported devices only)',
   'set.automark.name': '⚡ Auto-Mark',
   'set.automark.desc': 'Auto-cross invalid spots when placing a Shiba',
+  'set.lockConfirmed.name': '🔒 Lock Confirmed Spots',
+  'set.lockConfirmed.desc': 'Protect placed Shibas, completed areas & row/col lines from accidental changes',
   'set.reset.name': '🗑️ Reset Progress',
   'set.reset.desc': 'Clear completed levels and cached game state',
   'set.reset.btn': 'Reset',

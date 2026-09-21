@@ -224,6 +224,8 @@ export const de: Record<string, string> = {
   'set.vibration.desc': 'Haptisches Feedback beim Markieren (unterstützte Geräte)',
   'set.automark.name': '⚡ Automatisches Sperren',
   'set.automark.desc': 'Ungültige Felder nach Shiba-Platzierung automatisch mit ✕ versehen',
+  'set.lockConfirmed.name': '🔒 Bestätigte Felder sperren',
+  'set.lockConfirmed.desc': 'Verhindert versehentliches Ändern platzierter Shibas & Zonen',
   'set.reset.name': '🗑️ Spielstand zurücksetzen',
   'set.reset.desc': 'Abgeschlossene Level und Zwischenspeicher löschen',
   'set.reset.btn': 'Zurücksetzen',

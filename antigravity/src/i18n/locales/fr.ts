@@ -224,6 +224,8 @@ export const fr: Record<string, string> = {
   'set.vibration.desc': 'Retour haptique lors du marquage (appareils compatibles)',
   'set.automark.name': '⚡ Marquage automatique',
   'set.automark.desc': 'Met automatiquement des ✕ sur les cases invalides',
+  'set.lockConfirmed.name': '🔒 Verrouiller les zones confirmées',
+  'set.lockConfirmed.desc': 'Empêche de modifier par erreur les Shibas placés et zones terminées',
   'set.reset.name': '🗑️ Réinitialiser les données',
   'set.reset.desc': 'Effacer les niveaux terminés et les données en cache',
   'set.reset.btn': 'Réinitialiser',

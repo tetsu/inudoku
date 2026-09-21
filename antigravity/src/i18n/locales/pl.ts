@@ -224,6 +224,8 @@ export const pl: Record<string, string> = {
   'set.vibration.desc': 'Odpowiedź haptyczna podczas oznaczania (tylko obsługiwane urządzenia)',
   'set.automark.name': '⚡ Automatyczny ✕',
   'set.automark.desc': 'Automatycznie stawiaj znaki ✕ wokół postawionej Shiby',
+  'set.lockConfirmed.name': '🔒 Blokuj potwierdzone pola',
+  'set.lockConfirmed.desc': 'Chroń znalezione Shiby i ukończone strefy przed przypadkową zmianą',
   'set.reset.name': '🗑️ Zresetuj postęp',
   'set.reset.desc': 'Wyczyść ukończone poziomy i zapisany stan gry',
   'set.reset.btn': 'Resetuj',

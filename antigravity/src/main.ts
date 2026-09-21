@@ -81,6 +81,7 @@ class InudokuGame {
   // Settings
   private settings: GameSettings = {
     autoMark: true,
+    lockConfirmed: true,
     soundEnabled: true,
     bgmEnabled: true,
     bgmVolume: 0.35,
@@ -752,6 +753,7 @@ class InudokuGame {
   private renderCellContent(cellEl: HTMLElement, cell: CellState) {
     cellEl.innerHTML = '';
     cellEl.classList.toggle('cell-conflict', cell.isConflict);
+    cellEl.classList.toggle('cell-locked', this.isCellLocked(cell.r, cell.c));
 
     if (cell.mark === 'dog') {
       const state = cell.isConflict ? 'conflict' : 'normal';
@@ -858,8 +860,88 @@ class InudokuGame {
     } catch {}
   }
 
+  public isRegionConfirmed(regionId: number): boolean {
+    if (!this.grid || this.grid.length === 0) return false;
+    const size = this.currentPuzzle?.size || this.grid.length;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (this.grid[r]?.[c]?.region === regionId && this.grid[r]?.[c]?.mark === 'dog') {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public isRowConfirmed(r: number): boolean {
+    if (!this.grid || this.grid.length === 0) return false;
+    const size = this.currentPuzzle?.size || this.grid.length;
+    for (let c = 0; c < size; c++) {
+      if (this.grid[r]?.[c]?.mark === 'dog') {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public isColConfirmed(c: number): boolean {
+    if (!this.grid || this.grid.length === 0) return false;
+    const size = this.currentPuzzle?.size || this.grid.length;
+    for (let r = 0; r < size; r++) {
+      if (this.grid[r]?.[c]?.mark === 'dog') {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public isCellLocked(r: number, c: number): boolean {
+    if (!this.settings.lockConfirmed) return false;
+    const cell = this.grid?.[r]?.[c];
+    if (!cell) return false;
+    // Any cell with a confirmed Shiba dog is locked
+    if (cell.mark === 'dog') return true;
+    // Any cell in a region, row, or column where a Shiba dog is already confirmed is locked
+    return (
+      this.isRegionConfirmed(cell.region) ||
+      this.isRowConfirmed(r) ||
+      this.isColConfirmed(c)
+    );
+  }
+
+  public flashLockedCell(r: number, c: number): void {
+    const cellEl = document.getElementById(`cell-${r}-${c}`);
+    if (cellEl) {
+      cellEl.classList.remove('cell-locked-tap');
+      void cellEl.offsetWidth; // trigger reflow
+      cellEl.classList.add('cell-locked-tap');
+      setTimeout(() => {
+        cellEl?.classList.remove('cell-locked-tap');
+      }, 250);
+    }
+    this.vibrateLight(20);
+  }
+
+  public updateAllLockedStates(): void {
+    if (!this.grid || this.grid.length === 0) return;
+    const size = this.currentPuzzle?.size || this.grid.length;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const cellEl = document.getElementById(`cell-${r}-${c}`);
+        if (cellEl) {
+          const locked = this.isCellLocked(r, c);
+          cellEl.classList.toggle('cell-locked', locked);
+        }
+      }
+    }
+  }
+
   private eraseCell(r: number, c: number) {
     if (this.isFinished) return;
+    if (this.isCellLocked(r, c)) {
+      this.flashLockedCell(r, c);
+      return;
+    }
     const cell = this.grid[r][c];
     if (cell.mark === 'empty') return;
     const prevMark = cell.mark;
@@ -874,6 +956,11 @@ class InudokuGame {
 
   private handleCellClick(r: number, c: number, forceMark?: 'dog' | 'cross' | 'question') {
     if (this.isFinished) return;
+
+    if (this.isCellLocked(r, c)) {
+      this.flashLockedCell(r, c);
+      return;
+    }
 
     const cell = this.grid[r][c];
 
@@ -1127,6 +1214,7 @@ class InudokuGame {
     const validation = validateGrid(this.grid, this.currentPuzzle);
     this.updateAllConflicts(validation.conflictingCells);
     this.updateStatus(validation.dogCount);
+    this.updateAllLockedStates();
 
     if (validation.isComplete && !this.isFinished) {
       this.handleVictory();
@@ -1683,6 +1771,10 @@ class InudokuGame {
         e.preventDefault();
         this.clearFocusedCell();
         this.lastTapInfo = null;
+        if (this.isCellLocked(r, c)) {
+          this.flashLockedCell(r, c);
+          return;
+        }
         this.handleCellClick(r, c, 'question');
         return;
       }
@@ -1707,6 +1799,10 @@ class InudokuGame {
           this.longPressFired = true;
           this.longPressTimer = null;
           this.lastTapInfo = null; // Long press cancels double-tap tracking
+          if (this.isCellLocked(r, c)) {
+            this.flashLockedCell(r, c);
+            return;
+          }
           this.handleCellClick(r, c, 'question');
           this.vibrateLight(45);
         }, 400);
@@ -1733,7 +1829,10 @@ class InudokuGame {
         const startCell = this.grid[startR]?.[startC];
 
         if (startCell) {
-          if (startCell.mark === 'cross') {
+          if (this.isCellLocked(startR, startC)) {
+            // Locked cell (confirmed dog or confirmed region): do not start drag operations
+            this.dragMode = null;
+          } else if (startCell.mark === 'cross') {
             // Xマークからドラッグ開始 -> Xマーク消去モード (erase)
             this.dragMode = 'erase';
             startCell.mark = 'empty';
@@ -1768,7 +1867,7 @@ class InudokuGame {
           if (!this.visitedDragCells.has(key)) {
             this.visitedDragCells.add(key);
             const cell = this.grid[r]?.[c];
-            if (cell) {
+            if (cell && !this.isCellLocked(r, c)) {
               if (this.dragMode === 'erase') {
                 // Xマークのマスのみマークを消す！
                 if (cell.mark === 'cross') {
@@ -1830,6 +1929,13 @@ class InudokuGame {
       // Case C: Single Click/Tap vs Double Click/Tap
       if (this.pointerDownCell) {
         const { r, c } = this.pointerDownCell;
+        if (this.isCellLocked(r, c)) {
+          this.lastTapInfo = null;
+          this.flashLockedCell(r, c);
+          this.pointerDownCell = null;
+          this.pointerDownPos = null;
+          return;
+        }
         const now = Date.now();
 
         // Check if this tap is within 320ms on the SAME cell -> Double Click / Double Tap!
@@ -1897,6 +2003,10 @@ class InudokuGame {
         const c = parseInt(cellEl.dataset.c, 10);
         this.clearFocusedCell();
         this.lastTapInfo = null; // Right click cancels double-tap tracking
+        if (this.isCellLocked(r, c)) {
+          this.flashLockedCell(r, c);
+          return;
+        }
         this.handleCellClick(r, c, 'question');
       }
     });
@@ -2575,6 +2685,13 @@ class InudokuGame {
       this.saveSettings();
     });
 
+    const lockConfirmedToggle = document.getElementById('setting-lock-confirmed') as HTMLInputElement;
+    lockConfirmedToggle?.addEventListener('change', () => {
+      this.settings.lockConfirmed = lockConfirmedToggle.checked;
+      this.saveSettings();
+      this.updateAllLockedStates();
+    });
+
     const resetProgressBtn = document.getElementById('btn-reset-progress');
     resetProgressBtn?.addEventListener('click', async () => {
       const ok = await this.showConfirm({
@@ -2592,6 +2709,7 @@ class InudokuGame {
         this.tournamentPoints = 0;
         this.hintCount = 5;
         this.settings.autoMark = true;
+        this.settings.lockConfirmed = true;
         this.settings.vibrationEnabled = true;
         this.settings.userName = '';
         this.saveSettings();
@@ -3033,8 +3151,16 @@ class InudokuGame {
         toggle.dispatchEvent(new Event('change'));
       }
     }
-    // Row 8: Reset Progress
+    // Row 8: Lock Confirmed
     else if (this.settingsRowIdx === 8) {
+      const toggle = document.getElementById('setting-lock-confirmed') as HTMLInputElement | null;
+      if (toggle && (left || right || action)) {
+        toggle.checked = !toggle.checked;
+        toggle.dispatchEvent(new Event('change'));
+      }
+    }
+    // Row 9: Reset Progress
+    else if (this.settingsRowIdx === 9) {
       if (action) {
         document.getElementById('btn-reset-progress')?.click();
       }
@@ -3465,6 +3591,9 @@ class InudokuGame {
 
     const autoMarkToggle = document.getElementById('setting-automark') as HTMLInputElement;
     if (autoMarkToggle) autoMarkToggle.checked = this.settings.autoMark;
+
+    const lockConfirmedToggle = document.getElementById('setting-lock-confirmed') as HTMLInputElement;
+    if (lockConfirmedToggle) lockConfirmedToggle.checked = this.settings.lockConfirmed;
   }
 }
 
