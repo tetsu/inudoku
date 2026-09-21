@@ -2006,285 +2006,372 @@ input:checked + .slider:before {
 /* ==========================================================================
    3D Podiums Container
    ========================================================================== */
-.podium-stage {
+/* ==========================================================================
+   Horizontal Ascending Staircase System (Rank-Up & Leaderboard)
+   ========================================================================== */
+.staircase-stage {
   display: flex;
   justify-content: center;
   align-items: flex-end;
   width: 100%;
-  gap: 12px;
+  gap: 8px;
   margin-top: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  position: relative;
+  perspective: 900px;
 }
 
-.podium-column {
+.stair-step {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-end;
   flex: 1;
+  min-width: 0;
+  position: relative;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
 }
 
-/* Avatar on top of podium */
-.podium-avatar-box {
+.stair-step.is-user-step {
+  z-index: 20;
+}
+
+/* Avatar standing on top of the step */
+.step-avatar-wrap {
   position: relative;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   margin-bottom: -10px;
-  z-index: 5;
+  z-index: 15;
+  transition: transform 0.3s ease;
+}
+
+.avatar-bubble {
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  background: #FFFFFF;
+  border: 2.5px solid #CBD5E1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.7rem;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+  position: relative;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.is-user-step .avatar-bubble {
+  border-color: #F59E0B;
+  background: #FFFBEB;
+  width: 58px;
+  height: 58px;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.65), 0 6px 14px rgba(0, 0, 0, 0.25);
+  animation: userAvatarBob 2.5s infinite ease-in-out alternate;
+}
+
+@keyframes userAvatarBob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+.avatar-you-tag {
+  position: absolute;
+  bottom: -6px;
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #FFFFFF;
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  border: 1px solid #FEF3C7;
 }
 
 .crown-badge {
   position: absolute;
-  top: -16px;
-  font-size: 1.5rem;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  top: -18px;
+  font-size: 1.6rem;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
   animation: crownBob 2s infinite ease-in-out alternate;
+  z-index: 25;
 }
 
 @keyframes crownBob {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-4px) rotate(5deg); }
+  0% { transform: translateY(0) rotate(-3deg); }
+  100% { transform: translateY(-5px) rotate(4deg); }
 }
 
-.avatar-ring {
-  width: 58px;
-  height: 58px;
-  border-radius: 16px;
-  background: #FFFFFF;
-  border: 3px solid #E2E8F0;
+.step-shiba-svg {
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
 }
 
-.ring-gold {
-  border-color: #FBBF24;
-  background: #FFFBEB;
-  width: 66px;
-  height: 66px;
-}
-
-.avatar-emoji {
-  font-size: 2rem;
-}
-
-.ring-gold .avatar-emoji {
-  font-size: 2.3rem;
-}
-
-/* Cylinders / Pillars */
-.podium-pillar {
+/* 3D Step Solid Block */
+.step-block {
   width: 100%;
-  border-radius: 20px 20px 8px 8px;
+  border-radius: 16px 16px 6px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 14px;
-  padding-bottom: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
   position: relative;
   overflow: hidden;
+  transition: height 0.4s ease, background 0.3s ease;
 }
 
-.pillar-cap {
+.step-tread {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 10px;
-  background: rgba(255, 255, 255, 0.35);
-  border-radius: 20px 20px 0 0;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 16px 16px 0 0;
+  box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.8);
 }
 
-/* 1st Place (Gold) */
-.pillar-gold {
-  height: 135px;
-  background: linear-gradient(180deg, #FCD34D 0%, #F59E0B 45%, #D97706 100%);
-  border-top: 2px solid #FEF08A;
-}
-
-/* 2nd Place (Silver/Lavender) */
-.pillar-silver {
-  height: 110px;
-  background: linear-gradient(180deg, #C7D2FE 0%, #818CF8 50%, #6366F1 100%);
-  border-top: 2px solid #E0E7FF;
-}
-
-/* 3rd Place (Bronze/Peach) */
-.pillar-bronze {
-  height: 96px;
-  background: linear-gradient(180deg, #FDBA74 0%, #FB923C 50%, #EA580C 100%);
-  border-top: 2px solid #FFEDD5;
-}
-
-/* Number Badges on Pillars */
-.podium-badge {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  color: #FFFFFF;
-  font-family: var(--font-family-display);
-  font-size: 0.95rem;
-  font-weight: 900;
+.step-riser {
+  width: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-  margin-bottom: 4px;
-}
-
-.badge-gold {
-  background: #D97706;
-  border: 2px solid #FEF3C7;
-  width: 32px;
-  height: 32px;
-  font-size: 1.1rem;
-}
-
-.badge-silver {
-  background: #4F46E5;
-  border: 2px solid #EEF2FF;
-}
-
-.badge-bronze {
-  background: #C2410C;
-  border: 2px solid #FFF7ED;
-}
-
-.podium-name {
-  color: #FFFFFF;
-  font-weight: 800;
-  font-size: 0.85rem;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  margin-bottom: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 90%;
+  justify-content: flex-start;
+  padding-top: 14px;
+  padding-bottom: 8px;
+  padding-left: 2px;
+  padding-right: 2px;
   text-align: center;
 }
 
-.podium-score-pill {
-  background: #FFFFFF;
-  border-radius: 9999px;
-  padding: 2px 10px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+/* 3D Metallic / Material Colors for Steps */
+.step-gold {
+  background: linear-gradient(180deg, #FDE68A 0%, #F59E0B 45%, #D97706 80%, #92400E 100%);
+  border-top: 2px solid #FEF08A;
+  box-shadow: 0 10px 28px rgba(245, 158, 11, 0.45);
 }
 
-.score-bone-icon {
-  font-size: 0.9rem;
+.step-silver {
+  background: linear-gradient(180deg, #EEF2FF 0%, #C7D2FE 35%, #818CF8 75%, #4338CA 100%);
+  border-top: 2px solid #FFFFFF;
+  box-shadow: 0 10px 24px rgba(99, 102, 241, 0.35);
 }
 
-.score-num {
+.step-bronze {
+  background: linear-gradient(180deg, #FFF7ED 0%, #FDBA74 35%, #FB923C 75%, #9A3412 100%);
+  border-top: 2px solid #FED7AA;
+  box-shadow: 0 10px 24px rgba(234, 88, 12, 0.35);
+}
+
+.step-normal {
+  background: linear-gradient(180deg, #94A3B8 0%, #64748B 40%, #475569 80%, #334155 100%);
+  border-top: 2px solid #E2E8F0;
+}
+
+.is-user-step .step-block {
+  border: 2px solid #F59E0B;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.65), 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Step Riser Information */
+.step-rank-num {
   font-family: var(--font-family-display);
-  font-size: 0.85rem;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #FFFFFF;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  margin-bottom: 2px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.step-rank-num.bump {
+  animation: numBump 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: #FEF08A;
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.85), 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.step-name {
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 0.72rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 92%;
+  text-align: center;
+}
+
+.step-score-pill {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 9999px;
+  padding: 2px 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
+}
+
+.step-score-pill .score-bone-icon {
+  font-size: 0.75rem;
+}
+
+.step-score-pill .score-num {
+  font-family: var(--font-family-display);
+  font-size: 0.75rem;
   font-weight: 800;
   color: #854D0E;
 }
 
+/* Specific Step Heights for Rank-Up Screen (4 Ascending Steps: 0 -> 1 -> 2 -> 3) */
+.rankup-stairs .step-idx-0 .step-block { height: 65px; }
+.rankup-stairs .step-idx-1 .step-block { height: 100px; }
+.rankup-stairs .step-idx-2 .step-block { height: 140px; }
+.rankup-stairs .step-idx-3 .step-block { height: 185px; }
+
+/* Specific Step Heights for Daily Leaderboard (5 Ascending Steps: 5 -> 4 -> 3 -> 2 -> 1) */
+.leaderboard-stairs .step-idx-0 .step-block { height: 55px; }
+.leaderboard-stairs .step-idx-1 .step-block { height: 80px; }
+.leaderboard-stairs .step-idx-2 .step-block { height: 110px; }
+.leaderboard-stairs .step-idx-3 .step-block { height: 145px; }
+.leaderboard-stairs .step-idx-4 .step-block { height: 185px; }
+
+/* Shiba Hop Up Stairs Keyframe Animation */
+@keyframes shibaClimbStair {
+  0% {
+    transform: translate(0, 0) scale(1, 1);
+  }
+  15% {
+    transform: translate(0, 6px) scale(1.25, 0.75); /* Squash anticipation */
+  }
+  48% {
+    transform: translate(calc(var(--jump-x) * 0.5), calc(var(--jump-y) - 48px)) scale(0.9, 1.25) rotate(8deg); /* Arc apex */
+  }
+  82% {
+    transform: translate(var(--jump-x), var(--jump-y)) scale(1.2, 0.8); /* Landing impact squash */
+  }
+  100% {
+    transform: translate(var(--jump-x), var(--jump-y)) scale(1, 1); /* Settle */
+  }
+}
+
+.shiba-climbing {
+  animation: shibaClimbStair 0.75s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  z-index: 100 !important;
+}
+
+/* Celebratory Victory Hop on top step */
+@keyframes shibaVictoryBounce {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  30% { transform: translateY(-28px) scale(0.9, 1.2) rotate(-6deg); }
+  60% { transform: translateY(-28px) scale(0.9, 1.2) rotate(6deg); }
+  85% { transform: translateY(0) scale(1.18, 0.82); }
+}
+
+.shiba-victory {
+  animation: shibaVictoryBounce 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Landing Sparkle Burst */
+.landing-sparkle {
+  position: absolute;
+  pointer-events: none;
+  font-size: 1.3rem;
+  animation: sparklePop 0.6s ease-out forwards;
+  z-index: 50;
+}
+
+@keyframes sparklePop {
+  0% { transform: scale(0.2) translate(0, 0); opacity: 1; }
+  100% { transform: scale(1.4) translate(var(--tx, 0), var(--ty, -20px)); opacity: 0; }
+}
+
 /* ==========================================================================
-   Rank Up Cards Container & Animation
+   Rank Up Summary Banner
    ========================================================================== */
-.rankup-cards-container {
+.rankup-summary-banner {
+  background: #FFFFFF;
+  border-radius: 18px;
+  padding: 10px 16px;
+  margin: 10px 0;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  position: relative;
-}
-
-.rankup-card {
-  display: flex;
-  align-items: center;
-  background: #FFFFFF;
-  border-radius: 14px;
-  padding: 9px 14px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-  gap: 12px;
-  position: relative;
-  transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
-}
-
-.rankup-card.is-user-card {
-  background: #FFFBEB;
-  border: 2px solid #F59E0B;
-  z-index: 10;
-  box-shadow: 0 8px 22px rgba(245, 158, 11, 0.35);
-}
-
-.card-rank-num {
-  font-family: var(--font-family-display);
-  font-size: 1.35rem;
-  font-weight: 900;
-  color: #78350F;
-  width: 34px;
-  text-align: center;
-  transition: transform 0.3s ease, color 0.3s ease;
-}
-
-.card-avatar-box {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-  background: #F1F5F9;
-  border: 1.5px solid #CBD5E1;
-  flex-shrink: 0;
-}
-
-.card-user-name {
-  flex: 1;
-  font-weight: 800;
-  font-size: 1rem;
-  color: #334155;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.card-score-pill {
-  background: #F8FAFC;
-  border: 1.5px solid #E2E8F0;
-  border-radius: 9999px;
-  padding: 3px 14px;
-  display: flex;
   align-items: center;
   gap: 6px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  width: 100%;
 }
 
-.card-score-pill .score-bone-icon {
-  font-size: 1.05rem;
-}
-
-.card-score-pill .score-num {
+.rankup-badge-transition {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   font-family: var(--font-family-display);
-  font-size: 1.05rem;
+}
+
+.rank-badge-pill {
+  font-size: 1.15rem;
   font-weight: 900;
-  color: #78350F;
+  padding: 4px 14px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Rank Up Slide Animation: card height (64px) + gap (8px) = 72px exact */
-.rankup-card.slide-up {
-  transform: translateY(-72px);
+.rank-badge-prev {
+  background: #F1F5F9;
+  color: #64748B;
+  border: 1.5px solid #CBD5E1;
 }
 
-.rankup-card.slide-down {
-  transform: translateY(72px);
+.rank-arrow-icon {
+  font-size: 1.3rem;
+  color: #F59E0B;
+  animation: arrowPulse 1.2s infinite ease-in-out alternate;
 }
 
-.card-rank-num.bump {
-  animation: numBump 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  color: #EA580C;
+@keyframes arrowPulse {
+  0% { transform: translateX(0); opacity: 0.7; }
+  100% { transform: translateX(4px); opacity: 1; }
 }
 
+.rank-badge-new {
+  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  color: #B45309;
+  border: 2px solid #F59E0B;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.rank-badge-new.bump {
+  animation: numBump 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rankup-status-message {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #334155;
+  text-align: center;
+}
+
+/* Leaderboard Modal Stairs Container */
+.leaderboard-staircase-container {
+  width: 100%;
+  padding: 6px 0 12px 0;
+  margin-bottom: 12px;
+  border-bottom: 1.5px dashed #E2E8F0;
+}
+
+.leaderboard-stairs {
+  max-width: 540px;
+  margin: 0 auto;
+}
 
 @keyframes numBump {
   0% { transform: scale(1); }

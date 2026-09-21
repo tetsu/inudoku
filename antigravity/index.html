@@ -217,6 +217,13 @@
           <button class="modal-close" data-close-modal="modal-leaderboard">✕</button>
         </div>
         <div class="modal-body leaderboard-body">
+          <!-- Ascending Staircase Stage (Top 5 Ranks: 5 -> 4 -> 3 -> 2 -> 1) -->
+          <div class="leaderboard-staircase-container" id="leaderboard-staircase-container">
+            <div class="staircase-stage leaderboard-stairs" id="leaderboard-staircase-stage">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
           <div class="leaderboard-user-banner" id="leaderboard-user-card">
             <div class="user-card-left">
               <span class="user-rank-badge" id="my-rank-badge"># -</span>
@@ -886,67 +893,21 @@
           <span id="rankup-timer-countdown">23:29:56</span>
         </div>
 
-        <!-- 3D Podiums Container -->
-        <div class="podium-stage" id="podium-stage">
-          <!-- 2nd Place (Left) -->
-          <div class="podium-column podium-silver">
-            <div class="podium-avatar-box">
-              <div class="avatar-ring">
-                <span class="avatar-emoji">🦊</span>
-              </div>
-            </div>
-            <div class="podium-pillar pillar-silver">
-              <div class="pillar-cap"></div>
-              <div class="podium-badge badge-silver">2</div>
-              <div class="podium-name">VBB7VC</div>
-              <div class="podium-score-pill">
-                <span class="score-bone-icon">🦴</span>
-                <span class="score-num">27</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 1st Place (Center, Tallest) -->
-          <div class="podium-column podium-gold">
-            <div class="podium-avatar-box">
-              <span class="crown-badge">👑</span>
-              <div class="avatar-ring ring-gold">
-                <span class="avatar-emoji">🦁</span>
-              </div>
-            </div>
-            <div class="podium-pillar pillar-gold">
-              <div class="pillar-cap cap-gold"></div>
-              <div class="podium-badge badge-gold">1</div>
-              <div class="podium-name">RJEA3M</div>
-              <div class="podium-score-pill">
-                <span class="score-bone-icon">🦴</span>
-                <span class="score-num">29</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 3rd Place (Right) -->
-          <div class="podium-column podium-bronze">
-            <div class="podium-avatar-box">
-              <div class="avatar-ring">
-                <span class="avatar-emoji">🐊</span>
-              </div>
-            </div>
-            <div class="podium-pillar pillar-bronze">
-              <div class="pillar-cap"></div>
-              <div class="podium-badge badge-bronze">3</div>
-              <div class="podium-name">xenW</div>
-              <div class="podium-score-pill">
-                <span class="score-bone-icon">🦴</span>
-                <span class="score-num">26</span>
-              </div>
-            </div>
-          </div>
+        <!-- Horizontal Ascending Staircase Stage (Left to Right) -->
+        <div class="staircase-stage rankup-stairs" id="rankup-staircase-stage">
+          <!-- Ascending Steps injected dynamically by main.ts -->
         </div>
 
-        <!-- Rank Up Moving Cards Window -->
-        <div class="rankup-cards-container" id="rankup-cards-container">
-          <!-- Cards will be populated and animated by main.ts -->
+        <!-- Rank Up Summary Banner -->
+        <div class="rankup-summary-banner" id="rankup-summary-banner">
+          <div class="rankup-badge-transition">
+            <span class="rank-badge-pill rank-badge-prev" id="rankup-badge-prev"># -</span>
+            <span class="rank-arrow-icon">➔</span>
+            <span class="rank-badge-pill rank-badge-new" id="rankup-badge-new"># -</span>
+          </div>
+          <div class="rankup-status-message" id="rankup-status-msg">
+            骨を獲得してランクアップ！🐾
+          </div>
         </div>
 
         <!-- Flying Bones Animation Container -->

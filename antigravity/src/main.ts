@@ -14,7 +14,7 @@ import { generateUniquePuzzle } from './logic/generator';
 import { sounds } from './audio/sound';
 import { bgm } from './audio/bgm';
 import { CUD_REGION_COLORS, getCrossSvg, getQuestionSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
-import { calculateRankUp, getDailyLeaderboard, PodiumEntry, simulateRivalPoints } from './logic/leaderboard';
+import { calculateRankUp, getDailyLeaderboard, getDailyLeaderboardStairs, simulateRivalPoints } from './logic/leaderboard';
 import { storage } from './storage/storage';
 import { i18n, t, SupportedLang, LangSetting } from './i18n/i18n';
 
@@ -1305,7 +1305,7 @@ class InudokuGame {
     }, 450);
   }
 
-  private showRankUpScreen(earnedPoints: number) {
+  public showRankUpScreen(earnedPoints: number) {
     const prevPoints = this.tournamentPoints;
     const rankUpData = calculateRankUp(prevPoints, earnedPoints, this.getPlayerName());
     this.tournamentPoints = rankUpData.newPoints;
@@ -1334,120 +1334,175 @@ class InudokuGame {
       countdownEl.textContent = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
-    // 2. Update Podium tops (Gold, Silver, Bronze) dynamically (including Champion user!)
-    const goldAvatar = document.querySelector('.podium-gold .avatar-emoji');
-    const goldName = document.querySelector('.podium-gold .podium-name');
-    const goldScore = document.querySelector('.podium-gold .score-num');
-    const silverAvatar = document.querySelector('.podium-silver .avatar-emoji');
-    const silverName = document.querySelector('.podium-silver .podium-name');
-    const silverScore = document.querySelector('.podium-silver .score-num');
-    const bronzeAvatar = document.querySelector('.podium-bronze .avatar-emoji');
-    const bronzeName = document.querySelector('.podium-bronze .podium-name');
-    const bronzeScore = document.querySelector('.podium-bronze .score-num');
+    // 2. Render Horizontal Ascending Staircase (Steps 0 -> 1 -> 2 -> 3)
+    const stairsContainer = document.getElementById('rankup-staircase-stage')!;
+    stairsContainer.innerHTML = '';
 
-    const updatePodiumSlot = (
-      avatarEl: Element | null,
-      nameEl: Element | null,
-      scoreEl: Element | null,
-      entry?: PodiumEntry
-    ) => {
-      if (!avatarEl || !nameEl || !scoreEl || !entry) return;
-      if (entry.isUser) {
-        avatarEl.innerHTML = `<div class="podium-shiba-svg-wrap">${getShibaSvg(this.settings.shibaType, 'happy')}</div>`;
-      } else {
-        avatarEl.textContent = entry.avatar;
-      }
-      nameEl.textContent = entry.name;
-      scoreEl.textContent = String(entry.points);
-    };
+    rankUpData.stairSteps.forEach((step, idx) => {
+      const isUserInitial = idx === rankUpData.userStepIndexBefore;
+      const stepEl = document.createElement('div');
+      const colorClass = step.rank === 1 ? 'step-gold' : step.rank === 2 ? 'step-silver' : step.rank === 3 ? 'step-bronze' : 'step-normal';
+      stepEl.className = `stair-step step-idx-${idx} ${colorClass} ${isUserInitial ? 'is-user-step' : ''}`;
+      stepEl.id = `rankup-step-${idx}`;
 
-    updatePodiumSlot(silverAvatar, silverName, silverScore, rankUpData.top3[0]);
-    updatePodiumSlot(goldAvatar, goldName, goldScore, rankUpData.top3[1]);
-    updatePodiumSlot(bronzeAvatar, bronzeName, bronzeScore, rankUpData.top3[2]);
+      const avatarContent = isUserInitial
+        ? `<div class="step-shiba-svg">${getShibaSvg(this.settings.shibaType, 'happy')}</div><span class="avatar-you-tag">YOU</span>`
+        : `<span>${step.avatar}</span>`;
 
-    // 3. Render Cards List in initial state
-    const container = document.getElementById('rankup-cards-container')!;
-    container.innerHTML = '';
-
-    rankUpData.displayList.forEach((entry, idx) => {
-      const card = document.createElement('div');
-      card.className = `rankup-card ${entry.isUser ? 'is-user-card' : ''}`;
-      card.id = `rankup-card-${idx}`;
-
-      const avatarContent = entry.isUser
-        ? `<div class="shiba-avatar-svg-wrap">${getShibaSvg(this.settings.shibaType, 'happy')}</div>`
-        : `<span>${entry.avatar}</span>`;
-
-      card.innerHTML = `
-        <div class="card-rank-num" id="rank-num-${idx}">${entry.rank}</div>
-        <div class="card-avatar-box ${entry.isUser ? 'is-user-avatar' : ''}" style="background: ${entry.avatarBg}">
-          ${avatarContent}
+      stepEl.innerHTML = `
+        <div class="step-avatar-wrap" id="rankup-avatar-wrap-${idx}">
+          ${step.isChampion && !isUserInitial ? '<span class="crown-badge">👑</span>' : ''}
+          <div class="avatar-bubble ${isUserInitial ? 'is-user-avatar' : ''}" id="${isUserInitial ? 'rankup-shiba-bubble' : `avatar-bubble-${idx}`}">
+            ${avatarContent}
+          </div>
         </div>
-        <div class="card-user-name">${entry.name}</div>
-        <div class="card-score-pill">
-          <span class="score-bone-icon">🦴</span>
-          <span class="score-num" id="card-pts-${idx}">${entry.points}</span>
+        <div class="step-block ${colorClass}">
+          <div class="step-tread"></div>
+          <div class="step-riser">
+            <div class="step-rank-num" id="rankup-step-rank-${idx}">#${step.rank}</div>
+            <div class="step-name" id="rankup-step-name-${idx}">${step.name}</div>
+            <div class="step-score-pill">
+              <span class="score-bone-icon">🦴</span>
+              <span class="score-num" id="rankup-step-pts-${idx}">${step.points}</span>
+            </div>
+          </div>
         </div>
       `;
-      container.appendChild(card);
+      stairsContainer.appendChild(stepEl);
     });
 
-    // 4. Play flying bones & score increment after 450ms
+    // 3. Update Summary Banner initial state
+    const badgePrev = document.getElementById('rankup-badge-prev');
+    const badgeNew = document.getElementById('rankup-badge-new');
+    const statusMsg = document.getElementById('rankup-status-msg');
+
+    if (badgePrev) badgePrev.textContent = `#${rankUpData.prevRank}`;
+    if (badgeNew) badgeNew.textContent = `#${rankUpData.newRank}`;
+    if (statusMsg) {
+      statusMsg.textContent = rankUpData.newRank < rankUpData.prevRank
+        ? '骨を獲得して階段を登るワン！🐾'
+        : '骨を獲得中... 🦴';
+    }
+
+    // 4. Play flying bones & score increment
     setTimeout(() => {
       this.playFlyingBones(earnedPoints, () => {
-        const userPtsEl = document.getElementById(`card-pts-${rankUpData.userIndexBefore}`);
+        const userPtsEl = document.getElementById(`rankup-step-pts-${rankUpData.userStepIndexBefore}`);
         if (userPtsEl) {
           userPtsEl.textContent = String(rankUpData.newPoints);
           userPtsEl.classList.add('bump');
           sounds.playBark();
         }
 
-        // 5. Slide Up Animation if user actually moved up in rank
+        // 5. Check if user hops up the stairs to a higher step
+        const fromIdx = rankUpData.userStepIndexBefore;
+        const toIdx = rankUpData.userStepIndexAfter;
+        const didClimb = toIdx > fromIdx || rankUpData.newRank < rankUpData.prevRank;
+
         setTimeout(() => {
-          const userCard = document.getElementById('rankup-card-2');
-          const rivalCard = document.getElementById('rankup-card-1');
+          if (didClimb) {
+            const fromAvatarWrap = document.getElementById(`rankup-avatar-wrap-${fromIdx}`);
+            const toAvatarWrap = document.getElementById(`rankup-avatar-wrap-${toIdx}`);
 
-          if (rankUpData.newRank < rankUpData.prevRank && userCard && rivalCard) {
-            // Overtake animation!
-            userCard.classList.add('slide-up');
-            rivalCard.classList.add('slide-down');
-            sounds.playPaw();
+            if (fromAvatarWrap && toAvatarWrap) {
+              const fromRect = fromAvatarWrap.getBoundingClientRect();
+              const toRect = toAvatarWrap.getBoundingClientRect();
+              const jumpX = toRect.left - fromRect.left;
+              const jumpY = toRect.top - fromRect.top;
 
-            // 6. Update Ranks & Shine after slide completes (600ms), and physically reorder DOM!
-            setTimeout(() => {
-              const userRankEl = document.getElementById('rank-num-2');
-              const rivalRankEl = document.getElementById('rank-num-1');
-              if (userRankEl && rivalRankEl) {
-                userRankEl.textContent = String(rankUpData.newRank);
-                rivalRankEl.textContent = String(rankUpData.prevRank);
-                userRankEl.classList.add('bump');
-                rivalRankEl.classList.add('bump');
-              }
+              fromAvatarWrap.style.setProperty('--jump-x', `${jumpX}px`);
+              fromAvatarWrap.style.setProperty('--jump-y', `${jumpY}px`);
+              fromAvatarWrap.classList.add('shiba-climbing');
+              sounds.playBark();
 
-              // Physically reorder DOM elements to eliminate any gap or offset!
-              userCard.classList.remove('slide-up');
-              rivalCard.classList.remove('slide-down');
-              container.insertBefore(userCard, rivalCard);
+              // On landing (after 750ms keyframe animation)
+              setTimeout(() => {
+                sounds.playPaw();
+                this.createStairSparkles(toAvatarWrap);
 
-              // Confetti pop!
-              confetti({
-                particleCount: 60,
-                spread: 60,
-                origin: { y: 0.7 },
-              });
+                // Step re-assignment:
+                // From step becomes normal rival step
+                const fromStepEl = document.getElementById(`rankup-step-${fromIdx}`);
+                const toStepEl = document.getElementById(`rankup-step-${toIdx}`);
 
-              // Only show first-place toast if user reached 1st place for the first time today!
-              if (rankUpData.newRank === 1 && !wasAlreadyFirstPlaceToday) {
-                this.showToast(t('msg.rank.firstPlaceReached'));
-              }
-            }, 600);
-          } else if (userCard) {
-            // 1st place defense or closing in!
-            userCard.style.boxShadow = '0 0 25px rgba(245, 158, 11, 0.7)';
-            sounds.playBark();
-            // Do not show firstPlaceReached toast when already defending 1st place
+                if (fromStepEl && toStepEl) {
+                  fromStepEl.classList.remove('is-user-step');
+                  toStepEl.classList.add('is-user-step');
+
+                  const overtakenRival = rankUpData.stairSteps[toIdx];
+
+                  // Put rival avatar on the lower step
+                  fromAvatarWrap.innerHTML = `
+                    <div class="avatar-bubble">
+                      <span>${overtakenRival?.avatar || '🐼'}</span>
+                    </div>
+                  `;
+                  fromAvatarWrap.classList.remove('shiba-climbing');
+                  fromAvatarWrap.removeAttribute('style');
+
+                  // Put Shiba avatar on the new higher step!
+                  const isChamp = rankUpData.newRank === 1;
+                  toAvatarWrap.innerHTML = `
+                    ${isChamp ? '<span class="crown-badge">👑</span>' : ''}
+                    <div class="avatar-bubble is-user-avatar" id="rankup-shiba-bubble">
+                      <div class="step-shiba-svg">${getShibaSvg(this.settings.shibaType, 'happy')}</div>
+                      <span class="avatar-you-tag">YOU</span>
+                    </div>
+                  `;
+
+                  // Update riser text
+                  const fromRankEl = document.getElementById(`rankup-step-rank-${fromIdx}`);
+                  const fromNameEl = document.getElementById(`rankup-step-name-${fromIdx}`);
+                  const fromPtsEl = document.getElementById(`rankup-step-pts-${fromIdx}`);
+                  if (fromRankEl) fromRankEl.textContent = `#${rankUpData.prevRank}`;
+                  if (fromNameEl) fromNameEl.textContent = overtakenRival?.name || 'Rival';
+                  if (fromPtsEl) fromPtsEl.textContent = String(overtakenRival?.points || 0);
+
+                  const toRankEl = document.getElementById(`rankup-step-rank-${toIdx}`);
+                  const toNameEl = document.getElementById(`rankup-step-name-${toIdx}`);
+                  const toPtsEl = document.getElementById(`rankup-step-pts-${toIdx}`);
+                  if (toRankEl) {
+                    toRankEl.textContent = `#${rankUpData.newRank}`;
+                    toRankEl.classList.add('bump');
+                  }
+                  if (toNameEl) toNameEl.textContent = this.getPlayerName();
+                  if (toPtsEl) toPtsEl.textContent = String(rankUpData.newPoints);
+
+                  // Update status and badge
+                  if (badgeNew) badgeNew.classList.add('bump');
+                  if (statusMsg) {
+                    statusMsg.textContent = isChamp
+                      ? '👑 栄光の第1位！新チャンピオン誕生だワン！'
+                      : '🎉 ランクアップ達成！階段を駆け上がったワン！🐾';
+                  }
+
+                  // Confetti pop!
+                  confetti({
+                    particleCount: isChamp ? 90 : 55,
+                    spread: 65,
+                    origin: { y: 0.65 },
+                  });
+
+                  if (isChamp && !wasAlreadyFirstPlaceToday) {
+                    this.showToast(t('msg.rank.firstPlaceReached'));
+                  }
+                }
+              }, 750);
+            }
+          } else {
+            // Defending or score gain without rank step change
+            const userAvatarBubble = document.getElementById('rankup-shiba-bubble');
+            if (userAvatarBubble) {
+              userAvatarBubble.classList.add('shiba-victory');
+              sounds.playBark();
+            }
+            if (statusMsg) {
+              statusMsg.textContent = rankUpData.newRank === 1
+                ? '👑 チャンピオン防衛！圧倒的1位をキープ中だワン！'
+                : '🐾 スコア獲得！次の段へ近づいたワン！';
+            }
           }
-        }, 550);
+        }, 500);
       });
     }, 450);
 
@@ -1474,21 +1529,38 @@ class InudokuGame {
     window.addEventListener('keydown', handleKeyContinue);
   }
 
-
+  private createStairSparkles(targetEl: HTMLElement | null) {
+    if (!targetEl) return;
+    const rect = targetEl.getBoundingClientRect();
+    const emojis = ['✨', '🐾', '⭐', '🌟'];
+    for (let i = 0; i < 6; i++) {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'landing-sparkle';
+      sparkle.textContent = emojis[i % emojis.length];
+      const angle = (i / 6) * Math.PI * 2;
+      const dist = 28 + Math.random() * 20;
+      sparkle.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
+      sparkle.style.setProperty('--ty', `${Math.sin(angle) * dist - 15}px`);
+      sparkle.style.left = `${rect.width / 2}px`;
+      sparkle.style.top = `${rect.height / 2}px`;
+      targetEl.appendChild(sparkle);
+      setTimeout(() => sparkle.remove(), 700);
+    }
+  }
 
   private playFlyingBones(count: number, onComplete: () => void) {
     const layer = document.getElementById('flying-bones-layer')!;
     layer.innerHTML = '';
-    const targetCard = document.getElementById('rankup-card-2');
-    if (!targetCard) {
+    const targetEl = document.getElementById('rankup-shiba-bubble') || document.getElementById('rankup-card-2');
+    if (!targetEl) {
       onComplete();
       return;
     }
 
-    const rect = targetCard.getBoundingClientRect();
+    const rect = targetEl.getBoundingClientRect();
     const layerRect = layer.getBoundingClientRect();
-    const targetX = rect.right - layerRect.left - 50;
-    const targetY = rect.top - layerRect.top + 10;
+    const targetX = rect.left + rect.width / 2 - layerRect.left;
+    const targetY = rect.top + rect.height / 2 - layerRect.top;
 
     for (let i = 0; i < count; i++) {
       setTimeout(() => {
@@ -1680,6 +1752,43 @@ class InudokuGame {
       } else {
         dateEl.textContent = now.toLocaleDateString(LOCALE_MAP[lang] || 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       }
+    }
+
+    // Render Ascending Staircase for Top 5 (5th -> 4th -> 3rd -> 2nd -> 1st)
+    const stairsContainer = document.getElementById('leaderboard-staircase-stage');
+    if (stairsContainer) {
+      const stairs = getDailyLeaderboardStairs(leaderboard);
+      stairsContainer.innerHTML = '';
+      stairs.forEach((step) => {
+        const stepEl = document.createElement('div');
+        const colorClass = step.rank === 1 ? 'step-gold' : step.rank === 2 ? 'step-silver' : step.rank === 3 ? 'step-bronze' : 'step-normal';
+        stepEl.className = `stair-step step-idx-${step.stepIndex} ${colorClass} ${step.isUser ? 'is-user-step' : ''}`;
+
+        const avatarHtml = step.isUser
+          ? `<div class="step-shiba-svg">${getShibaSvg(this.settings.shibaType, 'happy')}</div><span class="avatar-you-tag">YOU</span>`
+          : `<span>${step.avatar}</span>`;
+
+        stepEl.innerHTML = `
+          <div class="step-avatar-wrap">
+            ${step.isChampion ? '<span class="crown-badge">👑</span>' : ''}
+            <div class="avatar-bubble ${step.isUser ? 'is-user-avatar' : ''}">
+              ${avatarHtml}
+            </div>
+          </div>
+          <div class="step-block ${colorClass}">
+            <div class="step-tread"></div>
+            <div class="step-riser">
+              <div class="step-rank-num">#${step.rank}</div>
+              <div class="step-name">${step.name}</div>
+              <div class="step-score-pill">
+                <span class="score-bone-icon">🦴</span>
+                <span class="score-num">${step.points}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        stairsContainer.appendChild(stepEl);
+      });
     }
 
     const userEntry = leaderboard.find((e) => e.isUser);
@@ -3653,5 +3762,5 @@ class InudokuGame {
 
 // Start game when DOM is loaded
 window.addEventListener('DOMContentLoaded', () => {
-  new InudokuGame();
+  (window as any).game = new InudokuGame();
 });
