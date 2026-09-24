@@ -17,6 +17,7 @@ export const pl: Record<string, string> = {
   'title.footer.cleared': 'Ukończono: {completed} (do nagrody: {next})',
   'milestone.title': '🎉 Ukończono {count} etapów!',
   'milestone.title.major': '🏆 Ukończono {count} etapów! Wielki bonus!',
+  'milestone.progress': 'Do następnej nagrody: {n}',
   'tutorial.label': 'Samouczek {n}/{total}',
   'tutorial.skip': 'Pomiń',
   'tutorial.step1': 'Każdy kolorowy obszar dostaje <strong>dokładnie jednego</strong> shibę. Trzy już stoją. <strong>Stuknij dwukrotnie</strong> wolne pole, by postawić ostatniego!',

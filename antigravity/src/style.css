@@ -2566,6 +2566,82 @@ input:checked + .slider:before {
   font-variant-numeric: tabular-nums;
 }
 
+.milestone-progress {
+  margin-top: 10px;
+  padding: 8px 14px 10px;
+  width: min(92%, 320px);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+}
+
+.milestone-progress.hidden {
+  display: none !important;
+}
+
+.milestone-progress.milestone-in {
+  animation: milestonePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.milestone-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.milestone-progress-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #78350F;
+}
+
+.milestone-progress-reward {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #92400E;
+  padding: 1px 9px;
+  border-radius: var(--radius-pill);
+  background: #FEF3C7;
+  border: 1.5px solid #FCD34D;
+}
+
+/* The +5 payouts before a difficulty step-up get a warmer highlight. */
+.milestone-progress-reward.is-major {
+  background: #FFEDD5;
+  border-color: #F97316;
+  color: #9A3412;
+}
+
+.milestone-progress-bar {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+
+.milestone-seg {
+  height: 8px;
+  border-radius: 4px;
+  background: #EDE4D6;
+}
+
+.milestone-seg.filled {
+  background: linear-gradient(180deg, #FBBF24 0%, #F59E0B 100%);
+}
+
+.milestone-seg.just-filled {
+  animation: segFill 0.5s ease-out 0.25s both;
+}
+
+@keyframes segFill {
+  0% { transform: scaleY(0.4); background: #EDE4D6; }
+  60% { transform: scaleY(1.6); }
+  100% { transform: scaleY(1); }
+}
+
 @keyframes milestonePop {
   0% { transform: scale(0.86) translateY(10px); opacity: 0; }
   100% { transform: scale(1) translateY(0); opacity: 1; }

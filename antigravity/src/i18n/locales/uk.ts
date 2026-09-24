@@ -17,6 +17,7 @@ export const uk: Record<string, string> = {
   'title.footer.cleared': 'Пройдено: {completed} (до нагороди: {next})',
   'milestone.title': '🎉 Пройдено {count} рівнів!',
   'milestone.title.major': '🏆 Пройдено {count} рівнів! Великий бонус!',
+  'milestone.progress': 'До наступної нагороди: {n}',
   'tutorial.label': 'Навчання {n}/{total}',
   'tutorial.skip': 'Пропустити',
   'tutorial.step1': 'У кожній кольоровій зоні <strong>рівно один</strong> сиба. Троє вже стоять. <strong>Двічі торкніться</strong> вільної клітинки, щоб поставити останнього!',

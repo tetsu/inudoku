@@ -11,7 +11,12 @@ import {
 import { getAutoCrossCells, validateGrid } from './logic/validator';
 import { getNextHint } from './logic/solver';
 import { generateUniquePuzzle } from './logic/generator';
-import { clearsUntilNextMilestone, getMilestoneReward, MilestoneReward } from './logic/milestones';
+import {
+  clearsUntilNextMilestone,
+  getMilestoneReward,
+  MILESTONE_INTERVAL,
+  MilestoneReward,
+} from './logic/milestones';
 import { TUTORIAL_INSTRUCTION_KEYS, TUTORIAL_STAGES } from './logic/tutorialStages';
 import { sounds } from './audio/sound';
 import { bgm } from './audio/bgm';
@@ -1572,6 +1577,7 @@ class InudokuGame {
     // Milestone banner starts hidden; it is revealed only once the staircase
     // beat has finished, so the two celebrations do not overlap.
     document.getElementById('rankup-milestone')?.classList.add('hidden');
+    document.getElementById('rankup-milestone-progress')?.classList.add('hidden');
 
     // 3. Update Summary Banner initial state
     const badgePrev = document.getElementById('rankup-badge-prev');
@@ -1759,11 +1765,14 @@ class InudokuGame {
    */
   private showMilestoneReward() {
     const reward = this.pendingMilestone;
-    if (!reward) return;
     // Clear first: the rank-up screen can be dismissed mid-animation, and the
     // claim flag below is what stops a second payout.
     this.pendingMilestone = null;
-    if (storage.hasMilestoneClaimed(reward.milestone)) return;
+    if (!reward || storage.hasMilestoneClaimed(reward.milestone)) {
+      // No payout this clear: show how close the next one is instead.
+      this.showMilestoneProgress(true);
+      return;
+    }
 
     const banner = document.getElementById('rankup-milestone');
     const titleEl = document.getElementById('rankup-milestone-title');
@@ -1793,10 +1802,46 @@ class InudokuGame {
         countEl.classList.add('bump');
         sounds.playWin();
         this.createStairSparkles(document.getElementById('rankup-milestone-pill'));
+        window.setTimeout(() => this.showMilestoneProgress(false), 700);
       },
       '💡',
       'rankup-milestone-pill'
     );
+  }
+
+  /**
+   * Shows "N more stages to the next reward" with a bar of MILESTONE_INTERVAL
+   * segments. `popLatest` animates the segment for the stage just cleared; it
+   * is off right after a payout, when the bar has just rolled over to empty.
+   */
+  private showMilestoneProgress(popLatest: boolean) {
+    const box = document.getElementById('rankup-milestone-progress');
+    const textEl = document.getElementById('rankup-milestone-progress-text');
+    const rewardEl = document.getElementById('rankup-milestone-progress-reward');
+    const barEl = document.getElementById('rankup-milestone-progress-bar');
+    if (!box || !textEl || !rewardEl || !barEl) return;
+
+    const cleared = Object.keys(this.completedLevels).length;
+    const remaining = clearsUntilNextMilestone(cleared);
+    const upcoming = getMilestoneReward(cleared + remaining);
+    const filled = cleared % MILESTONE_INTERVAL;
+
+    textEl.textContent = t('milestone.progress', { n: remaining });
+    rewardEl.textContent = `💡+${upcoming?.hints ?? 0}`;
+    rewardEl.classList.toggle('is-major', !!upcoming?.isMajor);
+    barEl.innerHTML = '';
+    for (let i = 0; i < MILESTONE_INTERVAL; i++) {
+      const seg = document.createElement('span');
+      seg.className = 'milestone-seg';
+      if (i < filled) seg.classList.add('filled');
+      if (popLatest && i === filled - 1) seg.classList.add('just-filled');
+      barEl.appendChild(seg);
+    }
+
+    box.classList.remove('hidden');
+    box.classList.remove('milestone-in');
+    void box.offsetWidth;
+    box.classList.add('milestone-in');
   }
 
   private createStairSparkles(targetEl: HTMLElement | null) {

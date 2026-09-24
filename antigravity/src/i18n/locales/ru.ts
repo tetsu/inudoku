@@ -17,6 +17,7 @@ export const ru: Record<string, string> = {
   'title.footer.cleared': 'Пройдено: {completed} (до награды: {next})',
   'milestone.title': '🎉 Пройдено {count} уровней!',
   'milestone.title.major': '🏆 Пройдено {count} уровней! Большой бонус!',
+  'milestone.progress': 'До следующей награды: {n}',
   'tutorial.label': 'Обучение {n}/{total}',
   'tutorial.skip': 'Пропустить',
   'tutorial.step1': 'В каждой цветной зоне <strong>ровно один</strong> сиба. Три уже стоят. <strong>Дважды нажмите</strong> на свободную клетку, чтобы поставить последнего!',

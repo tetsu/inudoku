@@ -17,6 +17,7 @@ export const zh: Record<string, string> = {
   'title.footer.cleared': '通关成就: {completed}（距下个奖励还差{next}）',
   'milestone.title': '🎉 通关{count}关！',
   'milestone.title.major': '🏆 通关{count}关！超级奖励！',
+  'milestone.progress': '再过{n}关获得下一个奖励！',
   'tutorial.label': '教程 {n}/{total}',
   'tutorial.skip': '跳过',
   'tutorial.step1': '每个颜色区域<strong>恰好放1只</strong>柴犬。已经放好3只了。<strong>双击</strong>剩下的空格，放上最后1只！',

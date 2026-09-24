@@ -17,6 +17,7 @@ export const es: Record<string, string> = {
   'title.footer.cleared': 'Completado: {completed} ({next} para la recompensa)',
   'milestone.title': '🎉 ¡{count} niveles completados!',
   'milestone.title.major': '🏆 ¡{count} niveles completados! ¡Gran bonus!',
+  'milestone.progress': '¡{n} más para la próxima recompensa!',
   'tutorial.label': 'Tutorial {n}/{total}',
   'tutorial.skip': 'Saltar',
   'tutorial.step1': 'Cada zona de color lleva <strong>exactamente un</strong> Shiba. Ya hay tres colocados. <strong>Toca dos veces</strong> la casilla libre para poner el último.',

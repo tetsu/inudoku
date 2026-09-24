@@ -17,6 +17,7 @@ export const ja: Record<string, string> = {
   'title.footer.cleared': 'クリア達成: {completed}（次の報酬まであと{next}）',
   'milestone.title': '🎉 {count}ステージ達成！',
   'milestone.title.major': '🏆 {count}ステージ達成！大ボーナス！',
+  'milestone.progress': 'あと{n}ステージで次の報酬！',
   'tutorial.label': 'チュートリアル {n}/{total}',
   'tutorial.skip': 'スキップ',
   'tutorial.step1': '色のエリアには柴犬を<strong>1匹ずつ</strong>。3匹はもう置いてあるワン。残った空きマスを<strong>ダブルタップ</strong>して、最後の1匹を置こう！',
