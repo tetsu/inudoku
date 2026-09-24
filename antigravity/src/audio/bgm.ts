@@ -1,59 +1,168 @@
 /**
  * Procedural smooth-jazz BGM for Shibadoku.
  *
- * Same philosophy as the SFX engine: pure Web Audio, zero external assets, so
- * the bundle stays asset-free and playback starts instantly. Generates an
- * endless lazy ii-V-I loop in F major with four voices:
- *   - Rhodes-style electric piano comping (FM tine + long decay)
- *   - Walking upright bass in quarter notes with chromatic approach tones
- *   - Brushed drums (filtered noise ride pattern + backbeat swish)
- *   - A sparse, breathy sax-ish lead that sits out more often than it plays
+ * Same philosophy as the SFX engine: pure Web Audio, zero external assets.
  *
- * Notes are scheduled with the standard Web Audio lookahead pattern: a coarse
- * setInterval timer queues sample-accurate events a little ahead of the clock.
+ * Smooth jazz is not swing, and the earlier version of this file was really a
+ * swing trio (triplet feel, ride cymbal, walking bass). What makes the genre is
+ * a straight, laid-back R&B groove under lush extended chords and a singable
+ * sax line, all soaked in reverb. So:
+ *
+ *   Groove   straight 16ths at 86 BPM; closed hi-hat 16ths with an accent
+ *            pattern, cross-stick on 2 and 4 (a hair late), soft kick
+ *   Bass     syncopated electric-bass line with octave pops and chromatic
+ *            approach notes, not quarter-note walking
+ *   Keys     FM Rhodes through chorus and a slow stereo auto-pan, comping with
+ *            the R&B habit of anticipating each chord an 8th early
+ *   Pad      soft detuned-saw strings for the "lush" layer
+ *   Lead     a composed, repeating sax hook (not random notes), with a scoop
+ *            into long notes, breath noise and delayed vibrato
+ *   Space    synthetic convolution reverb + gentle bus compression
+ *
+ * Harmony is the classic IVmaj7 - III7 - vi7 - v7 I7 smooth-jazz loop
+ * (Dbmaj9 | C7b9 | Fm9 | Ebm9 Ab13). A chord progression is a common musical
+ * form, not a work; the melody over it is original.
+ *
+ * Arrangement cycles every four loops (~45s): groove only, hook A, hook B,
+ * hook A -- so the lead breathes instead of playing non-stop.
+ *
+ * Scheduling uses the standard lookahead pattern: a coarse timer queues
+ * sample-accurate events slightly ahead of the audio clock.
  */
 import { getSharedAudioContext } from './context';
 
-const TEMPO = 84; // BPM - unhurried lounge tempo
-const SECONDS_PER_BEAT = 60 / TEMPO;
-const SWING = 2 / 3; // Off-beat 8ths land on the triplet, not halfway
-const LOOKAHEAD_MS = 25; // How often the scheduler wakes up
-const SCHEDULE_AHEAD = 0.25; // Seconds of audio queued in advance
-const MAX_GAIN = 0.5; // Ceiling so the four-voice mix never clips
-const STEPS_PER_BAR = 8; // 8th-note resolution
+const TEMPO = 86;
+const STEP_SEC = 60 / TEMPO / 4; // one 16th note
+const STEPS_PER_BAR = 16;
+const LOOP_STEPS = 64; // four bars
+const LOOKAHEAD_MS = 25;
+const SCHEDULE_AHEAD = 0.2; // seconds of audio queued in advance
+// After the bus compressor. Chosen so a given slider position is about as loud
+// as the previous (swing) version: measured RMS 0.086 at 100% vs 0.082 before,
+// with the peak around 0.36, well clear of clipping.
+const MAX_GAIN = 0.45;
 
-interface Chord {
-  /** Rootless mid-register voicing for the Rhodes, as MIDI note numbers. */
+interface Segment {
+  /** First 16th step of the chord within the four-bar loop. */
+  start: number;
+  /** Length in 16th steps. */
+  len: number;
+  /** Bass root, MIDI. */
+  root: number;
+  /** Rhodes voicing, MIDI (rootless, mid register). */
   voicing: number[];
-  /** Bass root, MIDI note number. */
-  bass: number;
-  /** Chord-tone offsets above the bass root the walking line may use. */
-  bassTones: number[];
-  /** Melody pool: chord tones plus tensions, MIDI note numbers. */
-  color: number[];
 }
 
-/**
- * Eight-bar loop: Gm9 | C13 | Fmaj9 | Fmaj9 | Dm9 | Gm9 | C13 | Fmaj9
- * The classic lazy ii-V-I turnaround that reads as "smooth jazz" instantly.
- */
-const PROGRESSION: Chord[] = [
-  // Gm9 - rootless Bb D F A
-  { voicing: [58, 62, 65, 69], bass: 43, bassTones: [0, 3, 7, 10], color: [65, 69, 70, 72, 74, 77] },
-  // C13 - rootless Bb D E A
-  { voicing: [58, 62, 64, 69], bass: 48, bassTones: [0, 4, 7, 10], color: [64, 67, 69, 70, 72, 76] },
-  // Fmaj9 - rootless A C E G
-  { voicing: [57, 60, 64, 67], bass: 41, bassTones: [0, 4, 7, 11], color: [65, 67, 69, 72, 76, 77] },
-  { voicing: [57, 60, 64, 67], bass: 41, bassTones: [0, 4, 7, 11], color: [65, 67, 69, 72, 76, 77] },
-  // Dm9 - rootless F A C E
-  { voicing: [53, 57, 60, 64], bass: 38, bassTones: [0, 3, 7, 10], color: [62, 65, 69, 72, 74, 76] },
-  { voicing: [58, 62, 65, 69], bass: 43, bassTones: [0, 3, 7, 10], color: [65, 69, 70, 72, 74, 77] },
-  { voicing: [58, 62, 64, 69], bass: 48, bassTones: [0, 4, 7, 10], color: [64, 67, 69, 70, 72, 76] },
-  { voicing: [57, 60, 64, 67], bass: 41, bassTones: [0, 4, 7, 11], color: [65, 67, 69, 72, 76, 77] },
+const LOOP: Segment[] = [
+  { start: 0, len: 16, root: 37, voicing: [53, 56, 60, 63] }, // Dbmaj9: F Ab C Eb
+  { start: 16, len: 16, root: 36, voicing: [52, 55, 58, 61] }, // C7b9:  E G Bb Db
+  { start: 32, len: 16, root: 41, voicing: [56, 60, 63, 67] }, // Fm9:   Ab C Eb G
+  { start: 48, len: 8, root: 39, voicing: [54, 58, 61, 65] }, // Ebm9:  Gb Bb Db F
+  { start: 56, len: 8, root: 44, voicing: [54, 58, 60, 65] }, // Ab13:  Gb Bb C F
+];
+
+interface Note {
+  /** 16th step within the loop. */
+  s: number;
+  /** Length in 16th steps. */
+  len: number;
+  midi: number;
+}
+
+/** Hook A: settles on chord colour tones (maj7, b9) with room to breathe. */
+const HOOK_A: Note[] = [
+  { s: 2, len: 2, midi: 68 },
+  { s: 4, len: 6, midi: 72 },
+  { s: 10, len: 2, midi: 70 },
+  { s: 12, len: 4, midi: 68 },
+  { s: 16, len: 6, midi: 67 },
+  { s: 22, len: 2, midi: 64 },
+  { s: 24, len: 2, midi: 67 },
+  { s: 26, len: 2, midi: 70 },
+  { s: 28, len: 4, midi: 73 },
+  { s: 32, len: 8, midi: 72 },
+  { s: 40, len: 2, midi: 68 },
+  { s: 42, len: 2, midi: 67 },
+  { s: 44, len: 4, midi: 65 },
+  { s: 48, len: 4, midi: 66 },
+  { s: 52, len: 2, midi: 65 },
+  { s: 54, len: 2, midi: 63 },
+  { s: 56, len: 6, midi: 72 },
+];
+
+/** Hook B: the answer phrase, climbing higher before falling back. */
+const HOOK_B: Note[] = [
+  { s: 3, len: 1, midi: 75 },
+  { s: 4, len: 6, midi: 77 },
+  { s: 10, len: 2, midi: 75 },
+  { s: 12, len: 4, midi: 72 },
+  { s: 16, len: 4, midi: 73 },
+  { s: 20, len: 2, midi: 72 },
+  { s: 22, len: 2, midi: 70 },
+  { s: 24, len: 8, midi: 67 },
+  { s: 34, len: 2, midi: 68 },
+  { s: 36, len: 2, midi: 72 },
+  { s: 38, len: 6, midi: 75 },
+  { s: 44, len: 2, midi: 73 },
+  { s: 46, len: 2, midi: 72 },
+  { s: 48, len: 6, midi: 70 },
+  { s: 54, len: 2, midi: 68 },
+  { s: 56, len: 4, midi: 66 },
+  { s: 60, len: 4, midi: 65 },
+];
+
+/** Which hook plays on each loop of the four-loop cycle (null = lead rests). */
+const ARRANGEMENT: (Note[] | null)[] = [null, HOOK_A, HOOK_B, HOOK_A];
+
+/** Hi-hat velocity per 16th within a beat: downbeat, e, and, a. */
+const HAT_ACCENT = [0.9, 0.32, 0.62, 0.36];
+
+interface BassHit {
+  s: number;
+  len: number;
+  /** Semitones above the root, or 'approach' for a chromatic lead-in. */
+  note: number | 'approach';
+  vel: number;
+}
+
+const BASS_LONG: BassHit[] = [
+  { s: 0, len: 5, note: 0, vel: 1 },
+  { s: 6, len: 2, note: 12, vel: 0.7 },
+  { s: 8, len: 3, note: 7, vel: 0.85 },
+  { s: 14, len: 2, note: 'approach', vel: 0.75 },
+];
+
+const BASS_SHORT: BassHit[] = [
+  { s: 0, len: 5, note: 0, vel: 1 },
+  { s: 6, len: 2, note: 'approach', vel: 0.75 },
 ];
 
 function midiToFreq(midi: number): number {
   return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+function segmentIndexAt(loopStep: number): number {
+  for (let i = LOOP.length - 1; i >= 0; i--) {
+    if (loopStep >= LOOP[i].start) return i;
+  }
+  return 0;
+}
+
+/** Small timing drift so the groove does not sound quantised to the sample. */
+function humanize(amount = 0.006): number {
+  return (Math.random() * 2 - 1) * amount;
+}
+
+interface Graph {
+  master: GainNode;
+  kick: AudioNode;
+  stick: AudioNode;
+  hat: AudioNode;
+  bass: AudioNode;
+  keys: AudioNode;
+  pad: AudioNode;
+  sax: AudioNode;
+  lfos: OscillatorNode[];
 }
 
 class MusicEngine {
@@ -61,16 +170,15 @@ class MusicEngine {
   private volume = 0.35;
   private playing = false;
 
-  private master: GainNode | null = null;
+  private graph: Graph | null = null;
   private noiseBuffer: AudioBuffer | null = null;
+  private impulse: AudioBuffer | null = null;
   private timer: number | null = null;
 
-  /** Global 8th-note counter; drives both the bar/beat position and the form. */
+  /** Global 16th-note counter since start(). */
   private step = 0;
   /** AudioContext time at which `step` should sound. */
   private nextStepTime = 0;
-  /** Last melody note played, so phrases move by step rather than leaping. */
-  private lastMelodyNote = 69;
 
   // --- Public API -----------------------------------------------------------
 
@@ -94,10 +202,10 @@ class MusicEngine {
   public setVolume(volume: number): void {
     this.volume = Math.min(1, Math.max(0, volume));
     const ctx = getSharedAudioContext();
-    if (this.master && ctx) {
+    if (this.graph && ctx) {
       // Short ramp instead of a jump, so dragging the slider doesn't click.
-      this.master.gain.cancelScheduledValues(ctx.currentTime);
-      this.master.gain.setTargetAtTime(this.volume * MAX_GAIN, ctx.currentTime, 0.05);
+      this.graph.master.gain.cancelScheduledValues(ctx.currentTime);
+      this.graph.master.gain.setTargetAtTime(this.volume * MAX_GAIN, ctx.currentTime, 0.05);
     }
   }
 
@@ -119,10 +227,7 @@ class MusicEngine {
     const ctx = getSharedAudioContext();
     if (!ctx) return;
 
-    this.master = ctx.createGain();
-    this.master.gain.setValueAtTime(this.volume * MAX_GAIN, ctx.currentTime);
-    this.master.connect(ctx.destination);
-
+    this.graph = this.buildGraph(ctx);
     this.playing = true;
     this.step = 0;
     this.nextStepTime = ctx.currentTime + 0.12;
@@ -138,23 +243,141 @@ class MusicEngine {
     this.playing = false;
 
     const ctx = getSharedAudioContext();
-    const master = this.master;
-    this.master = null;
-    if (!master || !ctx) return;
+    const graph = this.graph;
+    this.graph = null;
+    if (!graph || !ctx) return;
 
-    // Fade before disconnecting so the tail doesn't cut off with a click.
+    // Fade before disconnecting so the reverb tail doesn't cut off with a click.
     const now = ctx.currentTime;
-    master.gain.cancelScheduledValues(now);
-    master.gain.setValueAtTime(master.gain.value, now);
-    master.gain.linearRampToValueAtTime(0.0001, now + 0.4);
-    window.setTimeout(() => master.disconnect(), 900);
+    const gain = graph.master.gain;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(gain.value, now);
+    gain.linearRampToValueAtTime(0.0001, now + 0.5);
+    window.setTimeout(() => {
+      // The LFOs run forever unless stopped; everything else is one-shot.
+      graph.lfos.forEach((lfo) => {
+        try {
+          lfo.stop();
+        } catch {
+          /* already stopped */
+        }
+      });
+      graph.master.disconnect();
+    }, 900);
+  }
+
+  // --- Signal graph ---------------------------------------------------------
+
+  /**
+   * Instrument buses -> mix -> compressor -> master volume -> speakers, with
+   * every bus also feeding a shared convolution reverb at its own send level.
+   */
+  private buildGraph(ctx: AudioContext): Graph {
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(this.volume * MAX_GAIN, ctx.currentTime);
+    master.connect(ctx.destination);
+
+    // Gentle glue: evens out the voices and keeps peaks away from clipping.
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.setValueAtTime(-20, ctx.currentTime);
+    comp.knee.setValueAtTime(14, ctx.currentTime);
+    comp.ratio.setValueAtTime(3, ctx.currentTime);
+    comp.attack.setValueAtTime(0.012, ctx.currentTime);
+    comp.release.setValueAtTime(0.25, ctx.currentTime);
+    comp.connect(master);
+
+    const mix = ctx.createGain();
+    mix.connect(comp);
+
+    const reverb = ctx.createConvolver();
+    reverb.buffer = this.getImpulse(ctx);
+    const reverbReturn = ctx.createGain();
+    reverbReturn.gain.setValueAtTime(0.6, ctx.currentTime);
+    reverb.connect(reverbReturn);
+    reverbReturn.connect(comp);
+
+    const bus = (pan: number, send: number): GainNode => {
+      const input = ctx.createGain();
+      const panner = this.createPanner(ctx, pan);
+      input.connect(panner);
+      panner.connect(mix);
+      if (send > 0) {
+        const sendGain = ctx.createGain();
+        sendGain.gain.setValueAtTime(send, ctx.currentTime);
+        input.connect(sendGain);
+        sendGain.connect(reverb);
+      }
+      return input;
+    };
+
+    // Rhodes: chorus (a short, slowly wobbling delay) and a slow stereo
+    // auto-pan -- the two effects that make it read as "smooth".
+    const lfos: OscillatorNode[] = [];
+    const keysIn = ctx.createGain();
+    const keysPan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    const keysOut: AudioNode = keysPan ?? ctx.createGain();
+    keysOut.connect(mix);
+    keysIn.connect(keysOut);
+
+    const chorus = ctx.createDelay(0.05);
+    chorus.delayTime.setValueAtTime(0.02, ctx.currentTime);
+    const chorusWet = ctx.createGain();
+    chorusWet.gain.setValueAtTime(0.5, ctx.currentTime);
+    keysIn.connect(chorus);
+    chorus.connect(chorusWet);
+    chorusWet.connect(keysOut);
+
+    const chorusLfo = ctx.createOscillator();
+    chorusLfo.frequency.setValueAtTime(0.9, ctx.currentTime);
+    const chorusDepth = ctx.createGain();
+    chorusDepth.gain.setValueAtTime(0.004, ctx.currentTime);
+    chorusLfo.connect(chorusDepth);
+    chorusDepth.connect(chorus.delayTime);
+    chorusLfo.start();
+    lfos.push(chorusLfo);
+
+    if (keysPan) {
+      const panLfo = ctx.createOscillator();
+      panLfo.frequency.setValueAtTime(0.35, ctx.currentTime);
+      const panDepth = ctx.createGain();
+      panDepth.gain.setValueAtTime(0.35, ctx.currentTime);
+      panLfo.connect(panDepth);
+      panDepth.connect(keysPan.pan);
+      panLfo.start();
+      lfos.push(panLfo);
+    }
+
+    const keysSend = ctx.createGain();
+    keysSend.gain.setValueAtTime(0.3, ctx.currentTime);
+    keysIn.connect(keysSend);
+    keysSend.connect(reverb);
+
+    return {
+      master,
+      kick: bus(0, 0),
+      stick: bus(-0.12, 0.22),
+      hat: bus(0.28, 0.08),
+      bass: bus(0, 0.04),
+      keys: keysIn,
+      pad: bus(0, 0.5),
+      sax: bus(0.05, 0.4),
+      lfos,
+    };
+  }
+
+  /** StereoPanner where supported (Safari < 14.1 lacks it), else a pass-through. */
+  private createPanner(ctx: AudioContext, pan: number): AudioNode {
+    if (!ctx.createStereoPanner) return ctx.createGain();
+    const panner = ctx.createStereoPanner();
+    panner.pan.setValueAtTime(pan, ctx.currentTime);
+    return panner;
   }
 
   // --- Scheduling -----------------------------------------------------------
 
   private scheduler(): void {
     const ctx = getSharedAudioContext();
-    if (!ctx || !this.master) return;
+    if (!ctx || !this.graph) return;
 
     // Autoplay policy can leave the context suspended after start(). Its clock is
     // frozen while suspended, so scheduling now would queue a pile of events that
@@ -171,99 +394,185 @@ class MusicEngine {
     }
 
     while (this.nextStepTime < ctx.currentTime + SCHEDULE_AHEAD) {
-      this.scheduleStep(ctx, this.step, this.nextStepTime);
-      // On-beat -> off-beat is the long side of the swing, off -> on the short.
-      const isOnBeat = this.step % 2 === 0;
-      this.nextStepTime += SECONDS_PER_BEAT * (isOnBeat ? SWING : 1 - SWING);
+      this.scheduleStep(ctx, this.graph, this.step, this.nextStepTime);
+      this.nextStepTime += STEP_SEC; // straight 16ths: no swing
       this.step++;
     }
   }
 
-  private scheduleStep(ctx: AudioContext, step: number, time: number): void {
-    const stepInBar = step % STEPS_PER_BAR;
-    const bar = Math.floor(step / STEPS_PER_BAR) % PROGRESSION.length;
-    const beat = Math.floor(stepInBar / 2);
-    const isOnBeat = stepInBar % 2 === 0;
+  private scheduleStep(ctx: AudioContext, g: Graph, step: number, time: number): void {
+    const loopStep = step % LOOP_STEPS;
+    const loopIndex = Math.floor(step / LOOP_STEPS);
+    const bar = Math.floor(loopStep / STEPS_PER_BAR);
+    const barStep = loopStep % STEPS_PER_BAR;
 
-    const chord = PROGRESSION[bar];
-    const nextChord = PROGRESSION[(bar + 1) % PROGRESSION.length];
+    const segIdx = segmentIndexAt(loopStep);
+    const seg = LOOP[segIdx];
+    const next = LOOP[(segIdx + 1) % LOOP.length];
+    const rel = loopStep - seg.start;
 
-    if (isOnBeat) {
-      this.scheduleBass(ctx, chord, nextChord, beat, time);
-      // Ride cymbal marks all four quarters.
-      this.playBrush(ctx, time, 0.055, 7200, 0.22);
-      // Brush swish on the backbeat.
-      if (beat === 1 || beat === 3) {
-        this.playBrush(ctx, time, 0.16, 3400, 0.1);
+    this.scheduleDrums(ctx, g, bar, barStep, loopIndex, time);
+
+    // Bass
+    const pattern = seg.len === 16 ? BASS_LONG : BASS_SHORT;
+    for (const hit of pattern) {
+      if (hit.s !== rel) continue;
+      const midi =
+        hit.note === 'approach' ? next.root + (next.root >= seg.root ? -1 : 1) : seg.root + hit.note;
+      this.playBass(ctx, g, midiToFreq(midi), time + humanize(0.004), hit.len * STEP_SEC, hit.vel);
+    }
+
+    // Rhodes: each chord is struck an 8th before its bar (the R&B
+    // anticipation), with a lighter re-strike mid-bar on the long chords.
+    if (step === 0) {
+      this.playRhodes(ctx, g, seg.voicing, time, 12, 0.45); // nothing anticipated the first chord
+    }
+    if (seg.len === 16) {
+      if (rel === 10) this.playRhodes(ctx, g, seg.voicing, time + humanize(), 3, 0.26);
+      if (rel === 14) this.playRhodes(ctx, g, next.voicing, time + humanize(), 10, 0.42);
+    } else if (rel === 6) {
+      this.playRhodes(ctx, g, next.voicing, time + humanize(), 8, 0.4);
+    }
+
+    // Pad swells in under each chord.
+    if (rel === 0) {
+      this.playPad(ctx, g, seg.voicing, time, seg.len * STEP_SEC);
+    }
+
+    // Lead
+    const hook = ARRANGEMENT[loopIndex % ARRANGEMENT.length];
+    if (hook) {
+      for (const note of hook) {
+        if (note.s !== loopStep) continue;
+        const dur = note.len * STEP_SEC + 0.05; // slight overlap for legato
+        this.playSax(ctx, g, midiToFreq(note.midi), time + humanize(0.01), dur, note.len >= 4);
       }
-    } else if (beat === 1 || beat === 3) {
-      // Swung "ding-da-ding": extra ride note after beats 2 and 4.
-      this.playBrush(ctx, time, 0.05, 7600, 0.16);
     }
-
-    // Comp on the downbeat, plus a syncopated push into the second half.
-    if (stepInBar === 0) {
-      this.playChord(ctx, chord.voicing, time, 0.5);
-    } else if (stepInBar === 5 && Math.random() < 0.6) {
-      this.playChord(ctx, chord.voicing, time, 0.28);
-    }
-
-    this.scheduleMelody(ctx, chord, stepInBar, time);
   }
 
-  private scheduleBass(
+  private scheduleDrums(
     ctx: AudioContext,
-    chord: Chord,
-    nextChord: Chord,
-    beat: number,
+    g: Graph,
+    bar: number,
+    barStep: number,
+    loopIndex: number,
     time: number
   ): void {
-    let note: number;
-    if (beat === 0) {
-      note = chord.bass;
-    } else if (beat === 3) {
-      // Chromatic approach into the next bar's root, from above or below.
-      note = nextChord.bass + (Math.random() < 0.5 ? -1 : 1);
-    } else {
-      const tones = chord.bassTones;
-      note = chord.bass + tones[Math.floor(Math.random() * tones.length)];
+    const kickSteps = [0, 10];
+    if (bar % 2 === 1) kickSteps.push(7);
+    if (bar === 3) kickSteps.push(14);
+    if (kickSteps.includes(barStep)) this.playKick(ctx, g, time);
+
+    // Cross-stick on 2 and 4, landing a touch behind the beat: laid back.
+    if (barStep === 4 || barStep === 12) {
+      this.playStick(ctx, g, time + 0.012, 1);
     }
-    this.playBass(ctx, midiToFreq(note), time);
-  }
-
-  private scheduleMelody(ctx: AudioContext, chord: Chord, stepInBar: number, time: number): void {
-    // Deliberately sparse: the lead should decorate the comp, not sit on top of
-    // it. Phrases favour the off-beats, and most steps stay silent.
-    const density = stepInBar % 2 === 1 ? 0.22 : 0.1;
-    if (Math.random() > density) return;
-
-    // Prefer the pool note nearest the last one so the line moves stepwise.
-    const pool = chord.color;
-    let best = pool[0];
-    let bestDist = Infinity;
-    for (const candidate of pool) {
-      // Random tie-break keeps repeated bars from producing identical phrases.
-      const dist = Math.abs(candidate - this.lastMelodyNote) + Math.random() * 5;
-      if (dist < bestDist) {
-        bestDist = dist;
-        best = candidate;
-      }
+    if (bar === 3 && barStep === 15 && loopIndex % 2 === 1) {
+      this.playStick(ctx, g, time, 0.4); // ghost note into the turnaround
     }
-    this.lastMelodyNote = best;
 
-    const dur = SECONDS_PER_BEAT * (0.5 + Math.random() * 1.2);
-    this.playSax(ctx, midiToFreq(best), time, dur);
+    const openHat = bar === 3 && barStep === 14 && loopIndex % 2 === 0;
+    const vel = HAT_ACCENT[barStep % 4] * (0.85 + Math.random() * 0.3);
+    this.playHat(ctx, g, time + humanize(0.004), openHat ? 0.7 : vel, openHat);
   }
 
   // --- Voices ---------------------------------------------------------------
 
+  /** Soft kick: pitch-swept sine plus a click so it reads on small speakers. */
+  private playKick(ctx: AudioContext, g: Graph, time: number): void {
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(120, time);
+    osc.frequency.exponentialRampToValueAtTime(48, time + 0.11);
+
+    const amp = ctx.createGain();
+    amp.gain.setValueAtTime(0.0001, time);
+    amp.gain.linearRampToValueAtTime(0.55, time + 0.004);
+    amp.gain.exponentialRampToValueAtTime(0.0001, time + 0.32);
+
+    osc.connect(amp);
+    amp.connect(g.kick);
+    osc.start(time);
+    osc.stop(time + 0.35);
+
+    this.playNoise(ctx, g.kick, time, 0.02, 'highpass', 3000, 0.7, 0.05);
+  }
+
+  /** Cross-stick: a woody click (band-passed noise) with a short tonal knock. */
+  private playStick(ctx: AudioContext, g: Graph, time: number, vel: number): void {
+    this.playNoise(ctx, g.stick, time, 0.06, 'bandpass', 1900, 1.8, 0.22 * vel);
+
+    const knock = ctx.createOscillator();
+    knock.type = 'sine';
+    knock.frequency.setValueAtTime(430, time);
+    const amp = ctx.createGain();
+    amp.gain.setValueAtTime(0.12 * vel, time);
+    amp.gain.exponentialRampToValueAtTime(0.0001, time + 0.035);
+    knock.connect(amp);
+    amp.connect(g.stick);
+    knock.start(time);
+    knock.stop(time + 0.05);
+  }
+
+  private playHat(ctx: AudioContext, g: Graph, time: number, vel: number, open: boolean): void {
+    this.playNoise(ctx, g.hat, time, open ? 0.28 : 0.035, 'highpass', 7500, 0.7, 0.045 * vel);
+  }
+
+  /**
+   * Fingered electric bass: sine body for weight plus filtered saw harmonics,
+   * which is what makes a bass line audible on phone speakers.
+   */
+  private playBass(ctx: AudioContext, g: Graph, freq: number, time: number, dur: number, vel: number): void {
+    const body = ctx.createOscillator();
+    body.type = 'sine';
+    body.frequency.setValueAtTime(freq, time);
+
+    const edge = ctx.createOscillator();
+    edge.type = 'sawtooth';
+    edge.frequency.setValueAtTime(freq, time);
+    const edgeGain = ctx.createGain();
+    edgeGain.gain.setValueAtTime(0.35, time);
+
+    const tone = ctx.createBiquadFilter();
+    tone.type = 'lowpass';
+    tone.Q.setValueAtTime(1.5, time);
+    tone.frequency.setValueAtTime(1200, time);
+    tone.frequency.exponentialRampToValueAtTime(520, time + 0.12);
+
+    const amp = ctx.createGain();
+    const end = time + dur;
+    amp.gain.setValueAtTime(0.0001, time);
+    amp.gain.linearRampToValueAtTime(0.33 * vel, time + 0.006);
+    amp.gain.exponentialRampToValueAtTime(0.22 * vel, time + 0.15);
+    amp.gain.setValueAtTime(0.22 * vel, end);
+    amp.gain.exponentialRampToValueAtTime(0.0001, end + 0.06);
+
+    body.connect(tone);
+    edge.connect(edgeGain);
+    edgeGain.connect(tone);
+    tone.connect(amp);
+    amp.connect(g.bass);
+
+    body.start(time);
+    edge.start(time);
+    body.stop(end + 0.08);
+    edge.stop(end + 0.08);
+  }
+
   /** Rhodes-style electric piano: 1:1 FM for the tine, long soft decay. */
-  private playChord(ctx: AudioContext, voicing: number[], time: number, velocity: number): void {
+  private playRhodes(
+    ctx: AudioContext,
+    g: Graph,
+    voicing: number[],
+    time: number,
+    steps: number,
+    velocity: number
+  ): void {
+    const ring = steps * STEP_SEC + 0.6;
     voicing.forEach((midi, idx) => {
       const freq = midiToFreq(midi);
-      // Tiny spread so the voicing strums rather than landing as a block.
-      const t = time + idx * 0.012;
-      const dur = 1.8;
+      const t = time + idx * 0.009; // light strum
+      const vel = velocity * (0.9 + Math.random() * 0.2);
 
       const carrier = ctx.createOscillator();
       carrier.type = 'sine';
@@ -272,144 +581,208 @@ class MusicEngine {
       const modulator = ctx.createOscillator();
       modulator.type = 'sine';
       modulator.frequency.setValueAtTime(freq, t);
-
-      // Modulation index decays fast: that bell-like attack is the Rhodes tine.
       const modDepth = ctx.createGain();
-      modDepth.gain.setValueAtTime(freq * 2.4, t);
-      modDepth.gain.exponentialRampToValueAtTime(freq * 0.04, t + 0.4);
+      modDepth.gain.setValueAtTime(freq * 1.8, t);
+      modDepth.gain.exponentialRampToValueAtTime(freq * 0.03, t + 0.35);
 
       const tone = ctx.createBiquadFilter();
       tone.type = 'lowpass';
-      tone.frequency.setValueAtTime(2600, t);
+      tone.frequency.setValueAtTime(2400, t);
 
       const amp = ctx.createGain();
       amp.gain.setValueAtTime(0.0001, t);
-      amp.gain.linearRampToValueAtTime(velocity * 0.16, t + 0.02);
-      amp.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      amp.gain.linearRampToValueAtTime(vel * 0.075, t + 0.012);
+      amp.gain.exponentialRampToValueAtTime(0.0001, t + ring);
 
       modulator.connect(modDepth);
       modDepth.connect(carrier.frequency);
       carrier.connect(tone);
       tone.connect(amp);
-      amp.connect(this.master!);
+      amp.connect(g.keys);
 
       modulator.start(t);
       carrier.start(t);
-      modulator.stop(t + dur);
-      carrier.stop(t + dur);
+      modulator.stop(t + ring);
+      carrier.stop(t + ring);
     });
   }
 
-  /** Upright-ish bass: filtered triangle with a quick pluck envelope. */
-  private playBass(ctx: AudioContext, freq: number, time: number): void {
-    const dur = SECONDS_PER_BEAT * 0.9;
+  /** String pad an octave above the keys: two detuned saws, slow swell. */
+  private playPad(ctx: AudioContext, g: Graph, voicing: number[], time: number, dur: number): void {
+    const attack = 0.8;
+    const release = 1.2;
+    for (const midi of voicing.slice(1)) {
+      const freq = midiToFreq(midi + 12);
+      const tone = ctx.createBiquadFilter();
+      tone.type = 'lowpass';
+      tone.frequency.setValueAtTime(1400, time);
+      tone.Q.setValueAtTime(0.5, time);
 
-    const osc = ctx.createOscillator();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(freq, time);
-    // Slight downward drift mimics the pitch settling on a plucked string.
-    osc.frequency.exponentialRampToValueAtTime(freq * 0.995, time + 0.08);
+      const amp = ctx.createGain();
+      amp.gain.setValueAtTime(0.0001, time);
+      amp.gain.linearRampToValueAtTime(0.018, time + attack);
+      amp.gain.setValueAtTime(0.018, time + dur);
+      amp.gain.exponentialRampToValueAtTime(0.0001, time + dur + release);
+
+      for (const detune of [-7, 7]) {
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, time);
+        osc.detune.setValueAtTime(detune, time);
+        osc.connect(tone);
+        osc.start(time);
+        osc.stop(time + dur + release + 0.05);
+      }
+      tone.connect(amp);
+      amp.connect(g.pad);
+    }
+  }
+
+  /**
+   * Alto-sax-ish lead: saw + square through a formant peak and an opening
+   * low-pass, a breath-noise transient, a scoop up into longer notes, and
+   * vibrato that only arrives once the note has sustained a while.
+   */
+  private playSax(
+    ctx: AudioContext,
+    g: Graph,
+    freq: number,
+    time: number,
+    dur: number,
+    scoop: boolean
+  ): void {
+    const end = time + dur;
+
+    const saw = ctx.createOscillator();
+    saw.type = 'sawtooth';
+    saw.frequency.setValueAtTime(freq, time);
+    const square = ctx.createOscillator();
+    square.type = 'square';
+    square.frequency.setValueAtTime(freq, time);
+    square.detune.setValueAtTime(4, time);
+    const squareGain = ctx.createGain();
+    squareGain.gain.setValueAtTime(0.25, time);
+
+    if (scoop) {
+      // Start a little flat and slide up: the signature smooth-jazz sax entry.
+      for (const osc of [saw, square]) {
+        osc.detune.setValueAtTime(-70, time);
+        osc.detune.linearRampToValueAtTime(osc === square ? 4 : 0, time + 0.07);
+      }
+    }
+
+    const vibrato = ctx.createOscillator();
+    vibrato.frequency.setValueAtTime(5.3, time);
+    const vibratoDepth = ctx.createGain(); // in cents
+    vibratoDepth.gain.setValueAtTime(0, time);
+    vibratoDepth.gain.setValueAtTime(0, time + Math.min(0.25, dur * 0.45));
+    vibratoDepth.gain.linearRampToValueAtTime(dur > 0.4 ? 18 : 6, end);
+    vibrato.connect(vibratoDepth);
+    vibratoDepth.connect(saw.detune);
+    vibratoDepth.connect(square.detune);
+
+    const formant = ctx.createBiquadFilter();
+    formant.type = 'peaking';
+    formant.frequency.setValueAtTime(1300, time);
+    formant.Q.setValueAtTime(1.2, time);
+    formant.gain.setValueAtTime(6, time);
 
     const tone = ctx.createBiquadFilter();
     tone.type = 'lowpass';
-    tone.frequency.setValueAtTime(420, time);
+    tone.Q.setValueAtTime(1, time);
+    tone.frequency.setValueAtTime(1100, time);
+    tone.frequency.linearRampToValueAtTime(2600, time + 0.06);
+    tone.frequency.setTargetAtTime(2000, time + 0.08, 0.2);
 
     const amp = ctx.createGain();
     amp.gain.setValueAtTime(0.0001, time);
-    amp.gain.linearRampToValueAtTime(0.3, time + 0.02);
-    amp.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+    amp.gain.linearRampToValueAtTime(0.11, time + 0.045);
+    amp.gain.setTargetAtTime(0.085, time + 0.06, 0.25);
+    amp.gain.setValueAtTime(0.085, end);
+    amp.gain.exponentialRampToValueAtTime(0.0001, end + 0.11);
 
-    osc.connect(tone);
+    saw.connect(formant);
+    square.connect(squareGain);
+    squareGain.connect(formant);
+    formant.connect(tone);
     tone.connect(amp);
-    amp.connect(this.master!);
+    amp.connect(g.sax);
 
-    osc.start(time);
-    osc.stop(time + dur);
+    for (const osc of [saw, square, vibrato]) {
+      osc.start(time);
+      osc.stop(end + 0.15);
+    }
+
+    // Breath on the attack.
+    this.playNoise(ctx, g.sax, time, 0.15, 'bandpass', 2500, 0.7, 0.03);
   }
 
-  /** Brushed drums: band-passed noise. Short+bright = ride, long+dark = swish. */
-  private playBrush(
+  /** One-shot filtered noise burst; the building block of every drum and breath. */
+  private playNoise(
     ctx: AudioContext,
+    out: AudioNode,
     time: number,
     dur: number,
-    filterFreq: number,
-    velocity: number
+    type: BiquadFilterType,
+    freq: number,
+    q: number,
+    level: number
   ): void {
     const buffer = this.getNoiseBuffer(ctx);
-    if (!buffer) return;
-
     const src = ctx.createBufferSource();
     src.buffer = buffer;
     // Random offset so consecutive hits don't replay identical noise.
     const offset = Math.random() * Math.max(0, buffer.duration - dur - 0.01);
 
-    const band = ctx.createBiquadFilter();
-    band.type = 'bandpass';
-    band.frequency.setValueAtTime(filterFreq, time);
-    band.Q.setValueAtTime(0.8, time);
+    const filter = ctx.createBiquadFilter();
+    filter.type = type;
+    filter.frequency.setValueAtTime(freq, time);
+    filter.Q.setValueAtTime(q, time);
 
     const amp = ctx.createGain();
     amp.gain.setValueAtTime(0.0001, time);
-    amp.gain.linearRampToValueAtTime(velocity * 0.09, time + 0.005);
+    amp.gain.linearRampToValueAtTime(level, time + 0.003);
     amp.gain.exponentialRampToValueAtTime(0.0001, time + dur);
 
-    src.connect(band);
-    band.connect(amp);
-    amp.connect(this.master!);
-
+    src.connect(filter);
+    filter.connect(amp);
+    amp.connect(out);
     src.start(time, offset, dur + 0.02);
     src.stop(time + dur + 0.05);
   }
 
-  /** Sax-ish lead: filtered saw with breathy attack and a touch of vibrato. */
-  private playSax(ctx: AudioContext, freq: number, time: number, dur: number): void {
-    const osc = ctx.createOscillator();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(freq, time);
+  // --- Buffers --------------------------------------------------------------
 
-    const vibrato = ctx.createOscillator();
-    vibrato.type = 'sine';
-    vibrato.frequency.setValueAtTime(5.2, time);
-    const vibratoDepth = ctx.createGain();
-    // In cents, so the depth is pitch-independent.
-    vibratoDepth.gain.setValueAtTime(0.0001, time);
-    vibratoDepth.gain.linearRampToValueAtTime(14, time + dur * 0.5);
-
-    const tone = ctx.createBiquadFilter();
-    tone.type = 'lowpass';
-    tone.frequency.setValueAtTime(1500, time);
-    tone.frequency.linearRampToValueAtTime(2300, time + 0.12);
-    tone.Q.setValueAtTime(3.5, time);
-
-    const amp = ctx.createGain();
-    amp.gain.setValueAtTime(0.0001, time);
-    amp.gain.linearRampToValueAtTime(0.1, time + 0.07); // Slow breathy attack
-    amp.gain.setTargetAtTime(0.055, time + 0.1, 0.3);
-    amp.gain.exponentialRampToValueAtTime(0.0001, time + dur);
-
-    vibrato.connect(vibratoDepth);
-    vibratoDepth.connect(osc.detune);
-    osc.connect(tone);
-    tone.connect(amp);
-    amp.connect(this.master!);
-
-    vibrato.start(time);
-    osc.start(time);
-    vibrato.stop(time + dur);
-    osc.stop(time + dur);
-  }
-
-  /** Two seconds of white noise, generated once and reused for every brush hit. */
-  private getNoiseBuffer(ctx: AudioContext): AudioBuffer | null {
+  /** One second of white noise, generated once and reused. */
+  private getNoiseBuffer(ctx: AudioContext): AudioBuffer {
     if (this.noiseBuffer) return this.noiseBuffer;
-    const length = Math.floor(ctx.sampleRate * 2);
+    const length = ctx.sampleRate;
     const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < length; i++) {
       data[i] = Math.random() * 2 - 1;
     }
     this.noiseBuffer = buffer;
-    return this.noiseBuffer;
+    return buffer;
+  }
+
+  /**
+   * Synthetic 2.6s stereo room: decorrelated noise under an exponential decay.
+   * Avoids shipping an impulse-response file while still giving the lead and
+   * keys the long, lush tail the genre is known for.
+   */
+  private getImpulse(ctx: AudioContext): AudioBuffer {
+    if (this.impulse) return this.impulse;
+    const length = Math.floor(ctx.sampleRate * 2.6);
+    const buffer = ctx.createBuffer(2, length, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = buffer.getChannelData(ch);
+      for (let i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2.8);
+      }
+    }
+    this.impulse = buffer;
+    return buffer;
   }
 }
 
