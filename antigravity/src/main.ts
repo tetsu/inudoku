@@ -11,6 +11,8 @@ import {
 import { getAutoCrossCells, validateGrid } from './logic/validator';
 import { getNextHint } from './logic/solver';
 import { generateUniquePuzzle } from './logic/generator';
+import { clearsUntilNextMilestone, getMilestoneReward, MilestoneReward } from './logic/milestones';
+import { TUTORIAL_INSTRUCTION_KEYS, TUTORIAL_STAGES } from './logic/tutorialStages';
 import { sounds } from './audio/sound';
 import { bgm } from './audio/bgm';
 import { CUD_REGION_COLORS, getCrossSvg, getQuestionSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
@@ -83,6 +85,10 @@ class InudokuGame {
   private lives: number = 3;
   private hintCount: number = 5;
   private pendingDailyReward: boolean = false;
+  /** Milestone earned by the clear now being celebrated, paid out on the rank-up screen. */
+  private pendingMilestone: MilestoneReward | null = null;
+  /** Index into TUTORIAL_STAGES while a tutorial stage is being played, else null. */
+  private tutorialStageIndex: number | null = null;
 
   // Settings
   private settings: GameSettings = {
@@ -258,6 +264,14 @@ class InudokuGame {
 
   private saveActiveGame() {
     if (this.isFinished) return;
+    // Nothing has been played this session: grid is still empty and
+    // currentPuzzle is only its level-1 default. Saving here (e.g. from the
+    // pagehide handler on the title screen) used to store a blank "game in
+    // progress", which turned Play into "Continue" and made a brand-new player
+    // stop counting as first-time -- so neither the rules nor the tutorial showed.
+    if (this.grid.length === 0) return;
+    // A tutorial board must not overwrite the player's real in-progress game.
+    if (this.tutorialStageIndex !== null) return;
     const marks: CellMark[][] = this.grid.map((row) => row.map((cell) => cell.mark));
     storage.saveActiveGame({
       stageIndex: this.currentStageIndex,
@@ -381,13 +395,21 @@ class InudokuGame {
     const progressEl = document.getElementById('title-progress-text');
     if (progressEl) {
       const completedCount = Object.keys(this.completedLevels).length;
-      progressEl.textContent = t('title.footer.cleared', { completed: completedCount });
+      // Levels are endless, so the bare total means little on its own; pairing
+      // it with the next milestone gives the number something to count toward.
+      progressEl.textContent = t('title.footer.cleared', {
+        completed: completedCount,
+        next: clearsUntilNextMilestone(completedCount),
+      });
     }
   }
 
   public showTitleScreen() {
     this.stopTimer();
     this.saveActiveGame();
+    // Cleared only after saving: while the flag is set saveActiveGame skips,
+    // so clearing it first would store the tutorial board as the real game.
+    this.setTutorialMode(null);
     this.screenGameEl.classList.add('hidden');
     this.screenTitleEl.classList.remove('hidden');
     this.renderTitleScreen();
@@ -399,7 +421,110 @@ class InudokuGame {
     document.getElementById('btn-title-play')?.classList.add('menu-focused');
   }
 
+  // --- Tutorial Stages ---
+
+  /** Enters (index) or leaves (null) tutorial mode and refreshes its banner. */
+  private setTutorialMode(index: number | null) {
+    this.tutorialStageIndex = index;
+    this.screenGameEl.classList.toggle('is-tutorial', index !== null);
+    const textEl = document.getElementById('tutorial-banner-text');
+    const stepEl = document.getElementById('tutorial-banner-step');
+    if (index !== null) {
+      if (textEl) textEl.innerHTML = t(TUTORIAL_INSTRUCTION_KEYS[index]);
+      if (stepEl) {
+        stepEl.textContent = t('tutorial.label', { n: index + 1, total: TUTORIAL_STAGES.length });
+      }
+    }
+  }
+
+  private startTutorialStage(index: number) {
+    const puzzle = TUTORIAL_STAGES[index];
+    if (!puzzle) {
+      this.finishTutorialStages();
+      return;
+    }
+    this.stopTimer();
+    // Replaying from the rules modal mid-level: persist the real board first.
+    // Only when a level is actually on screen -- from the title screen the board
+    // was already saved on the way out, and there may be no board at all.
+    if (!this.screenGameEl.classList.contains('hidden')) {
+      this.saveActiveGame();
+    }
+    // Set before initPuzzle, which reads it for the header label.
+    this.setTutorialMode(index);
+    this.screenTitleEl.classList.add('hidden');
+    this.screenGameEl.classList.remove('hidden');
+    this.updateHintBadge();
+    this.initPuzzle(puzzle);
+  }
+
+  private handleTutorialStageClear() {
+    const index = this.tutorialStageIndex ?? 0;
+    const isLast = index + 1 >= TUTORIAL_STAGES.length;
+    this.showToast(t(isLast ? 'tutorial.done' : 'tutorial.clear'));
+    if (isLast) {
+      confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
+    }
+
+    window.setTimeout(() => {
+      // The player may have left (home, skip) while the message was up.
+      if (this.tutorialStageIndex !== index) return;
+      if (isLast) {
+        this.finishTutorialStages();
+      } else {
+        this.startTutorialStage(index + 1);
+      }
+    }, 1600);
+  }
+
+  private finishTutorialStages() {
+    storage.setTutorialStagesDone(true);
+    // Every rule has now been played through, so the rules slides need not
+    // open on their own afterwards.
+    storage.setHasSeenRules(true);
+    this.startGame();
+  }
+
+  /**
+   * Skipping still counts as done, but deliberately leaves the rules unseen so
+   * startGame() opens the rules slides for a first-time player instead.
+   */
+  private skipTutorialStages() {
+    storage.setTutorialStagesDone(true);
+    this.startGame();
+  }
+
+  /** Places a puzzle's clue dogs and draws the crosses each one implies. */
+  private applyClues(puzzle: PuzzleDefinition) {
+    if (!puzzle.clues || puzzle.clues.length === 0) return;
+    for (const { r, c } of puzzle.clues) {
+      const cell = this.grid[r]?.[c];
+      if (!cell) continue;
+      cell.mark = 'dog';
+      cell.isClue = true;
+    }
+    // Drawn regardless of the auto-mark setting: showing *why* cells are ruled
+    // out is the point of the example.
+    for (const { r, c } of puzzle.clues) {
+      for (const pos of getAutoCrossCells(r, c, puzzle, this.grid)) {
+        this.grid[pos.r][pos.c].mark = 'cross';
+      }
+    }
+  }
+
   public startGame(levelIndex?: number) {
+    this.setTutorialMode(null);
+
+    // A brand-new player starting level 1 goes through the guided stages rather
+    // than a wall of rules. Every entry point passes an index (Play sends
+    // unlockedLevel - 1), and a first-time player only has level 1 unlocked, so
+    // "level 1 for a first-timer" covers Play and the stage list alike.
+    const isLevelOne = levelIndex === undefined || levelIndex === 0;
+    if (isLevelOne && !storage.isTutorialStagesDone() && this.isFirstTimeUser()) {
+      this.startTutorialStage(0);
+      return;
+    }
+
     const activeGame = this.getActiveGame();
     let targetIndex: number;
 
@@ -444,11 +569,13 @@ class InudokuGame {
     const completed = storage.getCompletedLevels();
     const hasCompletedAny = Object.keys(completed).length > 0;
     const isLevel1 = storage.getUnlockedLevel() === 1;
-    const hasActiveGame = !!storage.getActiveGame();
-    return !hasCompletedAny && isLevel1 && !hasActiveGame;
+    // A level-1 game in progress does not disqualify: a player who closed the
+    // rules unread and then poked at the board would otherwise have a saved
+    // game and never be shown the rules again.
+    return !hasCompletedAny && isLevel1;
   }
 
-  public showHelpModal(isInitial: boolean = false) {
+  public showHelpModal(_isInitial: boolean = false) {
     const helpModal = document.getElementById('modal-help');
     if (!helpModal) return;
     this.stopTimer();
@@ -456,9 +583,9 @@ class InudokuGame {
     this.renderTutorialVisuals();
     this.switchTutorialSlide(0, false);
     helpModal.classList.remove('hidden');
-    if (isInitial) {
-      storage.setHasSeenRules(true);
-    }
+    // Deliberately not marking the rules as seen here: that happens only when the
+    // player reaches the last slide and presses start. Marking on open meant a
+    // first-time player who dismissed it by accident never saw the rules again.
   }
 
   public setupTutorialModal() {
@@ -712,10 +839,14 @@ class InudokuGame {
         isConflict: false,
       }))
     );
+    this.applyClues(puzzle);
 
     if (this.levelValEl) {
-
-      this.levelValEl.textContent = String(this.currentStageIndex + 1);
+      // The banner carries "Tutorial n/3"; a fraction here would read as
+      // "level 1 of 3", as if the game had three levels.
+      this.levelValEl.textContent = this.tutorialStageIndex !== null
+        ? '🎓'
+        : String(this.currentStageIndex + 1);
     }
     if (this.diffValEl) {
       this.diffValEl.textContent = this.getDifficultyLabel(puzzle.difficulty, puzzle.size);
@@ -776,6 +907,7 @@ class InudokuGame {
     cellEl.innerHTML = '';
     cellEl.classList.toggle('cell-conflict', cell.isConflict);
     cellEl.classList.toggle('cell-locked', this.isCellLocked(cell.r, cell.c));
+    cellEl.classList.toggle('cell-clue', !!cell.isClue);
 
     if (cell.mark === 'dog') {
       const state = cell.isConflict ? 'conflict' : 'normal';
@@ -936,9 +1068,11 @@ class InudokuGame {
   }
 
   public isCellLocked(r: number, c: number): boolean {
-    if (!this.settings.lockConfirmed) return false;
     const cell = this.grid?.[r]?.[c];
     if (!cell) return false;
+    // Tutorial worked examples stay put regardless of the lock setting.
+    if (cell.isClue) return true;
+    if (!this.settings.lockConfirmed) return false;
     // Any cell with a confirmed Shiba dog is locked
     if (cell.mark === 'dog') return true;
     // Any cell in a region, row, column, or surrounding 8 cells of a confirmed Shiba dog is locked
@@ -1227,8 +1361,11 @@ class InudokuGame {
     if (this.hintTimeout !== null) clearTimeout(this.hintTimeout);
     this.hintTimeout = window.setTimeout(() => this.hideHint(), 3000);
 
-    // Lose a bone (life) on mistake!
-    this.loseLife();
+    // Lose a bone (life) on mistake - except in the tutorial, where the message
+    // above is the lesson and a game over would only punish learning.
+    if (this.tutorialStageIndex === null) {
+      this.loseLife();
+    }
   }
 
   private updateLivesView(brokenIndex?: number) {
@@ -1293,6 +1430,12 @@ class InudokuGame {
     this.stopTimer();
     sounds.playWin();
 
+    // Tutorial stages skip scoring, progression and the rank-up screen entirely.
+    if (this.tutorialStageIndex !== null) {
+      this.handleTutorialStageClear();
+      return;
+    }
+
 
     // Calculate score
     const size = this.currentPuzzle.size;
@@ -1317,6 +1460,15 @@ class InudokuGame {
 
     this.clearActiveGame();
     this.saveProgression();
+
+    // Milestone is resolved here but paid out at the end of the rank-up screen,
+    // so the celebration stays in one place instead of stacking another modal.
+    this.pendingMilestone = null;
+    const clearedCount = Object.keys(this.completedLevels).length;
+    const milestone = getMilestoneReward(clearedCount);
+    if (milestone && !storage.hasMilestoneClaimed(milestone.milestone)) {
+      this.pendingMilestone = milestone;
+    }
 
     // Earn bone points based on puzzle size (3, 4, 5, or 6 points)
     const earnedPoints = Math.max(3, Math.min(6, size - 3));
@@ -1403,6 +1555,24 @@ class InudokuGame {
       stairsContainer.appendChild(stepEl);
     });
 
+    // The ladder is as long as the climb, so step size is derived from the step
+    // count rather than fixed per index: the rise always spans the same total
+    // height, and long ladders drop the name/points so the rank stays readable.
+    const stepCount = rankUpData.stairSteps.length;
+    stairsContainer.classList.toggle('is-compact', stepCount > 6);
+    const RISE_MIN = 56;
+    const RISE_MAX = 188;
+    for (let idx = 0; idx < stepCount; idx++) {
+      const block = document.querySelector<HTMLElement>(`#rankup-step-${idx} .step-block`);
+      if (!block) continue;
+      const t = stepCount > 1 ? idx / (stepCount - 1) : 1;
+      block.style.height = `${Math.round(RISE_MIN + (RISE_MAX - RISE_MIN) * t)}px`;
+    }
+
+    // Milestone banner starts hidden; it is revealed only once the staircase
+    // beat has finished, so the two celebrations do not overlap.
+    document.getElementById('rankup-milestone')?.classList.add('hidden');
+
     // 3. Update Summary Banner initial state
     const badgePrev = document.getElementById('rankup-badge-prev');
     const badgeNew = document.getElementById('rankup-badge-new');
@@ -1426,103 +1596,29 @@ class InudokuGame {
           sounds.playBark();
         }
 
-        // 5. Check if user hops up the stairs to a higher step
+        // 5. Walk the shiba up the staircase one rank at a time.
         const fromIdx = rankUpData.userStepIndexBefore;
         const toIdx = rankUpData.userStepIndexAfter;
-        const didClimb = toIdx > fromIdx || rankUpData.newRank < rankUpData.prevRank;
+        const hops = toIdx - fromIdx;
+        const isChamp = rankUpData.newRank === 1;
 
-        setTimeout(() => {
-          if (didClimb) {
-            const fromAvatarWrap = document.getElementById(`rankup-avatar-wrap-${fromIdx}`);
-            const toAvatarWrap = document.getElementById(`rankup-avatar-wrap-${toIdx}`);
-
-            if (fromAvatarWrap && toAvatarWrap) {
-              const fromRect = fromAvatarWrap.getBoundingClientRect();
-              const toRect = toAvatarWrap.getBoundingClientRect();
-              const jumpX = toRect.left - fromRect.left;
-              const jumpY = toRect.top - fromRect.top;
-
-              fromAvatarWrap.style.setProperty('--jump-x', `${jumpX}px`);
-              fromAvatarWrap.style.setProperty('--jump-y', `${jumpY}px`);
-              fromAvatarWrap.classList.add('shiba-climbing');
-              sounds.playBark();
-
-              // On landing (after 750ms keyframe animation)
-              setTimeout(() => {
-                sounds.playPaw();
-                this.createStairSparkles(toAvatarWrap);
-
-                // Step re-assignment:
-                // From step becomes normal rival step
-                const fromStepEl = document.getElementById(`rankup-step-${fromIdx}`);
-                const toStepEl = document.getElementById(`rankup-step-${toIdx}`);
-
-                if (fromStepEl && toStepEl) {
-                  fromStepEl.classList.remove('is-user-step');
-                  toStepEl.classList.add('is-user-step');
-
-                  const overtakenRival = rankUpData.stairSteps[toIdx];
-
-                  // Put rival avatar on the lower step
-                  fromAvatarWrap.innerHTML = `
-                    <div class="avatar-bubble">
-                      <span>${overtakenRival?.avatar || '🐼'}</span>
-                    </div>
-                  `;
-                  fromAvatarWrap.classList.remove('shiba-climbing');
-                  fromAvatarWrap.removeAttribute('style');
-
-                  // Put Shiba avatar on the new higher step!
-                  const isChamp = rankUpData.newRank === 1;
-                  toAvatarWrap.innerHTML = `
-                    ${isChamp ? '<span class="crown-badge">👑</span>' : ''}
-                    <div class="avatar-bubble is-user-avatar" id="rankup-shiba-bubble">
-                      <div class="step-shiba-svg">${getShibaSvg(this.settings.shibaType, 'happy')}</div>
-                      <span class="avatar-you-tag">YOU</span>
-                    </div>
-                  `;
-
-                  // Update riser text
-                  const fromRankEl = document.getElementById(`rankup-step-rank-${fromIdx}`);
-                  const fromNameEl = document.getElementById(`rankup-step-name-${fromIdx}`);
-                  const fromPtsEl = document.getElementById(`rankup-step-pts-${fromIdx}`);
-                  if (fromRankEl) fromRankEl.textContent = `#${rankUpData.prevRank}`;
-                  if (fromNameEl) fromNameEl.textContent = overtakenRival?.name || 'Rival';
-                  if (fromPtsEl) fromPtsEl.textContent = String(overtakenRival?.points || 0);
-
-                  const toRankEl = document.getElementById(`rankup-step-rank-${toIdx}`);
-                  const toNameEl = document.getElementById(`rankup-step-name-${toIdx}`);
-                  const toPtsEl = document.getElementById(`rankup-step-pts-${toIdx}`);
-                  if (toRankEl) {
-                    toRankEl.textContent = `#${rankUpData.newRank}`;
-                    toRankEl.classList.add('bump');
-                  }
-                  if (toNameEl) toNameEl.textContent = this.getPlayerName();
-                  if (toPtsEl) toPtsEl.textContent = String(rankUpData.newPoints);
-
-                  // Update status and badge
-                  if (badgeNew) badgeNew.classList.add('bump');
-                  if (statusMsg) {
-                    statusMsg.textContent = isChamp
-                      ? '👑 栄光の第1位！新チャンピオン誕生だワン！'
-                      : '🎉 ランクアップ達成！階段を駆け上がったワン！🐾';
-                  }
-
-                  // Confetti pop!
-                  confetti({
-                    particleCount: isChamp ? 90 : 55,
-                    spread: 65,
-                    origin: { y: 0.65 },
-                  });
-
-                  if (isChamp && !wasAlreadyFirstPlaceToday) {
-                    this.showToast(t('msg.rank.firstPlaceReached'));
-                  }
-                }
-              }, 750);
+        const finish = () => {
+          if (hops > 0) {
+            if (badgeNew) badgeNew.classList.add('bump');
+            if (statusMsg) {
+              statusMsg.textContent = isChamp
+                ? '👑 栄光の第1位！新チャンピオン誕生だワン！'
+                : '🎉 ランクアップ達成！階段を駆け上がったワン！🐾';
+            }
+            confetti({
+              particleCount: isChamp ? 90 : 55,
+              spread: 65,
+              origin: { y: 0.65 },
+            });
+            if (isChamp && !wasAlreadyFirstPlaceToday) {
+              this.showToast(t('msg.rank.firstPlaceReached'));
             }
           } else {
-            // Defending or score gain without rank step change
             const userAvatarBubble = document.getElementById('rankup-shiba-bubble');
             if (userAvatarBubble) {
               userAvatarBubble.classList.add('shiba-victory');
@@ -1533,6 +1629,21 @@ class InudokuGame {
                 ? '👑 チャンピオン防衛！圧倒的1位をキープ中だワン！'
                 : '🐾 スコア獲得！次の段へ近づいたワン！';
             }
+          }
+
+          // Milestone payout comes last, once the climb (or the defend beat)
+          // has resolved, so it reads as a separate reward rather than noise.
+          setTimeout(() => this.showMilestoneReward(), 350);
+        };
+
+        setTimeout(() => {
+          if (hops > 0) {
+            // Longer climbs speed each hop up so the whole ascent stays around
+            // two seconds however many ranks were overtaken.
+            const hopMs = Math.max(170, Math.min(520, Math.round(2200 / hops)));
+            this.climbStairsStepByStep(fromIdx, toIdx, hopMs, rankUpData, finish);
+          } else {
+            finish();
           }
         }, 500);
       });
@@ -1561,6 +1672,133 @@ class InudokuGame {
     window.addEventListener('keydown', handleKeyContinue);
   }
 
+  /**
+   * Hops the player's avatar up the staircase one step per rank.
+   *
+   * Each step's rank label is fixed (the step's position *is* that rank), so a
+   * hop is simply a swap of occupants between neighbouring steps: the player
+   * moves up, and the rival who was standing there drops down one. Chaining
+   * those swaps lands everyone in the right place without ever relabelling.
+   */
+  private climbStairsStepByStep(
+    fromIdx: number,
+    toIdx: number,
+    hopMs: number,
+    rankUpData: ReturnType<typeof calculateRankUp>,
+    onDone: () => void
+  ) {
+    const hop = (idx: number) => {
+      if (idx >= toIdx) {
+        onDone();
+        return;
+      }
+
+      const fromWrap = document.getElementById(`rankup-avatar-wrap-${idx}`);
+      const toWrap = document.getElementById(`rankup-avatar-wrap-${idx + 1}`);
+      if (!fromWrap || !toWrap) {
+        onDone();
+        return;
+      }
+
+      const fromRect = fromWrap.getBoundingClientRect();
+      const toRect = toWrap.getBoundingClientRect();
+      fromWrap.style.setProperty('--jump-x', `${toRect.left - fromRect.left}px`);
+      fromWrap.style.setProperty('--jump-y', `${toRect.top - fromRect.top}px`);
+      fromWrap.style.animationDuration = `${hopMs}ms`;
+      fromWrap.classList.add('shiba-climbing');
+      sounds.playPaw();
+
+      setTimeout(() => {
+        // The rival originally standing on the destination step moves down.
+        const rival = rankUpData.stairSteps[idx + 1];
+        fromWrap.classList.remove('shiba-climbing');
+        fromWrap.removeAttribute('style');
+        fromWrap.innerHTML = `
+          <div class="avatar-bubble">
+            <span>${rival?.avatar || '🐼'}</span>
+          </div>
+        `;
+        toWrap.innerHTML = `
+          ${rival?.isChampion ? '<span class="crown-badge">👑</span>' : ''}
+          <div class="avatar-bubble is-user-avatar" id="rankup-shiba-bubble">
+            <div class="step-shiba-svg">${getShibaSvg(this.settings.shibaType, 'happy')}</div>
+            <span class="avatar-you-tag">YOU</span>
+          </div>
+        `;
+
+        document.getElementById(`rankup-step-${idx}`)?.classList.remove('is-user-step');
+        document.getElementById(`rankup-step-${idx + 1}`)?.classList.add('is-user-step');
+
+        const fromNameEl = document.getElementById(`rankup-step-name-${idx}`);
+        const fromPtsEl = document.getElementById(`rankup-step-pts-${idx}`);
+        if (fromNameEl) fromNameEl.textContent = rival?.name || 'Rival';
+        if (fromPtsEl) fromPtsEl.textContent = String(rival?.points ?? 0);
+
+        const toNameEl = document.getElementById(`rankup-step-name-${idx + 1}`);
+        const toPtsEl = document.getElementById(`rankup-step-pts-${idx + 1}`);
+        if (toNameEl) toNameEl.textContent = this.getPlayerName();
+        if (toPtsEl) toPtsEl.textContent = String(rankUpData.newPoints);
+
+        // Sparkle only on the final landing; one per hop would be noise.
+        if (idx + 1 === toIdx) {
+          this.createStairSparkles(toWrap);
+          sounds.playBark();
+        }
+
+        hop(idx + 1);
+      }, hopMs);
+    };
+
+    hop(fromIdx);
+  }
+
+  /**
+   * Reveals the milestone banner and flies bulbs into it, then grants the
+   * hints. The grant happens on arrival so the number the player sees bump is
+   * the number actually saved.
+   */
+  private showMilestoneReward() {
+    const reward = this.pendingMilestone;
+    if (!reward) return;
+    // Clear first: the rank-up screen can be dismissed mid-animation, and the
+    // claim flag below is what stops a second payout.
+    this.pendingMilestone = null;
+    if (storage.hasMilestoneClaimed(reward.milestone)) return;
+
+    const banner = document.getElementById('rankup-milestone');
+    const titleEl = document.getElementById('rankup-milestone-title');
+    const countEl = document.getElementById('rankup-milestone-count');
+    if (!banner || !titleEl || !countEl) return;
+
+    titleEl.textContent = t(
+      reward.isMajor ? 'milestone.title.major' : 'milestone.title',
+      { count: reward.milestone }
+    );
+    countEl.textContent = String(this.hintCount);
+    banner.classList.remove('hidden');
+    banner.classList.add('milestone-in');
+    sounds.playQuestion();
+
+    this.playFlyingBones(
+      reward.hints,
+      () => {
+        this.hintCount += reward.hints;
+        storage.saveHintCount(this.hintCount);
+        storage.setMilestoneClaimed(reward.milestone);
+        this.updateHintBadge();
+
+        countEl.textContent = String(this.hintCount);
+        countEl.classList.remove('bump');
+        void countEl.offsetWidth;
+        countEl.classList.add('bump');
+        sounds.playWin();
+        this.createStairSparkles(document.getElementById('rankup-milestone-pill'));
+      },
+      '💡',
+      'rankup-milestone-pill'
+    );
+  }
+
   private createStairSparkles(targetEl: HTMLElement | null) {
     if (!targetEl) return;
     const rect = targetEl.getBoundingClientRect();
@@ -1580,10 +1818,23 @@ class InudokuGame {
     }
   }
 
-  private playFlyingBones(count: number, onComplete: () => void) {
+  /**
+   * Flies `count` icons from the bottom of the rank-up screen into a target.
+   * Defaults to bones landing on the player's avatar (tournament points); the
+   * milestone payout passes a bulb and its own target so the two rewards stay
+   * visually distinct.
+   */
+  private playFlyingBones(
+    count: number,
+    onComplete: () => void,
+    icon: string = '🦴',
+    targetId?: string
+  ) {
     const layer = document.getElementById('flying-bones-layer')!;
     layer.innerHTML = '';
-    const targetEl = document.getElementById('rankup-shiba-bubble') || document.getElementById('rankup-card-2');
+    const targetEl = targetId
+      ? document.getElementById(targetId)
+      : document.getElementById('rankup-shiba-bubble') || document.getElementById('rankup-card-2');
     if (!targetEl) {
       onComplete();
       return;
@@ -1598,7 +1849,7 @@ class InudokuGame {
       setTimeout(() => {
         const bone = document.createElement('div');
         bone.className = 'flying-bone';
-        bone.textContent = '🦴';
+        bone.textContent = icon;
         bone.style.left = `${layerRect.width / 2 + (i - 1) * 30}px`;
         bone.style.top = `${layerRect.height - 30}px`;
         layer.appendChild(bone);
@@ -1651,7 +1902,7 @@ class InudokuGame {
   public showHint() {
     if (this.isFinished) return;
 
-    if (this.hintCount <= 0) {
+    if (this.hintCount <= 0 && this.tutorialStageIndex === null) {
       this.showToast(t('msg.hint.empty'));
       sounds.playConflict();
       return;
@@ -1662,10 +1913,12 @@ class InudokuGame {
       this.hintTimeout = null;
     }
 
-    // Decrement hint count and persist
-    this.hintCount--;
-    storage.saveHintCount(this.hintCount);
-    this.updateHintBadge();
+    // Decrement hint count and persist (free in the tutorial)
+    if (this.tutorialStageIndex === null) {
+      this.hintCount--;
+      storage.saveHintCount(this.hintCount);
+      this.updateHintBadge();
+    }
 
     const currentDogs: Position[] = [];
     for (let r = 0; r < this.currentPuzzle.size; r++) {
@@ -2228,11 +2481,24 @@ class InudokuGame {
         isDanger: true,
       });
       if (ok) {
-        this.clearActiveGame();
+        // In the tutorial the saved game belongs to the player's real level
+        // (they may be replaying the tutorial), so leave it alone.
+        if (this.tutorialStageIndex === null) {
+          this.clearActiveGame();
+        }
         this.initPuzzle(this.currentPuzzle);
       }
     });
     document.getElementById('btn-close-hint')?.addEventListener('click', () => this.hideHint());
+
+    document.getElementById('btn-tutorial-skip')?.addEventListener('click', () => {
+      if (this.tutorialStageIndex !== null) this.skipTutorialStages();
+    });
+    // Anyone can replay the guided stages from the rules modal.
+    document.getElementById('btn-tutorial-replay')?.addEventListener('click', () => {
+      document.getElementById('modal-help')?.classList.add('hidden');
+      this.startTutorialStage(0);
+    });
 
     // Auto-save on window blur or unload
     window.addEventListener('beforeunload', () => {
@@ -2658,7 +2924,6 @@ class InudokuGame {
         if (modalId) {
           document.getElementById(modalId)?.classList.add('hidden');
           if (modalId === 'modal-help') {
-            storage.setHasSeenRules(true);
             if (!this.screenGameEl.classList.contains('hidden') && !this.isFinished) {
               this.startTimer();
             }
@@ -2689,7 +2954,6 @@ class InudokuGame {
             if (resolve) resolve(false);
           }
           if (backdrop.id === 'modal-help') {
-            storage.setHasSeenRules(true);
             if (!this.screenGameEl.classList.contains('hidden') && !this.isFinished) {
               this.startTimer();
             }
@@ -3422,7 +3686,6 @@ class InudokuGame {
 
     if (cancel) {
       modal.classList.add('hidden');
-      storage.setHasSeenRules(true);
       if (!this.screenGameEl.classList.contains('hidden') && !this.isFinished) {
         this.startTimer();
       }

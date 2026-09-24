@@ -133,6 +133,15 @@
           </button>
         </section>
 
+        <!-- Tutorial Banner (stands in for the sub bar during the guided first-run stages) -->
+        <section class="tutorial-banner" id="tutorial-banner" aria-live="polite">
+          <div class="tutorial-banner-head">
+            <span class="tutorial-banner-step" id="tutorial-banner-step">チュートリアル 1/3</span>
+            <button id="btn-tutorial-skip" class="tutorial-skip-btn" data-i18n="tutorial.skip">スキップ</button>
+          </div>
+          <p class="tutorial-banner-text" id="tutorial-banner-text"></p>
+        </section>
+
         <!-- Main Game Board Container -->
         <main class="board-wrapper">
           <div class="board-outer-frame">
@@ -409,6 +418,7 @@
 
         <!-- Tutorial Footer -->
         <div class="modal-footer tutorial-footer">
+          <button id="btn-tutorial-replay" class="tutorial-replay-btn" data-i18n="tutorial.replay">🎓 チュートリアルを遊ぶ</button>
           <div class="tutorial-dots" role="tablist">
             <button class="tutorial-dot active" data-tutorial-dot="0" aria-label="Slide 1"></button>
             <button class="tutorial-dot" data-tutorial-dot="1" aria-label="Slide 2"></button>
@@ -882,6 +892,15 @@
           </div>
           <div class="rankup-status-message" id="rankup-status-msg">
             骨を獲得してランクアップ！🐾
+          </div>
+        </div>
+
+        <!-- Stage Milestone Reward (revealed after the staircase settles) -->
+        <div class="milestone-banner hidden" id="rankup-milestone">
+          <span class="milestone-title" id="rankup-milestone-title">🎉 10ステージ達成！</span>
+          <div class="milestone-hint-pill" id="rankup-milestone-pill">
+            <span class="milestone-hint-icon">💡</span>
+            <span class="milestone-hint-count" id="rankup-milestone-count">0</span>
           </div>
         </div>
 

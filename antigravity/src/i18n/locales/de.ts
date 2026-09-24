@@ -14,7 +14,17 @@ export const de: Record<string, string> = {
   'title.btn.controls': 'Steuerung',
   'title.btn.rules': 'Regeln',
   'title.btn.settings': 'Einstellungen',
-  'title.footer.cleared': 'Abgeschlossen: {completed}',
+  'title.footer.cleared': 'Abgeschlossen: {completed} (noch {next} bis zur Belohnung)',
+  'milestone.title': '🎉 {count} Level geschafft!',
+  'milestone.title.major': '🏆 {count} Level geschafft! Großer Bonus!',
+  'tutorial.label': 'Tutorial {n}/{total}',
+  'tutorial.skip': 'Überspringen',
+  'tutorial.step1': 'Jeder Farbbereich bekommt <strong>genau einen</strong> Shiba. Drei stehen schon. <strong>Doppeltippe</strong> das freie Feld, um den letzten zu setzen!',
+  'tutorial.step2': 'Auch jede <strong>Zeile und Spalte</strong> bekommt nur einen. ✕ markiert ausgeschlossene Felder. Beginne mit einer <strong>Zeile mit nur einem freien Feld</strong>!',
+  'tutorial.step3': 'Shibas dürfen sich <strong>nie berühren, auch nicht diagonal</strong>. Diesmal nur ein Beispiel. Festgefahren? 💡 Tipps sind hier <strong>gratis</strong>!',
+  'tutorial.clear': 'Geschafft! Weiter zum nächsten Schritt 🐾',
+  'tutorial.done': 'Tutorial abgeschlossen! Jetzt geht es richtig los! 🎉',
+  'tutorial.replay': '🎓 Tutorial spielen',
 
   // Gameplay Header & Subbar
   'game.header.home': 'Hauptmenü',

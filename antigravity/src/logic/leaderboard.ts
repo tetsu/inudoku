@@ -211,6 +211,78 @@ export function simulateRivalPoints(): void {
  * Calculates rank and surrounding competitors dynamically based on user's real points.
  * Fully supports 1st place Champion status and defense.
  */
+/** Ranks run 1..50 in the generated tournament. */
+const MAX_RANK = 50;
+
+/**
+ * Builds a staircase of CONSECUTIVE ranks spanning the player's climb, plus one
+ * context step at each end.
+ *
+ * Every step is exactly one rank, so a jump from #10 to #5 renders as
+ * 10 -> 9 -> 8 -> 7 -> 6 -> 5 and can be animated one hop at a time. The step's
+ * position therefore *is* its rank: the labels never change during the climb,
+ * only which competitor stands on each step, so overtaking is a straight swap
+ * between neighbouring steps.
+ *
+ * Rivals are read off the competitor list allowing for the player displacing
+ * one place: ranks above the player map straight through, ranks below it are
+ * shifted by one.
+ */
+function buildStairLadder(
+  prevRank: number,
+  newRank: number,
+  userName: string,
+  competitors: TournamentEntry[],
+  userPoints: number
+): { steps: StairStepEntry[]; userIndexBefore: number; userIndexAfter: number } {
+  const best = Math.min(prevRank, newRank);
+  const worst = Math.max(prevRank, newRank);
+  let top = Math.max(1, best - 1);
+  let bottom = Math.min(MAX_RANK, worst + 1);
+
+  // Trim the context steps first if the span is already long; the ranks the
+  // player actually moves through are never dropped.
+  const MAX_LADDER_STEPS = 16;
+  if (bottom - top + 1 > MAX_LADDER_STEPS) {
+    bottom = worst;
+    top = best;
+  }
+
+  const steps: StairStepEntry[] = [];
+  for (let rank = bottom; rank >= top; rank--) {
+    const stepIndex = bottom - rank;
+    if (rank === prevRank) {
+      steps.push({
+        rank,
+        name: userName,
+        avatar: '🐕',
+        avatarBg: '#FED7AA',
+        points: userPoints,
+        isUser: true,
+        isChampion: rank === 1,
+        stepIndex,
+      });
+      continue;
+    }
+    const rival = rank < prevRank ? competitors[rank - 1] : competitors[rank - 2];
+    steps.push({
+      rank,
+      name: rival?.name || `Rival #${rank}`,
+      avatar: rival?.avatar || '🐕',
+      avatarBg: rival?.avatarBg || '#F1F5F9',
+      points: rival?.points ?? 0,
+      isChampion: rank === 1,
+      stepIndex,
+    });
+  }
+
+  return {
+    steps,
+    userIndexBefore: bottom - prevRank,
+    userIndexAfter: bottom - newRank,
+  };
+}
+
 export function calculateRankUp(
   prevUserPoints: number,
   earnedPoints: number,
@@ -357,45 +429,8 @@ export function calculateRankUp(
   const displayList: TournamentEntry[] = [];
 
   if (newRank === 1) {
-    const rival2nd = rawCompetitors[0] || { name: 'RJEA3M', avatar: '🦁', avatarBg: '#FED7AA', points: 30 };
-    const rival3rd = rawCompetitors[1] || { name: 'VBB7VC', avatar: '🦊', avatarBg: '#BFDBFE', points: 27 };
-
-    const stairSteps: StairStepEntry[] = [
-      {
-        rank: 4,
-        name: rawCompetitors[2]?.name || 'xenW',
-        avatar: rawCompetitors[2]?.avatar || '🐊',
-        avatarBg: rawCompetitors[2]?.avatarBg || '#BBF7D0',
-        points: rawCompetitors[2]?.points || 25,
-        stepIndex: 0,
-      },
-      {
-        rank: 3,
-        name: rival3rd.name,
-        avatar: rival3rd.avatar,
-        avatarBg: rival3rd.avatarBg,
-        points: rival3rd.points,
-        stepIndex: 1,
-      },
-      {
-        rank: 2,
-        name: rival2nd.name,
-        avatar: rival2nd.avatar,
-        avatarBg: rival2nd.avatarBg,
-        points: rival2nd.points,
-        stepIndex: 2,
-      },
-      {
-        rank: 1,
-        name: `${userName} 👑`,
-        avatar: '🐕',
-        avatarBg: '#FEF3C7',
-        points: newUserPoints,
-        isUser: true,
-        isChampion: true,
-        stepIndex: 3,
-      },
-    ];
+    const ladder = buildStairLadder(prevRank, 1, userName, rawCompetitors, newUserPoints);
+    const stairSteps = ladder.steps;
 
     return {
       prevRank,
@@ -408,8 +443,8 @@ export function calculateRankUp(
       userIndexBefore: 0,
       userIndexAfter: 0,
       stairSteps,
-      userStepIndexBefore: 3,
-      userStepIndexAfter: 3,
+      userStepIndexBefore: ladder.userIndexBefore,
+      userStepIndexAfter: ladder.userIndexAfter,
     };
   }
 
@@ -463,98 +498,12 @@ export function calculateRankUp(
     isUser: true,
   });
 
-  // Calculate 4-step horizontal staircase (ascending left to right: step 0 -> 1 -> 2 -> 3)
-  const stairSteps: StairStepEntry[] = [];
-  let userStepIndexBefore = 1;
-  let userStepIndexAfter = 2;
-
-  if (newRank === 1) {
-    // User climbing to 1st place!
-    stairSteps.push({
-      rank: 4,
-      name: rawCompetitors[2]?.name || 'xenW',
-      avatar: rawCompetitors[2]?.avatar || '🐊',
-      avatarBg: rawCompetitors[2]?.avatarBg || '#BBF7D0',
-      points: rawCompetitors[2]?.points || 24,
-      stepIndex: 0,
-    });
-    stairSteps.push({
-      rank: 3,
-      name: rawCompetitors[1]?.name || 'VBB7VC',
-      avatar: rawCompetitors[1]?.avatar || '🦊',
-      avatarBg: rawCompetitors[1]?.avatarBg || '#BFDBFE',
-      points: rawCompetitors[1]?.points || 27,
-      stepIndex: 1,
-    });
-    stairSteps.push({
-      rank: 2,
-      name: userName,
-      avatar: '🐕',
-      avatarBg: '#FED7AA',
-      points: prevUserPoints,
-      isUser: true,
-      stepIndex: 2,
-    });
-    stairSteps.push({
-      rank: 1,
-      name: rawCompetitors[0]?.name || 'RJEA3M',
-      avatar: rawCompetitors[0]?.avatar || '🦁',
-      avatarBg: rawCompetitors[0]?.avatarBg || '#FED7AA',
-      points: pointsOvertaken,
-      isChampion: true,
-      stepIndex: 3,
-    });
-    userStepIndexBefore = 2;
-    userStepIndexAfter = 3;
-  } else {
-    // Regular rank climb
-    const behindIndex = Math.min(rawCompetitors.length - 1, newRank + 1);
-    const rivalBehind = rawCompetitors[behindIndex] || {
-      rank: newRank + 2,
-      name: 'KuroMaru',
-      avatar: '🐕‍🦺',
-      avatarBg: '#DDD6FE',
-      points: Math.max(0, prevUserPoints - 2),
-    };
-
-    stairSteps.push({
-      rank: Math.max(newRank + 1, prevRank + 1),
-      name: rivalBehind.name,
-      avatar: rivalBehind.avatar,
-      avatarBg: rivalBehind.avatarBg,
-      points: rivalBehind.points,
-      stepIndex: 0,
-    });
-    stairSteps.push({
-      rank: prevRank,
-      name: userName,
-      avatar: '🐕',
-      avatarBg: '#FED7AA',
-      points: prevUserPoints,
-      isUser: true,
-      stepIndex: 1,
-    });
-    stairSteps.push({
-      rank: newRank,
-      name: rivalOvertaken.name,
-      avatar: rivalOvertaken.avatar,
-      avatarBg: rivalOvertaken.avatarBg,
-      points: pointsOvertaken,
-      stepIndex: 2,
-    });
-    stairSteps.push({
-      rank: Math.max(1, newRank - 1),
-      name: rivalAbove.name,
-      avatar: rivalAbove.avatar,
-      avatarBg: rivalAbove.avatarBg,
-      points: pointsAbove,
-      isChampion: newRank - 1 === 1,
-      stepIndex: 3,
-    });
-
-    userStepIndexBefore = 1;
-    userStepIndexAfter = (newRank < prevRank) ? 2 : 1;
-  }
+  // Consecutive staircase spanning the climb, so the shiba can hop one rank at
+  // a time instead of teleporting across the skipped ranks.
+  const ladder = buildStairLadder(prevRank, newRank, userName, rawCompetitors, newUserPoints);
+  const stairSteps = ladder.steps;
+  const userStepIndexBefore = ladder.userIndexBefore;
+  const userStepIndexAfter = ladder.userIndexAfter;
 
   return {
     prevRank,

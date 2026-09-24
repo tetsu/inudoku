@@ -14,7 +14,17 @@ export const ja: Record<string, string> = {
   'title.btn.controls': '操作ガイド',
   'title.btn.rules': 'ルール',
   'title.btn.settings': '設定',
-  'title.footer.cleared': 'クリア達成: {completed}',
+  'title.footer.cleared': 'クリア達成: {completed}（次の報酬まであと{next}）',
+  'milestone.title': '🎉 {count}ステージ達成！',
+  'milestone.title.major': '🏆 {count}ステージ達成！大ボーナス！',
+  'tutorial.label': 'チュートリアル {n}/{total}',
+  'tutorial.skip': 'スキップ',
+  'tutorial.step1': '色のエリアには柴犬を<strong>1匹ずつ</strong>。3匹はもう置いてあるワン。残った空きマスを<strong>ダブルタップ</strong>して、最後の1匹を置こう！',
+  'tutorial.step2': 'タテ・ヨコの<strong>各列にも1匹ずつ</strong>。✕は入れない場所だよ。<strong>空きが1マスだけの行</strong>から探してみよう！',
+  'tutorial.step3': '柴犬同士は<strong>ナナメも含めて隣り合えない</strong>ワン。お手本は1匹だけ。困ったら💡ヒントは<strong>無料</strong>だよ！',
+  'tutorial.clear': 'できたワン！次のステップへ🐾',
+  'tutorial.done': 'チュートリアル完了！本番スタートだワン！🎉',
+  'tutorial.replay': '🎓 チュートリアルを遊ぶ',
 
   // Gameplay Header & Subbar
   'game.header.home': 'タイトルへ戻る',

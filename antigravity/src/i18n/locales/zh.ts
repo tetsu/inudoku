@@ -14,7 +14,17 @@ export const zh: Record<string, string> = {
   'title.btn.controls': '操作指南',
   'title.btn.rules': '游戏规则',
   'title.btn.settings': '设置',
-  'title.footer.cleared': '通关成就: {completed}',
+  'title.footer.cleared': '通关成就: {completed}（距下个奖励还差{next}）',
+  'milestone.title': '🎉 通关{count}关！',
+  'milestone.title.major': '🏆 通关{count}关！超级奖励！',
+  'tutorial.label': '教程 {n}/{total}',
+  'tutorial.skip': '跳过',
+  'tutorial.step1': '每个颜色区域<strong>恰好放1只</strong>柴犬。已经放好3只了。<strong>双击</strong>剩下的空格，放上最后1只！',
+  'tutorial.step2': '每一<strong>行和每一列</strong>也只能有1只。✕ 表示不能放的格子。先从<strong>只剩1个空格的行</strong>找起吧！',
+  'tutorial.step3': '柴犬之间<strong>不能相邻，斜向也不行</strong>。这次只有1只示范。卡住了？💡提示在这里<strong>免费</strong>！',
+  'tutorial.clear': '做到了！进入下一步 🐾',
+  'tutorial.done': '教程完成！正式开始吧！🎉',
+  'tutorial.replay': '🎓 玩教程',
 
   // Gameplay Header & Subbar
   'game.header.home': '返回标题',

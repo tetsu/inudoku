@@ -45,11 +45,13 @@ export const STORAGE_KEYS = {
   ACTIVE_GAME: 'shibadoku_active_game',
   TOURNAMENT_POINTS: 'shibadoku_tournament_points',
   HAS_SEEN_RULES: 'shibadoku_has_seen_rules',
+  TUTORIAL_STAGES_DONE: 'shibadoku_tutorial_stages_done',
   HINT_COUNT: 'shibadoku_hint_count',
   LAST_SETTLEMENT_DATE: 'shibadoku_last_settlement_date',
   LAST_ACTIVE_DATE: 'shibadoku_last_active_date',
   FIRST_PLACE_PREFIX: 'shibadoku_first_place_',
   REWARD_CLAIMED_PREFIX: 'shibadoku_reward_claimed_',
+  MILESTONE_CLAIMED_PREFIX: 'shibadoku_milestone_claimed_',
   SCORE_PREFIX: 'shibadoku_score_',
   RIVALS_PREFIX: 'shibadoku_rivals_',
   TOURNAMENT_DAILY_PREFIX: 'shibadoku_tournament_points_',
@@ -280,6 +282,16 @@ export class StorageManager {
     this.safeSetItem(STORAGE_KEYS.HAS_SEEN_RULES, String(seen));
   }
 
+  // --- Tutorial Stages ---
+  /** True once the player has finished or skipped the guided first-run stages. */
+  public isTutorialStagesDone(): boolean {
+    return this.safeGetItem(STORAGE_KEYS.TUTORIAL_STAGES_DONE) === 'true';
+  }
+
+  public setTutorialStagesDone(done: boolean = true): void {
+    this.safeSetItem(STORAGE_KEYS.TUTORIAL_STAGES_DONE, String(done));
+  }
+
   // --- Hints ---
   public getHintCount(): number {
     const raw = this.safeGetItem(STORAGE_KEYS.HINT_COUNT);
@@ -310,6 +322,35 @@ export class StorageManager {
     this.safeSetItem(`${STORAGE_KEYS.REWARD_CLAIMED_PREFIX}${dateStr}`, String(claimed));
   }
 
+  // --- Stage Milestone Rewards ---
+  public hasMilestoneClaimed(milestone: number): boolean {
+    return this.safeGetItem(`${STORAGE_KEYS.MILESTONE_CLAIMED_PREFIX}${milestone}`) === 'true';
+  }
+
+  public setMilestoneClaimed(milestone: number): void {
+    this.safeSetItem(`${STORAGE_KEYS.MILESTONE_CLAIMED_PREFIX}${milestone}`, 'true');
+  }
+
+  /**
+   * Removes every claimed-milestone flag. Milestones are keyed by number rather
+   * than a fixed list, so they have to be found by prefix instead of removed
+   * one by one.
+   */
+  private clearMilestoneClaims(): void {
+    try {
+      const keys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(STORAGE_KEYS.MILESTONE_CLAIMED_PREFIX)) {
+          keys.push(key);
+        }
+      }
+      keys.forEach((key) => localStorage.removeItem(key));
+    } catch (e) {
+      console.warn('StorageManager: Failed to clear milestone claims', e);
+    }
+  }
+
   public getLastSettlementDate(): string | null {
     return this.safeGetItem(STORAGE_KEYS.LAST_SETTLEMENT_DATE);
   }
@@ -333,9 +374,11 @@ export class StorageManager {
     this.safeRemoveItem(STORAGE_KEYS.ACTIVE_GAME, STORAGE_KEYS.LEGACY_ACTIVE_GAME);
     this.safeRemoveItem(STORAGE_KEYS.TOURNAMENT_POINTS, STORAGE_KEYS.LEGACY_TOURNAMENT_POINTS);
     this.safeRemoveItem(STORAGE_KEYS.HAS_SEEN_RULES);
+    this.safeRemoveItem(STORAGE_KEYS.TUTORIAL_STAGES_DONE);
     this.safeRemoveItem(STORAGE_KEYS.HINT_COUNT);
     this.safeRemoveItem(STORAGE_KEYS.LAST_SETTLEMENT_DATE);
     this.safeRemoveItem(STORAGE_KEYS.LAST_ACTIVE_DATE);
+    this.clearMilestoneClaims();
   }
 }
 

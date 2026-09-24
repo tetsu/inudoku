@@ -14,7 +14,17 @@ export const en: Record<string, string> = {
   'title.btn.controls': 'Controls',
   'title.btn.rules': 'Rules',
   'title.btn.settings': 'Settings',
-  'title.footer.cleared': 'Cleared: {completed}',
+  'title.footer.cleared': 'Cleared: {completed} ({next} to next reward)',
+  'milestone.title': '🎉 {count} stages cleared!',
+  'milestone.title.major': '🏆 {count} stages cleared! Big bonus!',
+  'tutorial.label': 'Tutorial {n}/{total}',
+  'tutorial.skip': 'Skip',
+  'tutorial.step1': 'Each colored area gets <strong>exactly one</strong> Shiba. Three are already placed. <strong>Double-tap</strong> the one open square to place the last!',
+  'tutorial.step2': 'Each <strong>row and column</strong> also gets just one. ✕ marks squares that are ruled out. Start with a <strong>row that has only one open square</strong>!',
+  'tutorial.step3': 'Shibas can never <strong>touch, not even diagonally</strong>. Only one example this time. Stuck? 💡 Hints are <strong>free</strong> here!',
+  'tutorial.clear': 'Nice! On to the next step 🐾',
+  'tutorial.done': 'Tutorial complete! Time for the real thing! 🎉',
+  'tutorial.replay': '🎓 Play the tutorial',
 
   // Gameplay Header & Subbar
   'game.header.home': 'Back to Title',

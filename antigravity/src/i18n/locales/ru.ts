@@ -14,7 +14,17 @@ export const ru: Record<string, string> = {
   'title.btn.controls': 'Управление',
   'title.btn.rules': 'Правила',
   'title.btn.settings': 'Настройки',
-  'title.footer.cleared': 'Пройдено: {completed}',
+  'title.footer.cleared': 'Пройдено: {completed} (до награды: {next})',
+  'milestone.title': '🎉 Пройдено {count} уровней!',
+  'milestone.title.major': '🏆 Пройдено {count} уровней! Большой бонус!',
+  'tutorial.label': 'Обучение {n}/{total}',
+  'tutorial.skip': 'Пропустить',
+  'tutorial.step1': 'В каждой цветной зоне <strong>ровно один</strong> сиба. Три уже стоят. <strong>Дважды нажмите</strong> на свободную клетку, чтобы поставить последнего!',
+  'tutorial.step2': 'В каждой <strong>строке и столбце</strong> тоже только один. ✕ отмечает исключённые клетки. Начните со <strong>строки, где свободна одна клетка</strong>!',
+  'tutorial.step3': 'Сибы не могут <strong>касаться друг друга, даже по диагонали</strong>. Здесь только один пример. Застряли? 💡 Подсказки здесь <strong>бесплатны</strong>!',
+  'tutorial.clear': 'Получилось! Следующий шаг 🐾',
+  'tutorial.done': 'Обучение пройдено! Теперь по-настоящему! 🎉',
+  'tutorial.replay': '🎓 Пройти обучение',
 
   // Gameplay Header & Subbar
   'game.header.home': 'В главное меню',

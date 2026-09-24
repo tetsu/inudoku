@@ -14,7 +14,17 @@ export const uk: Record<string, string> = {
   'title.btn.controls': 'Керування',
   'title.btn.rules': 'Правила',
   'title.btn.settings': 'Налаштування',
-  'title.footer.cleared': 'Пройдено: {completed}',
+  'title.footer.cleared': 'Пройдено: {completed} (до нагороди: {next})',
+  'milestone.title': '🎉 Пройдено {count} рівнів!',
+  'milestone.title.major': '🏆 Пройдено {count} рівнів! Великий бонус!',
+  'tutorial.label': 'Навчання {n}/{total}',
+  'tutorial.skip': 'Пропустити',
+  'tutorial.step1': 'У кожній кольоровій зоні <strong>рівно один</strong> сиба. Троє вже стоять. <strong>Двічі торкніться</strong> вільної клітинки, щоб поставити останнього!',
+  'tutorial.step2': 'У кожному <strong>рядку й стовпці</strong> теж лише один. ✕ позначає виключені клітинки. Почніть із <strong>рядка, де вільна одна клітинка</strong>!',
+  'tutorial.step3': 'Сиби не можуть <strong>торкатися, навіть по діагоналі</strong>. Тут лише один приклад. Застрягли? 💡 Підказки тут <strong>безкоштовні</strong>!',
+  'tutorial.clear': 'Вийшло! Наступний крок 🐾',
+  'tutorial.done': 'Навчання завершено! Тепер по-справжньому! 🎉',
+  'tutorial.replay': '🎓 Пройти навчання',
 
   // Gameplay Header & Subbar
   'game.header.home': 'На головну',

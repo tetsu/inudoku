@@ -20,6 +20,11 @@ export interface PuzzleDefinition {
    */
   solution?: Position[];
   hintText?: string;
+  /**
+   * Dogs placed before play starts, as worked examples. Used by the tutorial
+   * stages; clue cells are locked so they cannot be removed.
+   */
+  clues?: Position[];
 }
 
 export interface CellState {

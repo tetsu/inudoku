@@ -14,7 +14,17 @@ export const pl: Record<string, string> = {
   'title.btn.controls': 'Sterowanie',
   'title.btn.rules': 'Zasady',
   'title.btn.settings': 'Ustawienia',
-  'title.footer.cleared': 'Ukończono: {completed}',
+  'title.footer.cleared': 'Ukończono: {completed} (do nagrody: {next})',
+  'milestone.title': '🎉 Ukończono {count} etapów!',
+  'milestone.title.major': '🏆 Ukończono {count} etapów! Wielki bonus!',
+  'tutorial.label': 'Samouczek {n}/{total}',
+  'tutorial.skip': 'Pomiń',
+  'tutorial.step1': 'Każdy kolorowy obszar dostaje <strong>dokładnie jednego</strong> shibę. Trzy już stoją. <strong>Stuknij dwukrotnie</strong> wolne pole, by postawić ostatniego!',
+  'tutorial.step2': 'Każdy <strong>wiersz i kolumna</strong> też dostaje tylko jednego. ✕ oznacza wykluczone pola. Zacznij od <strong>wiersza z jednym wolnym polem</strong>!',
+  'tutorial.step3': 'Shiby nigdy nie mogą <strong>się stykać, nawet po skosie</strong>. Tym razem tylko jeden przykład. Utknąłeś? 💡 Podpowiedzi są tu <strong>darmowe</strong>!',
+  'tutorial.clear': 'Udało się! Dalej 🐾',
+  'tutorial.done': 'Samouczek ukończony! Czas na prawdziwą grę! 🎉',
+  'tutorial.replay': '🎓 Zagraj w samouczek',
 
   // Gameplay Header & Subbar
   'game.header.home': 'Strona główna',

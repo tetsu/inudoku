@@ -137,6 +137,91 @@ button {
   flex-shrink: 0;
 }
 
+/* Tutorial Banner: replaces the sub bar while a guided stage is played. Lives
+   are not at stake there, so the bones would only be noise. */
+.tutorial-banner {
+  display: none;
+  flex-shrink: 0;
+  margin: 0 auto 10px;
+  width: 100%;
+  max-width: min(94vw, 430px);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: #FFF7ED;
+  border: 2px solid #F59E0B;
+  box-sizing: border-box;
+}
+
+.screen-game.is-tutorial .tutorial-banner {
+  display: block;
+}
+
+.screen-game.is-tutorial .game-sub-bar {
+  display: none;
+}
+
+.tutorial-banner-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tutorial-banner-step {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #B45309;
+  letter-spacing: 0.3px;
+}
+
+.tutorial-skip-btn {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #92400E;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: #FFFFFF;
+  border: 1px solid #FDBA74;
+  cursor: pointer;
+}
+
+.tutorial-banner-text {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--color-text-dark);
+}
+
+.tutorial-banner-text strong {
+  color: #C2410C;
+}
+
+/* Tutorial worked-example dogs: a small pin marks them as given, not placed. */
+.grid-cell.cell-clue::after {
+  content: '📌';
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 0.65rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Rules modal: entry point for replaying the guided stages */
+.tutorial-replay-btn {
+  display: block;
+  margin: 0 auto 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #B45309;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: #FFF7ED;
+  border: 1px solid #FDBA74;
+  cursor: pointer;
+}
+
 .pill-badge {
   display: flex;
   align-items: center;
@@ -233,6 +318,14 @@ button {
   border-radius: 18px;
   box-shadow: 0 4px 16px rgba(99, 71, 53, 0.08);
   display: flex;
+}
+
+/* The tutorial banner stands ~62px taller than the sub bar it replaces, and the
+   275px budget above assumes the sub bar. Without this, short screens (e.g.
+   620px tall) pushed the undo/hint/reset row off the bottom during the
+   tutorial. Tall screens are width-limited, so they are unaffected. */
+.screen-game.is-tutorial .board-outer-frame {
+  max-width: min(94vw, calc(100dvh - 340px), 430px);
 }
 
 .grid-board {
@@ -2223,10 +2316,9 @@ input:checked + .slider:before {
 }
 
 /* Specific Step Heights for Rank-Up Screen (4 Ascending Steps: 0 -> 1 -> 2 -> 3) */
-.rankup-stairs .step-idx-0 .step-block { height: 65px; }
-.rankup-stairs .step-idx-1 .step-block { height: 100px; }
-.rankup-stairs .step-idx-2 .step-block { height: 140px; }
-.rankup-stairs .step-idx-3 .step-block { height: 185px; }
+/* Rank-up step heights are set inline: the ladder spans the whole climb, so the
+   number of steps varies and the rise is divided across however many there are.
+   (The leaderboard staircase below is always five steps, so it stays fixed.) */
 
 /* Specific Step Heights for Daily Leaderboard (5 Ascending Steps: 5 -> 4 -> 3 -> 2 -> 1) */
 .leaderboard-stairs .step-idx-0 .step-block { height: 55px; }
@@ -2236,6 +2328,41 @@ input:checked + .slider:before {
 .leaderboard-stairs .step-idx-4 .step-block { height: 185px; }
 
 /* Shiba Hop Up Stairs Keyframe Animation */
+/* Long climbs render many steps; drop to rank-only so they stay legible. */
+.staircase-stage.is-compact {
+  gap: 3px;
+}
+
+.staircase-stage.is-compact .step-name,
+.staircase-stage.is-compact .step-score-pill {
+  display: none;
+}
+
+.staircase-stage.is-compact .step-rank-num {
+  font-size: 0.7rem;
+}
+
+.staircase-stage.is-compact .step-avatar-wrap {
+  width: 100%;
+}
+
+/* Steps get narrow on long climbs, so the avatar tracks the step width instead
+   of a fixed size - at a fixed size the bubbles overlap their neighbours. */
+.staircase-stage.is-compact .avatar-bubble {
+  width: min(26px, 100%);
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-width: 1.5px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* The highlighted step already identifies the player; the tag would overflow. */
+.staircase-stage.is-compact .avatar-you-tag {
+  display: none;
+}
+
 @keyframes shibaClimbStair {
   0% {
     transform: translate(0, 0) scale(1, 1);
@@ -2386,6 +2513,62 @@ input:checked + .slider:before {
   font-size: 1.6rem;
   transition: all 0.75s cubic-bezier(0.25, 1, 0.5, 1);
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+/* Stage Milestone Reward */
+.milestone-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, rgba(254, 243, 199, 0.96) 0%, rgba(253, 230, 138, 0.96) 100%);
+  border: 2px solid #F59E0B;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.milestone-banner.hidden {
+  display: none !important;
+}
+
+.milestone-banner.milestone-in {
+  animation: milestonePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.milestone-title {
+  font-family: var(--font-family-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #78350F;
+}
+
+.milestone-hint-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: #FFFFFF;
+  border: 2px solid #E78B3F;
+}
+
+.milestone-hint-icon {
+  font-size: 1.1rem;
+}
+
+.milestone-hint-count {
+  font-family: var(--font-family-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #92400E;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes milestonePop {
+  0% { transform: scale(0.86) translateY(10px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 /* Tap to Continue Guidance */
@@ -2789,3 +2972,20 @@ kbd {
   display: block;
 }
 
+/* ==========================================================================
+   Reduced Motion
+   The game leans on a lot of motion (staircase climbs, flying rewards, squash
+   and stretch). Honour the OS setting by collapsing animation to near-instant
+   rather than removing it, so anything that reveals state still completes and
+   nothing is left mid-transition.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
