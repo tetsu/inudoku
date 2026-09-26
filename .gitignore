@@ -3,3 +3,6 @@ dist
 dist-ssr
 *.local
 .DS_Store
+
+# Leftover output of `cap sync android`; there is no Android project yet
+antigravity/android/
