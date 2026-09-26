@@ -1577,7 +1577,23 @@ class InudokuGame {
       if (!block) continue;
       const t = stepCount > 1 ? idx / (stepCount - 1) : 1;
       block.style.height = `${Math.round(RISE_MIN + (RISE_MAX - RISE_MIN) * t)}px`;
+      // Ordinary steps shade from bronze to silver to gold up the ladder
+      if (block.classList.contains('step-normal')) {
+        block.classList.add(t < 0.34 ? 'step-tier-bronze' : t < 0.67 ? 'step-tier-silver' : 'step-tier-gold');
+      }
+      block.style.setProperty('--step-i', String(idx));
     }
+
+    // Celebration backdrop: reset from any previous clear, then light up the
+    // player's starting step
+    const hopsTotal = rankUpData.userStepIndexAfter - rankUpData.userStepIndexBefore;
+    overlay.classList.toggle('is-big-climb', hopsTotal >= 5 || rankUpData.newRank === 1);
+    document.getElementById('rankup-content')?.classList.remove('is-shaking', 'is-shaking-big');
+    document.getElementById('rankup-fx')?.classList.remove('is-flash');
+    this.populateRankupParticles();
+    requestAnimationFrame(() =>
+      this.moveRankupSpotlight(document.getElementById(`rankup-avatar-wrap-${rankUpData.userStepIndexBefore}`))
+    );
 
     // Milestone banner starts hidden; it is revealed only once the staircase
     // beat has finished, so the two celebrations do not overlap.
@@ -1590,7 +1606,16 @@ class InudokuGame {
     const statusMsg = document.getElementById('rankup-status-msg');
 
     if (badgePrev) badgePrev.textContent = `#${rankUpData.prevRank}`;
-    if (badgeNew) badgeNew.textContent = `#${rankUpData.newRank}`;
+    if (badgeNew) {
+      badgeNew.classList.remove('bump', 'tick', 'is-final', 'is-counting');
+      if (hopsTotal > 0) {
+        // Counts down rank by rank as the shiba climbs (see climbStairsStepByStep)
+        badgeNew.textContent = `#${rankUpData.prevRank}`;
+        badgeNew.classList.add('is-counting');
+      } else {
+        badgeNew.textContent = `#${rankUpData.newRank}`;
+      }
+    }
     if (statusMsg) {
       statusMsg.textContent = rankUpData.newRank < rankUpData.prevRank
         ? '骨を獲得して階段を登るワン！🐾'
@@ -1615,17 +1640,17 @@ class InudokuGame {
 
         const finish = () => {
           if (hops > 0) {
-            if (badgeNew) badgeNew.classList.add('bump');
+            if (badgeNew) {
+              badgeNew.textContent = `#${rankUpData.newRank}`;
+              badgeNew.classList.remove('is-counting', 'tick');
+              badgeNew.classList.add('is-final');
+            }
             if (statusMsg) {
               statusMsg.textContent = isChamp
                 ? '👑 栄光の第1位！新チャンピオン誕生だワン！'
                 : '🎉 ランクアップ達成！階段を駆け上がったワン！🐾';
             }
-            confetti({
-              particleCount: isChamp ? 90 : 55,
-              spread: 65,
-              origin: { y: 0.65 },
-            });
+            this.celebrateRankupArrival(hops, isChamp);
             if (isChamp && !wasAlreadyFirstPlaceToday) {
               this.showToast(t('msg.rank.firstPlaceReached'));
             }
@@ -1745,6 +1770,16 @@ class InudokuGame {
         if (fromNameEl) fromNameEl.textContent = rival?.name || 'Rival';
         if (fromPtsEl) fromPtsEl.textContent = String(rival?.points ?? 0);
 
+        // Rank counter and spotlight follow the shiba up, one rank per hop
+        const badgeNew = document.getElementById('rankup-badge-new');
+        if (badgeNew && rival) {
+          badgeNew.textContent = `#${rival.rank}`;
+          badgeNew.classList.remove('tick');
+          void badgeNew.offsetWidth; // restart the tick animation
+          badgeNew.classList.add('tick');
+        }
+        this.moveRankupSpotlight(toWrap);
+
         const toNameEl = document.getElementById(`rankup-step-name-${idx + 1}`);
         const toPtsEl = document.getElementById(`rankup-step-pts-${idx + 1}`);
         if (toNameEl) toNameEl.textContent = this.getPlayerName();
@@ -1847,6 +1882,114 @@ class InudokuGame {
     box.classList.remove('milestone-in');
     void box.offsetWidth;
     box.classList.add('milestone-in');
+  }
+
+  private rankupConfetti: ((opts: confetti.Options) => void) | null = null;
+
+  private getRankupConfetti(): (opts: confetti.Options) => void {
+    if (!this.rankupConfetti) {
+      const canvas = document.getElementById('rankup-confetti') as HTMLCanvasElement | null;
+      const fire = canvas ? confetti.create(canvas, { resize: true }) : confetti;
+      this.rankupConfetti = (opts) => void fire(opts);
+    }
+    return this.rankupConfetti;
+  }
+
+  /** Centres the rank-up rays and spotlight on the given element. */
+  private moveRankupSpotlight(targetEl: HTMLElement | null) {
+    const fx = document.getElementById('rankup-fx');
+    if (!fx || !targetEl) return;
+    const fxRect = fx.getBoundingClientRect();
+    const rect = targetEl.getBoundingClientRect();
+    fx.style.setProperty('--fx-x', `${rect.left + rect.width / 2 - fxRect.left}px`);
+    fx.style.setProperty('--fx-y', `${rect.top + rect.height / 2 - fxRect.top}px`);
+  }
+
+  /** Fills the rank-up backdrop with drifting sparkles (once per session). */
+  private populateRankupParticles() {
+    const layer = document.getElementById('rankup-particles');
+    if (!layer || layer.childElementCount > 0) return;
+    const COUNT = 26;
+    for (let i = 0; i < COUNT; i++) {
+      const p = document.createElement('span');
+      const isStar = i % 5 === 0;
+      p.className = `rankup-particle${isStar ? ' is-star' : ''}`;
+      if (isStar) p.textContent = '✨';
+      p.style.left = `${(i / COUNT) * 100 + Math.random() * (100 / COUNT)}%`;
+      p.style.setProperty('--size', isStar ? `${10 + Math.random() * 8}px` : `${4 + Math.random() * 6}px`);
+      p.style.setProperty('--dur', `${5 + Math.random() * 5}s`);
+      p.style.setProperty('--delay', `${-Math.random() * 10}s`);
+      p.style.setProperty('--drift', `${(Math.random() - 0.5) * 80}px`);
+      layer.appendChild(p);
+    }
+  }
+
+  /**
+   * The payoff when the shiba reaches its new rank: flash, shake, a star (or
+   * crown for first place) and side-cannon confetti, all scaled by how many
+   * ranks were climbed.
+   */
+  private celebrateRankupArrival(hops: number, isChamp: boolean) {
+    const big = hops >= 5 || isChamp;
+    const content = document.getElementById('rankup-content');
+    const fx = document.getElementById('rankup-fx');
+    const bubble = document.getElementById('rankup-shiba-bubble');
+
+    if (fx) {
+      fx.classList.remove('is-flash');
+      void fx.offsetWidth;
+      fx.classList.add('is-flash');
+    }
+    if (content) {
+      content.classList.remove('is-shaking', 'is-shaking-big');
+      void content.offsetWidth;
+      content.classList.add(big ? 'is-shaking-big' : 'is-shaking');
+    }
+    if (bubble) {
+      bubble.classList.add('is-landed');
+      const wrap = bubble.parentElement;
+      if (wrap && !wrap.querySelector('.crown-badge, .user-crown')) {
+        // The crown is reserved for first place (rank 1 already wears one)
+        const crown = document.createElement('span');
+        crown.className = 'user-crown';
+        crown.textContent = isChamp ? '👑' : '🌟';
+        wrap.prepend(crown);
+      }
+    }
+    this.vibrateLight(big ? [40, 60, 80] : 50);
+
+    // The page-wide confetti canvas sits underneath this overlay, so fire into
+    // the overlay's own canvas instead
+    const burst = (opts: confetti.Options) => this.getRankupConfetti()(opts);
+    const gold = ['#FFD700', '#FFC107', '#FFF3B0', '#FFB300', '#FFFFFF'];
+    const party = ['#FF7043', '#FFCA28', '#66BB6A', '#42A5F5', '#AB47BC', '#EC407A'];
+    const colors = isChamp ? gold : undefined;
+    const scale = Math.min(1, 0.45 + hops * 0.11);
+
+    // Centre burst from the landing point plus cannons from both edges
+    burst({ particleCount: Math.round(70 * scale) + (isChamp ? 40 : 0), spread: 80, startVelocity: 38, origin: { y: 0.55 }, colors });
+    const cannons = (count: number) => {
+      burst({ particleCount: count, angle: 60, spread: 55, startVelocity: 55, origin: { x: 0, y: 0.75 }, colors: colors ?? party });
+      burst({ particleCount: count, angle: 120, spread: 55, startVelocity: 55, origin: { x: 1, y: 0.75 }, colors: colors ?? party });
+    };
+    cannons(Math.round(45 * scale));
+
+    if (big) {
+      // Keep the party going: a few more volleys and a shower of stars
+      [250, 550].forEach((delay) => setTimeout(() => cannons(35), delay));
+      setTimeout(() => {
+        burst({
+          particleCount: isChamp ? 60 : 35,
+          spread: 160,
+          startVelocity: 25,
+          gravity: 0.6,
+          scalar: 1.3,
+          shapes: ['star'],
+          origin: { y: 0.2 },
+          colors: gold,
+        });
+      }, 400);
+    }
   }
 
   private createStairSparkles(targetEl: HTMLElement | null) {

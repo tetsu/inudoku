@@ -2106,6 +2106,7 @@ input:checked + .slider:before {
   flex-direction: column;
   align-items: center;
   position: relative;
+  z-index: 1;
   gap: 10px;
 }
 
@@ -2127,6 +2128,168 @@ input:checked + .slider:before {
 @keyframes rankupTitlePop {
   0% { transform: scale(0.6) translateY(-20px); opacity: 0; }
   100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* A glint sweeps across the gold title every few seconds */
+.rankup-header-title {
+  background:
+    linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.95) 50%, transparent 60%) -150% 0 / 250% 100% no-repeat,
+    linear-gradient(180deg, #FFFFFF 0%, #FFCC33 35%, #FF7700 85%, #E65100 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation:
+    rankupTitlePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    rankupTitleGlint 3.2s ease-in-out 0.8s infinite;
+}
+
+@keyframes rankupTitleGlint {
+  0%, 55% { background-position: -150% 0, 0 0; }
+  100% { background-position: 250% 0, 0 0; }
+}
+
+/* ==========================================================================
+   Rank-Up Celebration Backdrop
+   Rays and a soft spotlight are centred on --fx-x / --fx-y, which main.ts
+   keeps pinned to the player's shiba as it climbs.
+   ========================================================================== */
+.rankup-fx {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  --fx-x: 50%;
+  --fx-y: 45%;
+}
+
+.rankup-rays,
+.rankup-spot {
+  position: absolute;
+  left: var(--fx-x);
+  top: var(--fx-y);
+  transition: left 0.35s ease-out, top 0.35s ease-out;
+}
+
+.rankup-rays {
+  width: 1100px;
+  height: 1100px;
+  margin: -550px 0 0 -550px;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 196, 64, 0.2) 0deg 7deg,
+    rgba(255, 196, 64, 0) 7deg 18deg
+  );
+  -webkit-mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.55) 22%, transparent 55%);
+  mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.55) 22%, transparent 55%);
+  animation: rankupRaysSpin 24s linear infinite;
+  will-change: transform;
+}
+
+@keyframes rankupRaysSpin {
+  to { transform: rotate(360deg); }
+}
+
+.rankup-spot {
+  width: 420px;
+  height: 420px;
+  margin: -210px 0 0 -210px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 214, 102, 0.42) 0%, rgba(255, 153, 0, 0.16) 38%, transparent 68%);
+  animation: rankupSpotPulse 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes rankupSpotPulse {
+  from { opacity: 0.7; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1.06); }
+}
+
+/* Bigger climbs turn the whole backdrop up */
+.rankup-overlay.is-big-climb .rankup-rays {
+  animation-duration: 12s;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 214, 90, 0.32) 0deg 7deg,
+    rgba(255, 120, 60, 0.08) 7deg 18deg
+  );
+}
+
+.rankup-particles {
+  position: absolute;
+  inset: 0;
+}
+
+.rankup-confetti {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.rankup-particle {
+  position: absolute;
+  bottom: -12px;
+  width: var(--size, 6px);
+  height: var(--size, 6px);
+  border-radius: 50%;
+  background: radial-gradient(circle, #FFFBEB 0%, #FCD34D 45%, rgba(252, 211, 77, 0) 72%);
+  opacity: 0;
+  animation: rankupParticleRise var(--dur, 7s) linear var(--delay, 0s) infinite;
+  will-change: transform, opacity;
+}
+
+.rankup-particle.is-star {
+  width: auto;
+  height: auto;
+  background: none;
+  font-size: var(--size, 12px);
+  line-height: 1;
+}
+
+@keyframes rankupParticleRise {
+  0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+  12% { opacity: 1; }
+  50% { transform: translate(var(--drift, 20px), -48vh) scale(1); opacity: 0.9; }
+  85% { opacity: 0.6; }
+  100% { transform: translate(calc(var(--drift, 20px) * -0.5), -100vh) scale(0.7); opacity: 0; }
+}
+
+/* Screen shake on the final landing */
+.rankup-content.is-shaking {
+  animation: rankupShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+.rankup-content.is-shaking-big {
+  animation: rankupShakeBig 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes rankupShake {
+  10%, 90% { transform: translate(-1px, 1px); }
+  20%, 80% { transform: translate(3px, -2px); }
+  30%, 50%, 70% { transform: translate(-5px, 2px); }
+  40%, 60% { transform: translate(5px, -1px); }
+}
+
+@keyframes rankupShakeBig {
+  10%, 90% { transform: translate(-2px, 2px) rotate(-0.4deg); }
+  20%, 80% { transform: translate(6px, -4px) rotate(0.6deg); }
+  30%, 50%, 70% { transform: translate(-9px, 4px) rotate(-0.8deg); }
+  40%, 60% { transform: translate(9px, -3px) rotate(0.8deg); }
+}
+
+/* White flash behind the content at the moment of arrival */
+.rankup-fx.is-flash::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--fx-x) var(--fx-y), rgba(255, 255, 255, 0.55), rgba(255, 220, 120, 0.15) 40%, transparent 70%);
+  animation: rankupFlash 0.6s ease-out forwards;
+}
+
+@keyframes rankupFlash {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 /* Timer Pill */
@@ -2320,6 +2483,110 @@ input:checked + .slider:before {
   box-shadow: 0 0 20px rgba(245, 158, 11, 0.65), 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
+/* Rank-up ladder: steps turn from bronze to silver to gold as they climb
+   (the real top 3 keep their medal colours) */
+.rankup-stairs .step-normal.step-tier-bronze {
+  background: linear-gradient(180deg, #E8B48A 0%, #B7743F 45%, #8A4F24 80%, #5C3214 100%);
+  border-top-color: #F6D2B2;
+}
+
+.rankup-stairs .step-normal.step-tier-silver {
+  background: linear-gradient(180deg, #F1F5F9 0%, #B8C4D3 40%, #7C8BA1 80%, #4B5870 100%);
+  border-top-color: #FFFFFF;
+}
+
+.rankup-stairs .step-normal.step-tier-gold {
+  background: linear-gradient(180deg, #FFF3C4 0%, #F4C84A 42%, #C98E12 80%, #7A5306 100%);
+  border-top-color: #FFF7D6;
+}
+
+/* A light sweep runs up the ladder, step by step */
+.rankup-stairs .step-block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.45) 48%, transparent 66%);
+  transform: translateX(-120%);
+  animation: rankupStepShine 3.6s ease-in-out infinite;
+  animation-delay: calc(var(--step-i, 0) * 0.06s);
+  pointer-events: none;
+}
+
+@keyframes rankupStepShine {
+  0%, 60% { transform: translateX(-120%); }
+  85%, 100% { transform: translateX(120%); }
+}
+
+/* The player's step glows gold and breathes */
+.rankup-stairs .is-user-step .step-block {
+  border-color: #FCD34D;
+  animation: rankupUserGlow 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes rankupUserGlow {
+  from { box-shadow: 0 0 14px rgba(252, 211, 77, 0.55), 0 10px 24px rgba(0, 0, 0, 0.35); }
+  to { box-shadow: 0 0 32px rgba(252, 211, 77, 0.95), 0 0 60px rgba(245, 158, 11, 0.45), 0 10px 24px rgba(0, 0, 0, 0.35); }
+}
+
+/* Star (crown for first place) dropped onto the player once the climb lands */
+.user-crown {
+  position: absolute;
+  top: -22px;
+  font-size: 1.5rem;
+  z-index: 30;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+  animation: userCrownDrop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both, crownBob 2s 0.55s infinite ease-in-out alternate;
+}
+
+.staircase-stage.is-compact .user-crown {
+  top: -16px;
+  font-size: 1rem;
+}
+
+@keyframes userCrownDrop {
+  0% { transform: translateY(-40px) scale(0.3) rotate(-30deg); opacity: 0; }
+  100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+}
+
+/* Punch-zoom on the player's avatar at the moment of arrival */
+.avatar-bubble.is-landed {
+  animation: rankupAvatarPunch 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rankupAvatarPunch {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.55) rotate(-6deg); }
+  65% { transform: scale(0.92) rotate(3deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* The new-rank badge ticks through each rank like a slot counter */
+.rank-badge-new.is-counting {
+  opacity: 0.85;
+}
+
+.rank-badge-new.tick {
+  animation: rankTick 0.18s ease-out;
+}
+
+@keyframes rankTick {
+  0% { transform: translateY(-40%) scale(0.9); opacity: 0.4; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.rank-badge-new.is-final {
+  animation: rankFinalPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: linear-gradient(135deg, #FFF7CC, #FCD34D 55%, #F59E0B);
+  box-shadow: 0 0 18px rgba(252, 211, 77, 0.9), 0 4px 12px rgba(245, 158, 11, 0.5);
+}
+
+@keyframes rankFinalPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.45); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
 /* Step Riser Information */
 .step-rank-num {
   font-family: var(--font-family-display);
@@ -2412,6 +2679,23 @@ input:checked + .slider:before {
   border-radius: 7px;
   font-size: 0.8rem;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* The shiba is a bare viewBox SVG, so it has to be sized explicitly or
+   WebKit collapses it inside the shrunken bubble (the player's icon vanished) */
+.step-shiba-svg svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.staircase-stage.is-compact .step-shiba-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.staircase-stage.is-compact .is-user-step .avatar-bubble {
+  width: min(32px, 100%);
 }
 
 /* The highlighted step already identifies the player; the tag would overflow. */

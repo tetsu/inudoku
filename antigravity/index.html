@@ -870,7 +870,18 @@
 
     <!-- Clear Rank-Up Screen (Matching Meowdoku Screenshot) -->
     <div id="modal-rankup" class="rankup-overlay hidden">
-      <div class="rankup-content">
+      <!-- Celebration backdrop: rotating light rays that follow the player's
+           shiba, plus drifting sparkles (populated by main.ts) -->
+      <div class="rankup-fx" id="rankup-fx" aria-hidden="true">
+        <div class="rankup-rays"></div>
+        <div class="rankup-spot"></div>
+        <div class="rankup-particles" id="rankup-particles"></div>
+      </div>
+      <!-- Confetti canvas in front of the content (the page-wide confetti
+           canvas sits below this overlay) -->
+      <canvas class="rankup-confetti" id="rankup-confetti" aria-hidden="true"></canvas>
+
+      <div class="rankup-content" id="rankup-content">
         <h1 class="rankup-header-title" data-i18n="rankup.title">ランキング</h1>
         
         <div class="rankup-timer-pill">
