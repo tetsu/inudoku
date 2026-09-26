@@ -319,8 +319,13 @@ class InudokuGame {
     if (device === 'gamepad') {
       document.body.classList.add('gamepad-active');
     }
-    // Never show keyboard focus box on touch/mobile devices unless gamepad is actively used
-    if (device !== 'gamepad' && window.matchMedia('(pointer: coarse), (hover: none)').matches) {
+    // Never show keyboard focus box on touch/mobile devices unless a physical
+    // keyboard (iPad / Bluetooth) or gamepad is actively being used
+    if (
+      device !== 'gamepad' &&
+      !document.body.classList.contains('keyboard-active') &&
+      window.matchMedia('(pointer: coarse), (hover: none)').matches
+    ) {
       return;
     }
 
@@ -345,7 +350,7 @@ class InudokuGame {
     }
     if (!keepDevice) {
       this.inputDevice = 'pointer';
-      document.body.classList.remove('gamepad-active');
+      document.body.classList.remove('gamepad-active', 'keyboard-active');
     }
   }
 
@@ -2596,6 +2601,10 @@ class InudokuGame {
         return;
       }
 
+      // A real key press means a physical keyboard is attached, so touch devices
+      // should show the focus frame too
+      document.body.classList.add('keyboard-active');
+
       const up = e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W';
       const down = e.key === 'ArrowDown' || e.key === 's' || e.key === 'S';
       const left = e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A';
@@ -2893,7 +2902,9 @@ class InudokuGame {
   }
 
   private showControlsModal() {
-    const isTouch = this.isTouchDevice();
+    // A touch device with a physical keyboard in use (iPad, Bluetooth) gets
+    // the keyboard guide, same as a desktop browser
+    const isTouch = this.isTouchDevice() && !document.body.classList.contains('keyboard-active');
     const isGamepad = this.isGamepadConnected || this.inputDevice === 'gamepad';
     const badgePc = document.getElementById('badge-device-pc');
     const badgeMobile = document.getElementById('badge-device-mobile');

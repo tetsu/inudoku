@@ -59,7 +59,12 @@ button {
   height: 100dvh;
   max-width: 480px;
   margin: 0 auto;
-  padding: 8px 14px 14px;
+  /* Keep clear of the notch / Dynamic Island / home indicator (viewport-fit=cover) */
+  padding:
+    calc(8px + env(safe-area-inset-top))
+    calc(14px + env(safe-area-inset-right))
+    calc(14px + env(safe-area-inset-bottom))
+    calc(14px + env(safe-area-inset-left));
 }
 
 /* ==========================================================================
@@ -271,11 +276,13 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
-.btn-rule-pill:hover {
-  transform: translateY(-2px);
-  background: #FFFBEB;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.28);
-  color: #B45309;
+@media (hover: hover) {
+  .btn-rule-pill:hover {
+    transform: translateY(-2px);
+    background: #FFFBEB;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.28);
+    color: #B45309;
+  }
 }
 
 .btn-rule-pill:active {
@@ -311,7 +318,7 @@ button {
 .board-outer-frame {
   position: relative; /* Positioning context for the hint/error bubble */
   width: 100%;
-  max-width: min(94vw, calc(100dvh - 275px), 430px);
+  max-width: min(94vw, calc(100dvh - 275px - env(safe-area-inset-top) - env(safe-area-inset-bottom)), 430px);
   aspect-ratio: 1 / 1;
   background: #FFFFFF; /* White-based background between blocks */
   padding: 5px;
@@ -325,7 +332,7 @@ button {
    620px tall) pushed the undo/hint/reset row off the bottom during the
    tutorial. Tall screens are width-limited, so they are unaffected. */
 .screen-game.is-tutorial .board-outer-frame {
-  max-width: min(94vw, calc(100dvh - 340px), 430px);
+  max-width: min(94vw, calc(100dvh - 340px - env(safe-area-inset-top) - env(safe-area-inset-bottom)), 430px);
 }
 
 .grid-board {
@@ -355,8 +362,10 @@ button {
   overflow: hidden;
 }
 
-.grid-cell:hover {
-  filter: brightness(1.03);
+@media (hover: hover) {
+  .grid-cell:hover {
+    filter: brightness(1.03);
+  }
 }
 
 .grid-cell:active {
@@ -371,9 +380,9 @@ button {
   transform: scale(1.02);
 }
 
-/* Hide arrow-key focus frame completely on touch/smartphone devices unless gamepad is active */
+/* Hide arrow-key focus frame on touch/smartphone devices unless a gamepad or physical keyboard is in use */
 @media (pointer: coarse), (hover: none) {
-  body:not(.gamepad-active) .grid-cell.cell-focused {
+  body:not(.gamepad-active):not(.keyboard-active) .grid-cell.cell-focused {
     outline: none !important;
     box-shadow: none !important;
     transform: none !important;
@@ -524,8 +533,10 @@ button {
   cursor: default;
 }
 
-.grid-cell.cell-locked:hover {
-  filter: brightness(1.01);
+@media (hover: hover) {
+  .grid-cell.cell-locked:hover {
+    filter: brightness(1.01);
+  }
 }
 
 .grid-cell.cell-locked:active {
@@ -639,8 +650,10 @@ button {
   border: 3px solid transparent;
 }
 
-.hero-round-btn:hover {
-  transform: translateY(-2px);
+@media (hover: hover) {
+  .hero-round-btn:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .hero-round-btn:active {
@@ -718,9 +731,11 @@ button {
   transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
-.utility-btn:hover {
-  background: #FFF7ED;
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .utility-btn:hover {
+    background: #FFF7ED;
+    transform: translateY(-1px);
+  }
 }
 
 .utility-btn:active {
@@ -794,8 +809,10 @@ button {
   border-radius: var(--radius-pill);
 }
 
-.modal-close:hover {
-  background: #F3E8DC;
+@media (hover: hover) {
+  .modal-close:hover {
+    background: #F3E8DC;
+  }
 }
 
 .modal-body {
@@ -824,9 +841,11 @@ button {
   transition: all 0.15s ease;
 }
 
-.primary-btn:hover {
-  background: #D97706;
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .primary-btn:hover {
+    background: #D97706;
+    transform: translateY(-1px);
+  }
 }
 
 .secondary-btn {
@@ -866,9 +885,11 @@ button {
   text-align: center;
 }
 
-.tutorial-tab:hover {
-  color: var(--color-text-dark);
-  background: rgba(255, 255, 255, 0.6);
+@media (hover: hover) {
+  .tutorial-tab:hover {
+    color: var(--color-text-dark);
+    background: rgba(255, 255, 255, 0.6);
+  }
 }
 
 .tutorial-tab.active {
@@ -1274,9 +1295,11 @@ button {
   gap: 4px;
 }
 
-.stage-card:hover, .stage-card.active-stage {
-  border-color: #E78B3F;
-  background: #FFF7ED;
+@media (hover: hover) {
+  .stage-card:hover, .stage-card.active-stage {
+    border-color: #E78B3F;
+    background: #FFF7ED;
+  }
 }
 
 .stage-card-title {
@@ -1684,9 +1707,11 @@ input:checked + .slider:before {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.hero-play-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(217, 119, 6, 0.45);
+@media (hover: hover) {
+  .hero-play-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(217, 119, 6, 0.45);
+  }
 }
 
 .hero-play-btn:active {
@@ -1718,9 +1743,11 @@ input:checked + .slider:before {
   transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
-.menu-pill-btn:hover {
-  background: #FFF7ED;
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .menu-pill-btn:hover {
+    background: #FFF7ED;
+    transform: translateY(-1px);
+  }
 }
 
 .menu-pill-btn:active {
@@ -1914,10 +1941,12 @@ input:checked + .slider:before {
   transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.level-cell:hover:not(.locked) {
-  border-color: #E78B3F;
-  background: #FFF7ED;
-  transform: translateY(-2px);
+@media (hover: hover) {
+  .level-cell:hover:not(.locked) {
+    border-color: #E78B3F;
+    background: #FFF7ED;
+    transform: translateY(-2px);
+  }
 }
 
 .level-cell.current {
@@ -2963,9 +2992,11 @@ kbd {
   box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35);
 }
 
-.custom-dialog-actions .btn-danger:hover {
-  background: #DC2626;
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .custom-dialog-actions .btn-danger:hover {
+    background: #DC2626;
+    transform: translateY(-1px);
+  }
 }
 
 /* User Shiba Avatar in Ranking Screen & Leaderboard */
