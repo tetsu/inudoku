@@ -1515,6 +1515,11 @@ class InudokuGame {
     const overlay = document.getElementById('modal-rankup')!;
     overlay.classList.remove('hidden');
 
+    // The climb plays out on timers; once the player has continued (or a newer
+    // rank-up has started) any leftover steps must not touch the screen
+    const runId = ++this.rankupRunId;
+    const isCurrent = () => runId === this.rankupRunId && !overlay.classList.contains('hidden');
+
     // 1. Update countdown timer until midnight
     const now = new Date();
     const midnight = new Date(now);
@@ -1625,6 +1630,7 @@ class InudokuGame {
     // 4. Play flying bones & score increment
     setTimeout(() => {
       this.playFlyingBones(earnedPoints, () => {
+        if (!isCurrent()) return;
         const userPtsEl = document.getElementById(`rankup-step-pts-${rankUpData.userStepIndexBefore}`);
         if (userPtsEl) {
           userPtsEl.textContent = String(rankUpData.newPoints);
@@ -1639,6 +1645,7 @@ class InudokuGame {
         const isChamp = rankUpData.newRank === 1;
 
         const finish = () => {
+          if (!isCurrent()) return;
           if (hops > 0) {
             if (badgeNew) {
               badgeNew.textContent = `#${rankUpData.newRank}`;
@@ -1650,7 +1657,7 @@ class InudokuGame {
                 ? '👑 栄光の第1位！新チャンピオン誕生だワン！'
                 : '🎉 ランクアップ達成！階段を駆け上がったワン！🐾';
             }
-            this.celebrateRankupArrival(hops, isChamp);
+            this.celebrateRankupArrival(hops, isChamp, isCurrent);
             if (isChamp && !wasAlreadyFirstPlaceToday) {
               this.showToast(t('msg.rank.firstPlaceReached'));
             }
@@ -1669,15 +1676,18 @@ class InudokuGame {
 
           // Milestone payout comes last, once the climb (or the defend beat)
           // has resolved, so it reads as a separate reward rather than noise.
-          setTimeout(() => this.showMilestoneReward(), 350);
+          setTimeout(() => {
+            if (isCurrent()) this.showMilestoneReward();
+          }, 350);
         };
 
         setTimeout(() => {
+          if (!isCurrent()) return;
           if (hops > 0) {
             // Longer climbs speed each hop up so the whole ascent stays around
             // two seconds however many ranks were overtaken.
             const hopMs = Math.max(170, Math.min(520, Math.round(2200 / hops)));
-            this.climbStairsStepByStep(fromIdx, toIdx, hopMs, rankUpData, finish);
+            this.climbStairsStepByStep(fromIdx, toIdx, hopMs, rankUpData, finish, isCurrent);
           } else {
             finish();
           }
@@ -1721,9 +1731,11 @@ class InudokuGame {
     toIdx: number,
     hopMs: number,
     rankUpData: ReturnType<typeof calculateRankUp>,
-    onDone: () => void
+    onDone: () => void,
+    isCurrent: () => boolean
   ) {
     const hop = (idx: number) => {
+      if (!isCurrent()) return;
       if (idx >= toIdx) {
         onDone();
         return;
@@ -1745,6 +1757,7 @@ class InudokuGame {
       sounds.playPaw();
 
       setTimeout(() => {
+        if (!isCurrent()) return;
         // The rival originally standing on the destination step moves down.
         const rival = rankUpData.stairSteps[idx + 1];
         fromWrap.classList.remove('shiba-climbing');
@@ -1885,6 +1898,8 @@ class InudokuGame {
   }
 
   private rankupConfetti: ((opts: confetti.Options) => void) | null = null;
+  /** Bumped per rank-up screen so stale climb timers know to stop. */
+  private rankupRunId = 0;
 
   private getRankupConfetti(): (opts: confetti.Options) => void {
     if (!this.rankupConfetti) {
@@ -1929,7 +1944,7 @@ class InudokuGame {
    * crown for first place) and side-cannon confetti, all scaled by how many
    * ranks were climbed.
    */
-  private celebrateRankupArrival(hops: number, isChamp: boolean) {
+  private celebrateRankupArrival(hops: number, isChamp: boolean, isCurrent: () => boolean) {
     const big = hops >= 5 || isChamp;
     const content = document.getElementById('rankup-content');
     const fx = document.getElementById('rankup-fx');
@@ -1976,8 +1991,11 @@ class InudokuGame {
 
     if (big) {
       // Keep the party going: a few more volleys and a shower of stars
-      [250, 550].forEach((delay) => setTimeout(() => cannons(35), delay));
+      [250, 550].forEach((delay) => setTimeout(() => {
+        if (isCurrent()) cannons(35);
+      }, delay));
       setTimeout(() => {
+        if (!isCurrent()) return;
         burst({
           particleCount: isChamp ? 60 : 35,
           spread: 160,

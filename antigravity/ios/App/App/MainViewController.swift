@@ -96,6 +96,10 @@ class MainViewController: CAPBridgeViewController, UIGestureRecognizerDelegate {
       window.__nativeKeys = {
         forward(type, init) {
           if (type === 'keydown' && held.has(init.key)) return;
+          // A key whose keydown WebKit delivered can still be released here,
+          // e.g. Escape / Tab that moved focus out of a text field; without
+          // this it would stay "held" and its forwarded keydowns be dropped
+          if (type === 'keyup') held.delete(init.key);
           if (type === 'keyup' && performance.now() - (lastUp.get(init.key) ?? -1e9) < 150) return;
           const target = document.activeElement || document.body;
           const notCancelled = target.dispatchEvent(new KeyboardEvent(type, init));
