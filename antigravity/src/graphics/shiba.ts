@@ -1,59 +1,52 @@
 export type ShibaType = 'aka' | 'kuro' | 'shiro';
 
 interface ShibaTheme {
-  bodyGradStart: string;
-  bodyGradEnd: string;
-  bodyDark: string;
-  muzzleGradStart: string;
-  muzzleGradEnd: string;
-  earInnerStart: string;
-  earInnerEnd: string;
-  eyes: string;
-  nose: string;
-  cheeks: string;
+  fur: string;
+  /** Feet and tail sit behind the face, so they take a shade darker fur */
+  furBack: string;
+  cream: string;
+  /** 麻呂眉 (the eyebrow dots); tan on a black shiba */
+  brow: string;
+  /** Ring around the eyes so they read on dark fur */
+  eyeRing: string;
+  /** Edge line so a white shiba doesn't vanish into light cells */
+  edge: string;
 }
+
+const INK = '#231B15';
 
 const SHIBA_THEMES: Record<ShibaType, ShibaTheme> = {
   aka: {
-    bodyGradStart: '#F59E0B',
-    bodyGradEnd: '#D97706',
-    bodyDark: '#B45309',
-    muzzleGradStart: '#FFFDF9',
-    muzzleGradEnd: '#FDF3E7',
-    earInnerStart: '#FCA5A5',
-    earInnerEnd: '#F87171',
-    eyes: '#1C1917',
-    nose: '#1C1917',
-    cheeks: '#FB7185',
+    fur: '#D9822B',
+    furBack: '#B86B20',
+    cream: '#FFF3DF',
+    brow: '#FFF3DF',
+    eyeRing: 'none',
+    edge: 'none',
   },
   kuro: {
-    bodyGradStart: '#374151',
-    bodyGradEnd: '#1F2937',
-    bodyDark: '#111827',
-    muzzleGradStart: '#FEF3C7',
-    muzzleGradEnd: '#FDE68A',
-    earInnerStart: '#9CA3AF',
-    earInnerEnd: '#6B7280',
-    eyes: '#030712',
-    nose: '#030712',
-    cheeks: '#F43F5E',
+    fur: '#2F2925',
+    furBack: '#1E1A17',
+    cream: '#F3E6D0',
+    brow: '#D59A5B',
+    eyeRing: '#D59A5B',
+    edge: 'none',
   },
   shiro: {
-    bodyGradStart: '#FFFFFF',
-    bodyGradEnd: '#F3F4F6',
-    bodyDark: '#E5E7EB',
-    muzzleGradStart: '#FFFFFF',
-    muzzleGradEnd: '#F9FAFB',
-    earInnerStart: '#FCE7F3',
-    earInnerEnd: '#F472B6',
-    eyes: '#374151',
-    nose: '#374151',
-    cheeks: '#FB7185',
+    fur: '#F1E6D4',
+    furBack: '#E2D3BC',
+    cream: '#FFFFFF',
+    brow: '#E4D3B8',
+    eyeRing: 'none',
+    edge: '#CDB898',
   },
 };
 
 /**
- * Returns an inline SVG for the Shiba Inu matching the Meowdoku / Zoodoku art style.
+ * Returns an inline SVG of the Shibadoku shiba: a deadpan square face tile
+ * standing on two stubby feet, with its curled tail peeking out from behind.
+ * Coordinates are drawn on a 100×100 face grid and scaled into the box so
+ * the feet fit underneath.
  */
 export function getShibaSvg(
   type: ShibaType = 'aka',
@@ -61,110 +54,87 @@ export function getShibaSvg(
 ): string {
   const t = SHIBA_THEMES[type] || SHIBA_THEMES.aka;
   const uniqueId = `shiba-${type}-${state}-${Math.random().toString(36).substring(2, 7)}`;
+  const edge = t.edge === 'none' ? '' : `stroke="${t.edge}" stroke-width="2"`;
+  // Line-drawn eyes need the tan ring colour to show up on black fur
+  const eyeLine = t.eyeRing === 'none' ? INK : t.eyeRing;
 
-  let eyesAndMouthSvg = '';
-  let sweatOrSparkle = '';
+  let face = '';
+  let extra = '';
 
   if (state === 'conflict') {
-    // Worried / troubled expression
-    eyesAndMouthSvg = `
-      <ellipse cx="36" cy="38" rx="4.5" ry="3" fill="${t.muzzleGradStart}" transform="rotate(-18 36 38)" />
-      <ellipse cx="64" cy="38" rx="4.5" ry="3" fill="${t.muzzleGradStart}" transform="rotate(18 64 38)" />
-      <path d="M 31 52 Q 37 46 43 52" fill="none" stroke="${t.eyes}" stroke-width="3.5" stroke-linecap="round" />
-      <path d="M 57 52 Q 63 46 69 52" fill="none" stroke="${t.eyes}" stroke-width="3.5" stroke-linecap="round" />
-      <path d="M 44 68 Q 50 64 56 68" fill="none" stroke="${t.eyes}" stroke-width="2.6" stroke-linecap="round" />
+    // Doesn't cry: just goes flat-eyed and silent, with a sweat drop
+    face = `
+      <path d="M 27 46 L 39 46 M 61 46 L 73 46" stroke="${eyeLine}" stroke-width="3.4" stroke-linecap="round" />
+      <path d="M 44 79 L 56 79" stroke="${INK}" stroke-width="2.4" stroke-linecap="round" />
     `;
-    sweatOrSparkle = `
+    extra = `
       <g class="shiba-sweat">
-        <path d="M 76 34 C 76 30 80 25 80 25 C 80 25 84 30 84 34 C 84 37 82 39 80 39 C 78 39 76 37 76 34 Z" fill="#60A5FA" />
-        <ellipse cx="78.5" cy="32" rx="1.2" ry="2" fill="#DBEAFE" opacity="0.8" />
+        <path d="M 86 44 C 86 39 91 33 91 33 C 91 33 96 39 96 44 C 96 47.5 93.8 50 91 50 C 88.2 50 86 47.5 86 44 Z" fill="#60A5FA" />
       </g>
     `;
   } else if (state === 'happy') {
-    // Joyful celebration expression
-    eyesAndMouthSvg = `
-      <ellipse cx="35" cy="39" rx="5" ry="3.5" fill="${t.muzzleGradStart}" />
-      <ellipse cx="65" cy="39" rx="5" ry="3.5" fill="${t.muzzleGradStart}" />
-      <path d="M 29 52 Q 36 43 43 52" fill="none" stroke="${t.eyes}" stroke-width="4" stroke-linecap="round" />
-      <path d="M 57 52 Q 64 43 71 52" fill="none" stroke="${t.eyes}" stroke-width="4" stroke-linecap="round" />
-      <path d="M 42 64 Q 50 78 58 64 Z" fill="#F43F5E" stroke="${t.eyes}" stroke-width="2" stroke-linejoin="round" />
-      <path d="M 45 68 Q 50 76 55 68" fill="#FDA4AF" />
+    // Quietly proud: eyes closed into arcs, a small smile, tail wagging
+    face = `
+      <path d="M 28 47 Q 33 40 38 47 M 62 47 Q 67 40 72 47" fill="none" stroke="${eyeLine}" stroke-width="3.2" stroke-linecap="round" />
+      <path d="M 42 77 Q 46 83 50 78 Q 54 83 58 77" fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round" />
     `;
-    sweatOrSparkle = `
+    extra = `
       <g class="shiba-sparkle">
-        <path d="M 18 28 Q 20 22 22 28 Q 28 30 22 32 Q 20 38 18 32 Q 12 30 18 28 Z" fill="#FBBF24" />
-        <path d="M 82 24 Q 83.5 19 85 24 Q 90 25.5 85 27 Q 83.5 32 82 27 Q 77 25.5 82 24 Z" fill="#FBBF24" />
+        <path d="M 6 14 Q 8 8 10 14 Q 16 16 10 18 Q 8 24 6 18 Q 0 16 6 14 Z" fill="#FBBF24" />
       </g>
     `;
   } else {
-    // Cute puppy eyes like Meowdoku
-    eyesAndMouthSvg = `
-      <ellipse cx="36" cy="40" rx="4.8" ry="3.8" fill="${t.muzzleGradStart}" />
-      <ellipse cx="64" cy="40" rx="4.8" ry="3.8" fill="${t.muzzleGradStart}" />
-      <circle cx="36" cy="52" r="6.2" fill="${t.eyes}" />
-      <circle cx="34" cy="50" r="2.4" fill="#FFFFFF" />
-      <circle cx="38" cy="54" r="1.2" fill="#FFFFFF" />
-      <circle cx="64" cy="52" r="6.2" fill="${t.eyes}" />
-      <circle cx="62" cy="50" r="2.4" fill="#FFFFFF" />
-      <circle cx="66" cy="54" r="1.2" fill="#FFFFFF" />
-      <path d="M 43 65 Q 47 69 50 66 Q 53 69 57 65" fill="none" stroke="${t.eyes}" stroke-width="2.6" stroke-linecap="round" />
+    // Deadpan: two small dots set far apart
+    face = `
+      <circle cx="33" cy="45" r="3.8" fill="${INK}" stroke="${t.eyeRing}" stroke-width="1.6" />
+      <circle cx="67" cy="45" r="3.8" fill="${INK}" stroke="${t.eyeRing}" stroke-width="1.6" />
+      <path d="M 43 78 Q 46.5 81.5 50 78 Q 53.5 81.5 57 78" fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round" />
     `;
   }
+
+  const tail =
+    state === 'happy'
+      ? `<g class="shiba-tail is-wagging">
+           <path d="M 84 42 C 102 32 99 9 87 11 C 78 13 80 24 87 23" fill="none" stroke="${t.furBack}" stroke-width="8" stroke-linecap="round" />
+         </g>`
+      : `<g class="shiba-tail">
+           <path d="M 86 46 C 104 42 106 18 94 16 C 84 15 83 27 91 28" fill="none" stroke="${t.furBack}" stroke-width="8" stroke-linecap="round" />
+         </g>`;
 
   return `
     <svg viewBox="0 0 100 100" class="shiba-svg shiba-${state} shiba-type-${type}">
       <defs>
-        <linearGradient id="${uniqueId}-body" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="${t.bodyGradStart}" />
-          <stop offset="100%" stop-color="${t.bodyGradEnd}" />
-        </linearGradient>
-
-        <linearGradient id="${uniqueId}-muzzle" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="${t.muzzleGradStart}" />
-          <stop offset="100%" stop-color="${t.muzzleGradEnd}" />
-        </linearGradient>
-
-        <linearGradient id="${uniqueId}-ear" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="${t.earInnerStart}" />
-          <stop offset="100%" stop-color="${t.earInnerEnd}" />
-        </linearGradient>
-
         <filter id="${uniqueId}-shadow" x="-15%" y="-15%" width="130%" height="135%">
-          <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000000" flood-opacity="0.25" />
+          <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.2" />
         </filter>
       </defs>
 
       <g filter="url(#${uniqueId}-shadow)">
-        <!-- Left Ear -->
-        <path d="M 21 44 L 29 12 Q 38 20 41 33 Z" fill="url(#${uniqueId}-body)" />
-        <path d="M 26 39 L 31 18 Q 36 24 37 32 Z" fill="url(#${uniqueId}-ear)" />
+        <!-- Tail, behind the face -->
+        <g transform="translate(9 1) scale(0.82)">${tail}</g>
 
-        <!-- Right Ear -->
-        <path d="M 79 44 L 71 12 Q 62 20 59 33 Z" fill="url(#${uniqueId}-body)" />
-        <path d="M 74 39 L 69 18 Q 64 24 63 32 Z" fill="url(#${uniqueId}-ear)" />
+        <!-- Two stubby feet straight under the chin -->
+        <rect x="29" y="78" width="13" height="18" rx="4" fill="${t.fur}" ${edge} />
+        <rect x="29" y="89" width="13" height="7" rx="3" fill="${t.cream}" />
+        <rect x="58" y="78" width="13" height="18" rx="4" fill="${t.fur}" ${edge} />
+        <rect x="58" y="89" width="13" height="7" rx="3" fill="${t.cream}" />
 
-        <!-- Chubby Round Head -->
-        <ellipse cx="50" cy="54" rx="39" ry="34" fill="url(#${uniqueId}-body)" />
-
-        <!-- White Muzzle & Cheeks (Urajiro) -->
-        <path d="M 23 62 C 23 46 36 44 50 54 C 64 44 77 46 77 62 C 77 78 65 87 50 87 C 35 87 23 78 23 62 Z" fill="url(#${uniqueId}-muzzle)" />
-
-        <!-- Cute paws peeking -->
-        <ellipse cx="38" cy="85" rx="7" ry="5.5" fill="url(#${uniqueId}-muzzle)" stroke="${t.bodyDark}" stroke-width="1.2" />
-        <ellipse cx="62" cy="85" rx="7" ry="5.5" fill="url(#${uniqueId}-muzzle)" stroke="${t.bodyDark}" stroke-width="1.2" />
-
-        <!-- Blush Cheeks -->
-        <ellipse cx="27" cy="62" rx="6" ry="4" fill="${t.cheeks}" opacity="0.45" />
-        <ellipse cx="73" cy="62" rx="6" ry="4" fill="${t.cheeks}" opacity="0.45" />
-
-        <!-- Eyes and Mouth -->
-        ${eyesAndMouthSvg}
-
-        <!-- Nose -->
-        <path d="M 45.5 58 C 47 56.5 53 56.5 54.5 58 C 55.5 59.5 51.5 64 50 64 C 48.5 64 44.5 59.5 45.5 58 Z" fill="${t.nose}" />
-        <ellipse cx="48.5" cy="58.5" rx="1.2" ry="0.8" fill="#FFFFFF" opacity="0.7" />
-
-        ${sweatOrSparkle}
+        <!-- The face tile is the whole body -->
+        <g transform="translate(9 1) scale(0.82)">
+          <polygon points="12,34 22,4 42,22" fill="${t.fur}" ${edge} stroke-linejoin="round" />
+          <polygon points="58,22 78,4 88,34" fill="${t.fur}" ${edge} stroke-linejoin="round" />
+          <polygon points="20,26 24,13 34,22" fill="${t.cream}" />
+          <polygon points="66,22 76,13 80,26" fill="${t.cream}" />
+          <rect x="10" y="18" width="80" height="78" rx="12" fill="${t.fur}" ${edge} />
+          <!-- Urajiro: cream cheeks and muzzle, fur dipping to a point at the nose -->
+          <path d="M 10 62 Q 10 50 23 50 Q 38 50 45 63 L 50 68 L 55 63 Q 62 50 77 50 Q 90 50 90 62 L 90 84 Q 90 96 78 96 L 22 96 Q 10 96 10 84 Z" fill="${t.cream}" />
+          <!-- 麻呂眉 -->
+          <ellipse cx="33" cy="35" rx="6" ry="3.5" fill="${t.brow}" />
+          <ellipse cx="67" cy="35" rx="6" ry="3.5" fill="${t.brow}" />
+          ${face}
+          <ellipse cx="50" cy="70" rx="5.5" ry="4" fill="${INK}" />
+          ${extra}
+        </g>
       </g>
     </svg>
   `;

@@ -3407,3 +3407,19 @@ kbd {
     scroll-behavior: auto !important;
   }
 }
+
+/* The happy shiba wags its curled tail */
+.shiba-tail.is-wagging {
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+  animation: shibaTailWag 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes shibaTailWag {
+  from { transform: rotate(-10deg); }
+  to { transform: rotate(12deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shiba-tail.is-wagging { animation: none; }
+}
