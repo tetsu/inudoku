@@ -90,8 +90,11 @@ class InudokuGame {
   private lives: number = 3;
   private hintCount: number = 5;
   private pendingDailyReward: boolean = false;
-  /** Milestone earned by the clear now being celebrated, paid out on the rank-up screen. */
-  private pendingMilestone: MilestoneReward | null = null;
+  /**
+   * Milestone earned by the clear now being celebrated. Already paid when set;
+   * the rank-up screen only presents it, starting the counter at hintsBefore.
+   */
+  private pendingMilestone: (MilestoneReward & { hintsBefore: number }) | null = null;
   /** Index into TUTORIAL_STAGES while a tutorial stage is being played, else null. */
   private tutorialStageIndex: number | null = null;
 
@@ -1471,13 +1474,20 @@ class InudokuGame {
     this.clearActiveGame();
     this.saveProgression();
 
-    // Milestone is resolved here but paid out at the end of the rank-up screen,
-    // so the celebration stays in one place instead of stacking another modal.
+    // Milestones are paid right here, at the clear. The rank-up screen only
+    // presents the payout, and its timers stop once the player taps to
+    // continue -- so paying from the end of that animation lost the reward for
+    // anyone who tapped through before it finished.
     this.pendingMilestone = null;
     const clearedCount = Object.keys(this.completedLevels).length;
     const milestone = getMilestoneReward(clearedCount);
     if (milestone && !storage.hasMilestoneClaimed(milestone.milestone)) {
-      this.pendingMilestone = milestone;
+      const hintsBefore = this.hintCount;
+      this.hintCount += milestone.hints;
+      storage.saveHintCount(this.hintCount);
+      storage.setMilestoneClaimed(milestone.milestone);
+      this.updateHintBadge();
+      this.pendingMilestone = { ...milestone, hintsBefore };
     }
 
     // Earn bone points based on puzzle size (3, 4, 5, or 6 points)
@@ -1812,16 +1822,15 @@ class InudokuGame {
   }
 
   /**
-   * Reveals the milestone banner and flies bulbs into it, then grants the
-   * hints. The grant happens on arrival so the number the player sees bump is
-   * the number actually saved.
+   * Presents a milestone payout: reveals the banner with the hint count from
+   * before the clear, flies bulbs into it and bumps it to the new total. The
+   * hints were already granted in handleVictory, so skipping this (the player
+   * tapped through) costs nothing.
    */
   private showMilestoneReward() {
     const reward = this.pendingMilestone;
-    // Clear first: the rank-up screen can be dismissed mid-animation, and the
-    // claim flag below is what stops a second payout.
     this.pendingMilestone = null;
-    if (!reward || storage.hasMilestoneClaimed(reward.milestone)) {
+    if (!reward) {
       // No payout this clear: show how close the next one is instead.
       this.showMilestoneProgress(true);
       return;
@@ -1836,7 +1845,7 @@ class InudokuGame {
       reward.isMajor ? 'milestone.title.major' : 'milestone.title',
       { count: reward.milestone }
     );
-    countEl.textContent = String(this.hintCount);
+    countEl.textContent = String(reward.hintsBefore);
     banner.classList.remove('hidden');
     banner.classList.add('milestone-in');
     sounds.playQuestion();
@@ -1844,12 +1853,7 @@ class InudokuGame {
     this.playFlyingBones(
       reward.hints,
       () => {
-        this.hintCount += reward.hints;
-        storage.saveHintCount(this.hintCount);
-        storage.setMilestoneClaimed(reward.milestone);
-        this.updateHintBadge();
-
-        countEl.textContent = String(this.hintCount);
+        countEl.textContent = String(reward.hintsBefore + reward.hints);
         countEl.classList.remove('bump');
         void countEl.offsetWidth;
         countEl.classList.add('bump');
