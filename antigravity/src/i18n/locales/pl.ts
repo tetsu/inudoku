@@ -1,7 +1,7 @@
 export const pl: Record<string, string> = {
   // App Meta
   'app.title': 'Shibadoku - Logiczna łamigłówka z Shiba Inu',
-  'app.description': 'Relaksująca łamigłówka z pieskami Shiba Inu w stylu Zoodoku/Meowdoku. Umieść 1 Shibę w każdym wierszu, kolumnie i strefie kolorystycznej bez dotykania!',
+  'app.description': 'Relaksująca łamigłówka z pieskami Shiba Inu. Umieść 1 Shibę w każdym wierszu, kolumnie i strefie kolorystycznej bez dotykania!',
 
   // Title Screen
   'title.logo': 'Shibadoku',

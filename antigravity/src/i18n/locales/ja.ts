@@ -1,7 +1,7 @@
 export const ja: Record<string, string> = {
   // App Meta
   'app.title': 'Shibadoku (柴独) - 柴犬たちのロジックパズル',
-  'app.description': 'Zoodoku/Meowdokuスタイルの柴犬ロジックパズルゲーム。各行・各列・各エリアに柴犬を1匹ずつ配置して、パーソナルスペースを守ろう！',
+  'app.description': 'ゆったり遊べる柴犬ロジックパズルゲーム。各行・各列・各エリアに柴犬を1匹ずつ配置して、パーソナルスペースを守ろう！',
 
   // Title Screen
   'title.logo': 'Shibadoku',

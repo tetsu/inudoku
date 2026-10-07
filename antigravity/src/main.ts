@@ -1493,7 +1493,7 @@ class InudokuGame {
       origin: { y: 0.6 },
     });
 
-    // Show Meowdoku-style Tournament Rank-Up Screen!
+    // Show the tournament rank-up screen
     setTimeout(() => {
       this.showRankUpScreen(earnedPoints);
     }, 450);

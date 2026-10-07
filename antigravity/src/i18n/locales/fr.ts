@@ -1,7 +1,7 @@
 export const fr: Record<string, string> = {
   // App Meta
   'app.title': 'Shibadoku - Le puzzle logique des Shiba Inu',
-  'app.description': 'Un jeu de réflexion apaisant façon Zoodoku/Meowdoku avec des Shiba Inu. Placez 1 Shiba par ligne, colonne et zone colorée sans qu\'ils se touchent !',
+  'app.description': 'Un jeu de réflexion apaisant avec des Shiba Inu. Placez 1 Shiba par ligne, colonne et zone colorée sans qu\'ils se touchent !',
 
   // Title Screen
   'title.logo': 'Shibadoku',

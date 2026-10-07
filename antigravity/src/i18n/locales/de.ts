@@ -1,7 +1,7 @@
 export const de: Record<string, string> = {
   // App Meta
   'app.title': 'Shibadoku - Das Shiba Inu Logikrätsel',
-  'app.description': 'Ein entspannendes Logikrätsel im Zoodoku/Meowdoku-Stil mit Shiba Inus. Platziere 1 Shiba pro Zeile, Spalte und Farbzone, ohne dass sie sich berühren!',
+  'app.description': 'Ein entspannendes Logikrätsel mit Shiba Inus. Platziere 1 Shiba pro Zeile, Spalte und Farbzone, ohne dass sie sich berühren!',
 
   // Title Screen
   'title.logo': 'Shibadoku',

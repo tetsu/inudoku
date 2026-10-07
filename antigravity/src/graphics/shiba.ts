@@ -141,7 +141,7 @@ export function getShibaSvg(
 }
 
 /**
- * Returns the iconic white rounded Cross (❌) from Meowdoku / Zoodoku.
+ * Returns the white rounded cross (❌) used to mark ruled-out cells.
  */
 export function getCrossSvg(color: string = '#FFFFFF'): string {
   return `
@@ -158,7 +158,7 @@ export function getCrossSvg(color: string = '#FFFFFF'): string {
  * Returns paw mark SVG
  */
 export function getPawSvg(): string {
-  return getCrossSvg(); // Meowdoku primarily uses the white rounded cross
+  return getCrossSvg(); // paw marks reuse the cross
 }
 
 /**
@@ -183,7 +183,7 @@ export function getQuestionSvg(color: string = '#FFFFFF'): string {
 }
 
 /**
- * Exactly matched palette from Meowdoku / Zoodoku screenshot:
+ * Region palette:
  * Clean, saturated, distinct solid pastel colors with no dark borders.
  */
 export const REGION_COLORS = [

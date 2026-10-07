@@ -1,12 +1,12 @@
 /* ==========================================================================
-   Inudoku - Meowdoku / Zoodoku Faithful UI Styles
+   Shibadoku - UI Styles
    ========================================================================== */
 
 :root {
   --font-family-base: 'M PLUS Rounded 1c', 'Fredoka', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-family-display: 'Fredoka', 'M PLUS Rounded 1c', sans-serif;
 
-  /* Meowdoku Background Palette */
+  /* Background Palette */
   --color-bg-main: #F6EFE6;
   --color-bg-card: #FFFFFF;
   --color-bg-pill: #FFFFFF;
@@ -327,7 +327,7 @@ button {
 }
 
 /* ==========================================================================
-   Main Game Board (Meowdoku Style: NO dark borders, clean white gaps)
+   Main Game Board (no dark borders, clean white gaps)
    ========================================================================== */
 .board-wrapper {
   flex: 1;
@@ -637,7 +637,7 @@ button {
 }
 
 /* ==========================================================================
-   Bottom Hero Control Buttons (Matching Meowdoku Screenshot)
+   Bottom Hero Control Buttons
    ========================================================================== */
 .game-footer {
   display: flex;
@@ -2076,7 +2076,7 @@ input:checked + .slider:before {
 }
 
 /* ==========================================================================
-   Clear Rank-Up Overlay (Meowdoku Style Tournament Screen)
+   Clear Rank-Up Overlay (Tournament Screen)
    ========================================================================== */
 .rankup-overlay {
   position: fixed;

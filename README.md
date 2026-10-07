@@ -1,7 +1,7 @@
 # 🐕 Shibadoku (柴独)
 
 > **「ワンコにもパーソナルスペースが必要です！」**  
-> Zoodoku & Meowdoku にインスパイアされた、柴犬たちが主役のブラウザ向けロジックパズルゲーム。
+> 柴犬たちが主役のブラウザ向けロジックパズルゲーム。
 
 👉 **[🌐 オンラインで今すぐ遊ぶ (GitHub Pages)](https://tetsu.github.io/inudoku/)**  
 *(※GitHubの Settings > Pages で GitHub Actions を有効にすると自動公開されます)*
