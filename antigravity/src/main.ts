@@ -20,6 +20,7 @@ import {
 import { TUTORIAL_INSTRUCTION_KEYS, TUTORIAL_STAGES } from './logic/tutorialStages';
 import { sounds } from './audio/sound';
 import { bgm } from './audio/bgm';
+import { initAds, maybeShowInterstitial } from './ads';
 import { CUD_REGION_COLORS, getCrossSvg, getQuestionSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
 import { calculateRankUp, getDailyLeaderboard, getDailyLeaderboardStairs, simulateRivalPoints } from './logic/leaderboard';
 import { storage } from './storage/storage';
@@ -166,6 +167,21 @@ class InudokuGame {
     this.checkAndShowDailyReward();
     this.initGamepadSupport();
     this.initBgm();
+    void initAds();
+  }
+
+  /**
+   * Moves on to another stage, first showing an interstitial ad when one is due
+   * (iOS app only). The music pauses while the ad is up.
+   */
+  private async startGameAfterAd(index: number) {
+    await maybeShowInterstitial({
+      onOpen: () => bgm.stop(),
+      onClose: () => {
+        if (this.settings.bgmEnabled && !document.hidden) bgm.start();
+      },
+    });
+    this.startGame(index);
   }
 
   /**
@@ -1712,7 +1728,7 @@ class InudokuGame {
       overlay.classList.add('hidden');
       // Advance to next level
       const nextIndex = Math.min(this.currentStageIndex + 1, MAX_STAGE_LEVEL - 1);
-      this.startGame(nextIndex);
+      void this.startGameAfterAd(nextIndex);
     };
 
     const handleKeyContinue = (e: KeyboardEvent) => {
@@ -2742,7 +2758,7 @@ class InudokuGame {
     document.getElementById('btn-win-next')!.addEventListener('click', () => {
       document.getElementById('modal-win')!.classList.add('hidden');
       const nextIndex = Math.min(this.currentStageIndex + 1, MAX_STAGE_LEVEL - 1);
-      this.startGame(nextIndex);
+      void this.startGameAfterAd(nextIndex);
     });
 
     // Game Over actions
