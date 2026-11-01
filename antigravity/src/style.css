@@ -3468,3 +3468,18 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .stage-intro { animation: none; }
 }
+
+/* Developer-only instant clear (dev server / Debug iOS builds) */
+.dev-clear-btn {
+  position: fixed;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 50;
+  padding: 8px 12px;
+  border: 2px dashed #DC2626;
+  border-radius: var(--radius-pill);
+  background: #FEF2F2;
+  color: #DC2626;
+  font: 700 0.85rem var(--font-family-base);
+  cursor: pointer;
+}

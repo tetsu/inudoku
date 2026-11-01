@@ -167,9 +167,33 @@ class InudokuGame {
     this.checkAndShowDailyReward();
     this.initGamepadSupport();
     this.initBgm();
+    this.initDevTools();
     void initAds().then(() => {
       document.getElementById('setting-ad-privacy')?.classList.toggle('hidden', !isAdPrivacyOptionsRequired());
     });
+  }
+
+  /**
+   * Developer-only "clear this stage" button, for exercising what follows a
+   * clear (rank-up, ads) without solving puzzles. Only in the Vite dev server
+   * and Debug iOS builds - never in a production web build or a Release app.
+   */
+  private initDevTools() {
+    if (!import.meta.env.DEV && window.__debugBuild !== true) return;
+    const btn = document.createElement('button');
+    btn.className = 'dev-clear-btn';
+    btn.textContent = '⚡ クリア';
+    btn.addEventListener('click', () => {
+      const solution = this.currentPuzzle?.solution;
+      if (this.screenGameEl.classList.contains('hidden') || this.isFinished || !solution?.length) return;
+      for (const row of this.grid) {
+        for (const cell of row) cell.mark = 'cross';
+      }
+      for (const { r, c } of solution) this.grid[r][c].mark = 'dog';
+      this.renderBoard();
+      this.validateAndCheckWin();
+    });
+    this.screenGameEl.appendChild(btn);
   }
 
   /**
