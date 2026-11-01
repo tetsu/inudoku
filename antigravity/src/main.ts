@@ -228,9 +228,9 @@ class InudokuGame {
   }
 
   /**
-   * Shows "Level n / difficulty" over the board for a moment with the timer
-   * held, then starts the clock. Any tap, key (see the keydown handler) or
-   * button skips it.
+   * Covers the screen in white, floats "Level n / difficulty" up into it, then
+   * fades the white away to reveal the stage, starting the clock as it goes.
+   * Any tap, key (see the keydown handler) or button skips to the fade.
    */
   private showStageIntro(onEnd: () => void) {
     const el = document.getElementById('stage-intro');
@@ -241,18 +241,18 @@ class InudokuGame {
     this.stopTimer();
     el.querySelector('.stage-intro-level')!.textContent = `${t('game.header.level')} ${this.currentStageIndex + 1}`;
     el.querySelector('.stage-intro-diff')!.textContent = this.getDifficultyLabel(this.currentPuzzle.difficulty, this.currentPuzzle.size);
-    el.classList.remove('hidden');
-    // Cover the grid itself, which can run a few px past its frame on some phones
-    const frame = el.parentElement!.getBoundingClientRect();
-    const grid = this.gridBoardEl.getBoundingClientRect();
-    el.style.inset = `${grid.top - frame.top}px ${frame.right - grid.right}px ${frame.bottom - grid.bottom}px ${grid.left - frame.left}px`;
+    el.classList.remove('hidden', 'is-leaving');
 
     const end = () => {
       if (this.stageIntroEnd !== end) return;
       this.stageIntroEnd = null;
       clearTimeout(timer);
-      el.classList.add('hidden');
       el.removeEventListener('pointerdown', end);
+      el.classList.add('is-leaving');
+      window.setTimeout(() => {
+        // Unless another intro has started since
+        if (!this.stageIntroEnd) el.classList.add('hidden');
+      }, 450);
       // Not if the player left the stage, or opened the rules meanwhile: they
       // pause the clock and restart it when closed
       if (
@@ -264,7 +264,7 @@ class InudokuGame {
       }
       onEnd();
     };
-    const timer = window.setTimeout(end, 1200);
+    const timer = window.setTimeout(end, 1400);
     el.addEventListener('pointerdown', end);
     this.stageIntroEnd = end;
   }

@@ -3424,49 +3424,65 @@ kbd {
   .shiba-tail.is-wagging { animation: none; }
 }
 
-/* "Level n" card over the board when a stage starts right after an ad */
+/* Full-screen "Level n" curtain when a stage starts right after an ad: the
+   screen turns white, the level floats up into it, then the white fades away */
 .stage-intro {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 20;
+  z-index: 90; /* over the game, under modals */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  border-radius: var(--radius-tile);
-  background: rgba(246, 239, 230, 0.86);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  gap: 8px;
+  background: #FFFFFF;
   color: var(--color-text-dark);
   cursor: pointer;
-  animation: stageIntroIn 0.28s ease-out;
+  transition: opacity 0.45s ease-in;
 }
 
 .stage-intro.hidden {
   display: none;
 }
 
+.stage-intro.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.stage-intro-level,
+.stage-intro-diff {
+  opacity: 0;
+  animation: stageIntroRise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
 .stage-intro-level {
   font-family: var(--font-family-display);
-  font-size: clamp(2.4rem, 12vw, 3.4rem);
+  font-size: clamp(2.8rem, 14vw, 4rem);
   font-weight: 700;
   line-height: 1;
+  animation-delay: 0.15s;
 }
 
 .stage-intro-diff {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--color-text-muted);
+  animation-delay: 0.3s;
 }
 
-@keyframes stageIntroIn {
-  from { opacity: 0; transform: scale(0.94); }
-  to { opacity: 1; transform: scale(1); }
+@keyframes stageIntroRise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stage-intro { animation: none; }
+  .stage-intro { transition: none; }
+  .stage-intro-level,
+  .stage-intro-diff {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 /* Developer-only instant clear (dev server / Debug iOS builds) */

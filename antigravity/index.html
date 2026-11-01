@@ -75,6 +75,12 @@
       <!-- ================================================================
            Screen 2: Gameplay Screen
            ================================================================ -->
+      <!-- Full-screen "Level n" curtain shown when a stage starts right after an ad -->
+      <div id="stage-intro" class="stage-intro hidden" aria-live="polite">
+        <span class="stage-intro-level"></span>
+        <span class="stage-intro-diff"></span>
+      </div>
+
       <section id="screen-game" class="screen-game hidden">
         <!-- Top Bar (Header) -->
         <header class="game-top-bar">
@@ -147,11 +153,6 @@
           <div class="board-outer-frame">
             <div id="grid-board" class="grid-board" role="grid" aria-label="パズル盤面">
               <!-- Grid cells generated dynamically with clean white gaps -->
-            </div>
-            <!-- Brief "Level n" card shown over the board after an ad -->
-            <div id="stage-intro" class="stage-intro hidden" aria-live="polite">
-              <span class="stage-intro-level"></span>
-              <span class="stage-intro-diff"></span>
             </div>
             <!-- Anchored to the board frame so it can sit above the grid, never over it -->
             <div id="hint-bubble" class="hint-bubble hidden">
