@@ -242,6 +242,9 @@ export const ja: Record<string, string> = {
   'set.reset.name': '🗑️ 進捗データ初期化',
   'set.reset.desc': 'クリアしたレベルやキャッシュを消去',
   'set.reset.btn': 'リセット',
+  'set.adPrivacy.name': '🛡️ 広告のプライバシー',
+  'set.adPrivacy.desc': '広告に関する同意の内容を確認・変更します',
+  'set.adPrivacy.btn': '開く',
   'set.btn.save': '設定を保存',
 
   // Victory Modal

@@ -242,6 +242,9 @@ export const fr: Record<string, string> = {
   'set.reset.name': '🗑️ Réinitialiser les données',
   'set.reset.desc': 'Effacer les niveaux terminés et les données en cache',
   'set.reset.btn': 'Réinitialiser',
+  'set.adPrivacy.name': '🛡️ Confidentialité des pubs',
+  'set.adPrivacy.desc': 'Consulter ou modifier vos choix de consentement publicitaire',
+  'set.adPrivacy.btn': 'Ouvrir',
   'set.btn.save': 'Enregistrer',
 
   // Victory Modal

@@ -242,6 +242,9 @@ export const es: Record<string, string> = {
   'set.reset.name': '🗑️ Reiniciar progreso',
   'set.reset.desc': 'Borrar niveles completados y datos en caché',
   'set.reset.btn': 'Reiniciar',
+  'set.adPrivacy.name': '🛡️ Privacidad de anuncios',
+  'set.adPrivacy.desc': 'Revisa o cambia tu consentimiento de anuncios',
+  'set.adPrivacy.btn': 'Abrir',
   'set.btn.save': 'Guardar ajustes',
 
   // Victory Modal

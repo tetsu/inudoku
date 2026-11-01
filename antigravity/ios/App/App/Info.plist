@@ -78,7 +78,7 @@
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-3354299395899148~2165982921</string>
 	<key>NSUserTrackingUsageDescription</key>
-	<string>あなたに合った広告を表示するために使用します。許可しなくてもゲームはすべて遊べます。</string>
+	<string>Used to show ads that suit you. Every part of the game is playable even if you don't allow it.</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>

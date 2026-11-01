@@ -9,21 +9,22 @@ import {
  * AdMob interstitials for the iOS app. Everything here is a no-op on the web
  * build and on platforms without an ad unit yet.
  *
- * Ads are test ads unless the bundle was built with VITE_ADMOB_LIVE=true
- * (`npm run ios:release`), so a development build on a real device can never
- * serve, and be accidentally tapped on, a live ad.
+ * Ads are test ads unless the native app is a Release build (archive,
+ * TestFlight, App Store), which sets `window.__adsLive`. Running from Xcode in
+ * Debug therefore never serves, and can't be accidentally tapped on, a live ad,
+ * while a shipped build can't end up with test ads.
  */
 
 const IOS_INTERSTITIAL_ID = 'ca-app-pub-3354299395899148/5007768686';
 
-const LIVE = import.meta.env.VITE_ADMOB_LIVE === 'true';
+const LIVE = window.__adsLive === true;
 
 /** Show an interstitial at most once every this many stage clears... */
 const CLEARS_PER_AD = 3;
 /** ...and never sooner than this after the previous one. */
 const MIN_INTERVAL_MS = 90_000;
-/** Give up waiting for an ad that never reports back. */
-const SHOW_TIMEOUT_MS = 60_000;
+/** Give up on an ad that was never presented (no timeout once it is up). */
+const PRESENT_TIMEOUT_MS = 10_000;
 
 const interstitialId = Capacitor.getPlatform() === 'ios' ? IOS_INTERSTITIAL_ID : null;
 
@@ -32,6 +33,7 @@ let loaded = false;
 let loading = false;
 let clearsSinceAd = 0;
 let lastAdAt = 0;
+let privacyOptionsRequired = false;
 
 async function prepare() {
   if (!interstitialId || loaded || loading) return;
@@ -47,35 +49,52 @@ async function prepare() {
 }
 
 /**
- * Initialises the SDK, asks for consent (EU/UK) and tracking permission, and
- * preloads the first ad. Safe to call on any platform; failures just mean no
- * ads this session.
+ * Gathers consent (EU/UK) and tracking permission, then initialises the SDK and
+ * preloads the first ad - but only when consent allows requesting ads. Safe to
+ * call on any platform; failures just mean no ads this session.
  */
 export async function initAds(): Promise<void> {
   if (!Capacitor.isNativePlatform() || !interstitialId) return;
   try {
-    await AdMob.initialize({ initializeForTesting: !LIVE });
-
-    // GDPR consent (EU/UK). Fails when no consent message is published in the
-    // AdMob console; ads still work then, so carry on.
+    // GDPR consent. Fails when no consent message is published in the AdMob
+    // console, in which case there's nothing to gather and ads may be requested.
+    let canRequestAds = true;
     try {
-      const consent = await AdMob.requestConsentInfo();
+      let consent = await AdMob.requestConsentInfo();
       if (consent.isConsentFormAvailable && consent.status === AdmobConsentStatus.REQUIRED) {
-        await AdMob.showConsentForm();
+        consent = await AdMob.showConsentForm();
       }
+      canRequestAds = consent.canRequestAds;
+      privacyOptionsRequired = consent.privacyOptionsRequirementStatus === 'REQUIRED';
     } catch (e) {
       console.warn('[ads] consent info unavailable', e);
     }
+    if (!canRequestAds) return;
 
     const tracking = await AdMob.trackingAuthorizationStatus();
     if (tracking.status === 'notDetermined') {
       await AdMob.requestTrackingAuthorization();
     }
 
+    await AdMob.initialize({ initializeForTesting: !LIVE });
     ready = true;
     void prepare();
   } catch (e) {
     console.warn('[ads] AdMob unavailable', e);
+  }
+}
+
+/** Whether the settings screen should offer to revisit the consent choices. */
+export function isAdPrivacyOptionsRequired(): boolean {
+  return privacyOptionsRequired;
+}
+
+/** Re-opens the consent form so the player can change or withdraw consent. */
+export async function showAdPrivacyOptions(): Promise<void> {
+  try {
+    await AdMob.showPrivacyOptionsForm();
+  } catch (e) {
+    console.warn('[ads] privacy options unavailable', e);
   }
 }
 
@@ -98,16 +117,21 @@ export async function maybeShowInterstitial(hooks: { onOpen?: () => void; onClos
   try {
     await new Promise<void>((resolve) => {
       const handles: Promise<{ remove: () => Promise<void> }>[] = [];
+      let settled = false;
       const done = () => {
+        if (settled) return;
+        settled = true;
         clearTimeout(timer);
         handles.forEach((h) => void h.then((x) => x.remove()));
         resolve();
       };
-      const timer = setTimeout(done, SHOW_TIMEOUT_MS);
+      const timer = setTimeout(done, PRESENT_TIMEOUT_MS);
       handles.push(AdMob.addListener(InterstitialAdPluginEvents.Dismissed, done));
       handles.push(AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, done));
+      // Resolves once the ad is presented; from then on only Dismissed ends it
       AdMob.showInterstitial().then(
         () => {
+          clearTimeout(timer);
           clearsSinceAd = 0;
           lastAdAt = Date.now();
         },

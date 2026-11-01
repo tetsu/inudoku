@@ -242,6 +242,9 @@ export const en: Record<string, string> = {
   'set.reset.name': '🗑️ Reset Progress',
   'set.reset.desc': 'Clear completed levels and cached game state',
   'set.reset.btn': 'Reset',
+  'set.adPrivacy.name': '🛡️ Ad Privacy',
+  'set.adPrivacy.desc': 'Review or change your ad consent choices',
+  'set.adPrivacy.btn': 'Open',
   'set.btn.save': 'Save Settings',
 
   // Victory Modal

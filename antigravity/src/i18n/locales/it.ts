@@ -242,6 +242,9 @@ export const it: Record<string, string> = {
   'set.reset.name': '🗑️ Ripristina progressi',
   'set.reset.desc': 'Cancella i livelli completati e lo stato salvato',
   'set.reset.btn': 'Ripristina',
+  'set.adPrivacy.name': '🛡️ Privacy degli annunci',
+  'set.adPrivacy.desc': 'Rivedi o modifica il consenso per gli annunci',
+  'set.adPrivacy.btn': 'Apri',
   'set.btn.save': 'Salva',
 
   // Victory Modal

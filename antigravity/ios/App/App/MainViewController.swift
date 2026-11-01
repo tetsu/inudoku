@@ -124,6 +124,13 @@ class MainViewController: CAPBridgeViewController, UIGestureRecognizerDelegate {
             source: Self.forwarderScript, injectionTime: .atDocumentStart, forMainFrameOnly: true
         ))
         contentController?.add(ReclaimMessageHandler(owner: self), name: "nativeKeysReclaim")
+        // Real ads only in Release (archive / TestFlight / App Store) builds;
+        // running from Xcode in Debug keeps Google's test ads (see ads.ts)
+        #if !DEBUG
+        contentController?.addUserScript(WKUserScript(
+            source: "window.__adsLive = true;", injectionTime: .atDocumentStart, forMainFrameOnly: true
+        ))
+        #endif
         super.viewDidLoad()
 
         // A tap hands focus to WebKit; take it back unless it landed in a field

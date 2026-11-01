@@ -242,6 +242,9 @@ export const zh: Record<string, string> = {
   'set.reset.name': '🗑️ 重置游戏进度',
   'set.reset.desc': '清除已通关数据与本地缓存状态',
   'set.reset.btn': '重置',
+  'set.adPrivacy.name': '🛡️ 广告隐私',
+  'set.adPrivacy.desc': '查看或更改广告相关的同意设置',
+  'set.adPrivacy.btn': '打开',
   'set.btn.save': '保存设置',
 
   // Victory Modal

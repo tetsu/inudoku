@@ -242,6 +242,9 @@ export const de: Record<string, string> = {
   'set.reset.name': '🗑️ Spielstand zurücksetzen',
   'set.reset.desc': 'Abgeschlossene Level und Zwischenspeicher löschen',
   'set.reset.btn': 'Zurücksetzen',
+  'set.adPrivacy.name': '🛡️ Werbe-Datenschutz',
+  'set.adPrivacy.desc': 'Deine Einwilligung für Werbung prüfen oder ändern',
+  'set.adPrivacy.btn': 'Öffnen',
   'set.btn.save': 'Einstellungen speichern',
 
   // Victory Modal

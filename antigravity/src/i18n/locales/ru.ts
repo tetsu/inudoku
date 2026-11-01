@@ -242,6 +242,9 @@ export const ru: Record<string, string> = {
   'set.reset.name': '🗑️ Сбросить прогресс',
   'set.reset.desc': 'Очистить пройденные уровни и сохраненные данные',
   'set.reset.btn': 'Сбросить',
+  'set.adPrivacy.name': '🛡️ Конфиденциальность рекламы',
+  'set.adPrivacy.desc': 'Просмотреть или изменить согласие на рекламу',
+  'set.adPrivacy.btn': 'Открыть',
   'set.btn.save': 'Сохранить',
 
   // Victory Modal

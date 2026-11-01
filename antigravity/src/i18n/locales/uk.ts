@@ -242,6 +242,9 @@ export const uk: Record<string, string> = {
   'set.reset.name': '🗑️ Скинути прогрес',
   'set.reset.desc': 'Очистити пройдені рівні та збережений стан гри',
   'set.reset.btn': 'Скинути',
+  'set.adPrivacy.name': '🛡️ Конфіденційність реклами',
+  'set.adPrivacy.desc': 'Переглянути або змінити згоду на рекламу',
+  'set.adPrivacy.btn': 'Відкрити',
   'set.btn.save': 'Зберегти',
 
   // Victory Modal

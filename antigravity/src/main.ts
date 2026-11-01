@@ -20,7 +20,7 @@ import {
 import { TUTORIAL_INSTRUCTION_KEYS, TUTORIAL_STAGES } from './logic/tutorialStages';
 import { sounds } from './audio/sound';
 import { bgm } from './audio/bgm';
-import { initAds, maybeShowInterstitial } from './ads';
+import { initAds, isAdPrivacyOptionsRequired, maybeShowInterstitial, showAdPrivacyOptions } from './ads';
 import { CUD_REGION_COLORS, getCrossSvg, getQuestionSvg, getShibaSvg, REGION_COLORS, ShibaType } from './graphics/shiba';
 import { calculateRankUp, getDailyLeaderboard, getDailyLeaderboardStairs, simulateRivalPoints } from './logic/leaderboard';
 import { storage } from './storage/storage';
@@ -167,7 +167,9 @@ class InudokuGame {
     this.checkAndShowDailyReward();
     this.initGamepadSupport();
     this.initBgm();
-    void initAds();
+    void initAds().then(() => {
+      document.getElementById('setting-ad-privacy')?.classList.toggle('hidden', !isAdPrivacyOptionsRequired());
+    });
   }
 
   /**
@@ -175,12 +177,20 @@ class InudokuGame {
    * (iOS app only). The music pauses while the ad is up.
    */
   private async startGameAfterAd(index: number) {
-    await maybeShowInterstitial({
-      onOpen: () => bgm.stop(),
-      onClose: () => {
-        if (this.settings.bgmEnabled && !document.hidden) bgm.start();
-      },
-    });
+    // A second tap while the ad is opening would otherwise start the stage
+    // under the ad, then again once it closes
+    if (this.advancingPastAd) return;
+    this.advancingPastAd = true;
+    try {
+      await maybeShowInterstitial({
+        onOpen: () => bgm.stop(),
+        onClose: () => {
+          if (this.settings.bgmEnabled && !document.hidden) bgm.start();
+        },
+      });
+    } finally {
+      this.advancingPastAd = false;
+    }
     this.startGame(index);
   }
 
@@ -1920,6 +1930,7 @@ class InudokuGame {
   private rankupConfetti: ((opts: confetti.Options) => void) | null = null;
   /** Bumped per rank-up screen so stale climb timers know to stop. */
   private rankupRunId = 0;
+  private advancingPastAd = false;
 
   private getRankupConfetti(): (opts: confetti.Options) => void {
     if (!this.rankupConfetti) {
@@ -3422,6 +3433,10 @@ class InudokuGame {
       this.renderBoard();
     });
 
+    document.getElementById('btn-ad-privacy')?.addEventListener('click', () => {
+      void showAdPrivacyOptions();
+    });
+
     const resetProgressBtn = document.getElementById('btn-reset-progress');
     resetProgressBtn?.addEventListener('click', async () => {
       const ok = await this.showConfirm({
@@ -3785,7 +3800,7 @@ class InudokuGame {
       return;
     }
 
-    const items = Array.from(modal.querySelectorAll('.setting-item')) as HTMLElement[];
+    const items = Array.from(modal.querySelectorAll('.setting-item:not(.hidden)')) as HTMLElement[];
     const saveBtn = modal.querySelector('[data-close-modal="modal-settings"]') as HTMLElement | null;
     const totalCount = items.length + (saveBtn ? 1 : 0);
 
@@ -3902,6 +3917,12 @@ class InudokuGame {
     else if (this.settingsRowIdx === 10) {
       if (action) {
         document.getElementById('btn-reset-progress')?.click();
+      }
+    }
+    // Row 11: Ad privacy options (only shown where consent applies)
+    else if (this.settingsRowIdx === 11 && this.settingsRowIdx < items.length) {
+      if (action) {
+        document.getElementById('btn-ad-privacy')?.click();
       }
     }
     // Last row: Save & Close button
