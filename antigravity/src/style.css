@@ -3424,8 +3424,9 @@ kbd {
   .shiba-tail.is-wagging { animation: none; }
 }
 
-/* Full-screen "Level n" curtain when a stage starts right after an ad: the
-   screen turns white, the level floats up into it, then the white fades away */
+/* Full-screen "Level n" curtain when a stage starts right after an ad. It goes
+   up behind the ad, so closing the ad lands on plain white with the level on
+   it; then the whole curtain fades away to reveal the new stage. */
 .stage-intro {
   position: fixed;
   inset: 0;
@@ -3438,7 +3439,7 @@ kbd {
   background: #FFFFFF;
   color: var(--color-text-dark);
   cursor: pointer;
-  transition: opacity 0.45s ease-in;
+  transition: opacity 0.5s ease-in;
 }
 
 .stage-intro.hidden {
@@ -3450,39 +3451,21 @@ kbd {
   pointer-events: none;
 }
 
-.stage-intro-level,
-.stage-intro-diff {
-  opacity: 0;
-  animation: stageIntroRise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-}
-
 .stage-intro-level {
   font-family: var(--font-family-display);
   font-size: clamp(2.8rem, 14vw, 4rem);
   font-weight: 700;
   line-height: 1;
-  animation-delay: 0.15s;
 }
 
 .stage-intro-diff {
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--color-text-muted);
-  animation-delay: 0.3s;
-}
-
-@keyframes stageIntroRise {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .stage-intro { transition: none; }
-  .stage-intro-level,
-  .stage-intro-diff {
-    animation: none;
-    opacity: 1;
-  }
 }
 
 /* Developer-only instant clear (dev server / Debug iOS builds) */

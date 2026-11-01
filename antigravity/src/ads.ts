@@ -21,8 +21,14 @@ const LIVE = window.__adsLive === true;
 
 /** Show an interstitial at most once every this many stage clears... */
 const CLEARS_PER_AD = 3;
-/** ...and never sooner than this after the previous one. */
-const MIN_INTERVAL_MS = 90_000;
+/**
+ * ...and never sooner than this after the previous one. Not in development
+ * (dev server / Debug iOS builds), where the instant-clear button gets through
+ * three stages well within it and the ad would seem never to come back.
+ */
+const MIN_INTERVAL_MS = import.meta.env.DEV || window.__debugBuild === true ? 0 : 90_000;
+/** How long a presented ad takes to cover the screen completely. */
+const COVER_DELAY_MS = 600;
 /** Give up on an ad that was never presented (no timeout once it is up). */
 const PRESENT_TIMEOUT_MS = 10_000;
 
@@ -104,7 +110,9 @@ export async function showAdPrivacyOptions(): Promise<void> {
  * caller can start the next stage afterwards. Resolves to whether an ad was
  * actually on screen.
  */
-export async function maybeShowInterstitial(hooks: { onOpen?: () => void; onClose?: () => void } = {}): Promise<boolean> {
+export async function maybeShowInterstitial(
+  hooks: { onOpen?: () => void; onCovered?: () => void; onClose?: () => void } = {}
+): Promise<boolean> {
   if (!ready) return false;
   clearsSinceAd++;
   const due = clearsSinceAd >= CLEARS_PER_AD && Date.now() - lastAdAt >= MIN_INTERVAL_MS;
@@ -137,6 +145,11 @@ export async function maybeShowInterstitial(hooks: { onOpen?: () => void; onClos
           presented = true;
           clearsSinceAd = 0;
           lastAdAt = Date.now();
+          // The ad animates in after being presented; wait until it fills the
+          // screen before changing what's behind it
+          setTimeout(() => {
+            if (!settled) hooks.onCovered?.();
+          }, COVER_DELAY_MS);
         },
         done
       );

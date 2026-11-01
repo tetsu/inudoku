@@ -198,9 +198,11 @@ class InudokuGame {
 
   /**
    * Moves on to another stage, first showing an interstitial ad when one is due
-   * (iOS app only). The music pauses while the ad is up.
+   * (iOS app only). The music pauses while the ad is up. `closeScreen` hides
+   * the screen being continued from; it stays up until the ad covers it, so
+   * the cleared board never flashes between the two.
    */
-  private async startGameAfterAd(index: number) {
+  private async startGameAfterAd(index: number, closeScreen: () => void) {
     // A second tap while the ad is opening would otherwise start the stage
     // under the ad, then again once it closes
     if (this.advancingPastAd) return;
@@ -213,24 +215,45 @@ class InudokuGame {
           bgm.stop();
           musicStopped = true;
         },
+        // Swap what's behind the ad for the curtain once it covers the
+        // screen, so closing it lands on white rather than the stage cleared
+        onCovered: () => {
+          closeScreen();
+          this.showStageCurtain(index);
+        },
       });
     } finally {
       this.advancingPastAd = false;
     }
+    closeScreen();
     const resumeMusic = () => {
       if (musicStopped && this.settings.bgmEnabled && !document.hidden) bgm.start();
     };
     this.startGame(index);
     // Coming straight out of an ad, give the player a beat to see which stage
     // this is before the clock runs
-    if (adShown) this.showStageIntro(resumeMusic);
-    else resumeMusic();
+    if (adShown) {
+      this.showStageIntro(resumeMusic);
+    } else {
+      document.getElementById('stage-intro')?.classList.add('hidden');
+      resumeMusic();
+    }
+  }
+
+  /** Covers the whole screen in white with "Level n / difficulty" on it. */
+  private showStageCurtain(index: number) {
+    const el = document.getElementById('stage-intro');
+    if (!el) return;
+    const stage = getStageByLevel(index + 1);
+    el.querySelector('.stage-intro-level')!.textContent = `${t('game.header.level')} ${index + 1}`;
+    el.querySelector('.stage-intro-diff')!.textContent = this.getDifficultyLabel(stage.difficulty, stage.size);
+    el.classList.remove('hidden', 'is-leaving');
   }
 
   /**
-   * Covers the screen in white, floats "Level n / difficulty" up into it, then
-   * fades the white away to reveal the stage, starting the clock as it goes.
-   * Any tap, key (see the keydown handler) or button skips to the fade.
+   * Holds the white "Level n" curtain over the new stage for a moment, then
+   * fades it away to reveal the stage, starting the clock as it goes. Any tap,
+   * key (see the keydown handler) or button skips to the fade.
    */
   private showStageIntro(onEnd: () => void) {
     const el = document.getElementById('stage-intro');
@@ -239,9 +262,7 @@ class InudokuGame {
       return;
     }
     this.stopTimer();
-    el.querySelector('.stage-intro-level')!.textContent = `${t('game.header.level')} ${this.currentStageIndex + 1}`;
-    el.querySelector('.stage-intro-diff')!.textContent = this.getDifficultyLabel(this.currentPuzzle.difficulty, this.currentPuzzle.size);
-    el.classList.remove('hidden', 'is-leaving');
+    this.showStageCurtain(this.currentStageIndex);
 
     const end = () => {
       if (this.stageIntroEnd !== end) return;
@@ -252,7 +273,7 @@ class InudokuGame {
       window.setTimeout(() => {
         // Unless another intro has started since
         if (!this.stageIntroEnd) el.classList.add('hidden');
-      }, 450);
+      }, 500);
       // Not if the player left the stage, or opened the rules meanwhile: they
       // pause the clock and restart it when closed
       if (
@@ -264,7 +285,7 @@ class InudokuGame {
       }
       onEnd();
     };
-    const timer = window.setTimeout(end, 1400);
+    const timer = window.setTimeout(end, 1200);
     el.addEventListener('pointerdown', end);
     this.stageIntroEnd = end;
   }
@@ -1810,10 +1831,12 @@ class InudokuGame {
     const handleContinue = () => {
       overlay.removeEventListener('click', handleContinue);
       window.removeEventListener('keydown', handleKeyContinue);
-      overlay.classList.add('hidden');
+      // Stop the celebration's pending steps now, but leave the screen up
+      // until the next stage (or an ad) takes over
+      this.rankupRunId++;
       // Advance to next level
       const nextIndex = Math.min(this.currentStageIndex + 1, MAX_STAGE_LEVEL - 1);
-      void this.startGameAfterAd(nextIndex);
+      void this.startGameAfterAd(nextIndex, () => overlay.classList.add('hidden'));
     };
 
     const handleKeyContinue = (e: KeyboardEvent) => {
@@ -2843,9 +2866,8 @@ class InudokuGame {
     });
 
     document.getElementById('btn-win-next')!.addEventListener('click', () => {
-      document.getElementById('modal-win')!.classList.add('hidden');
       const nextIndex = Math.min(this.currentStageIndex + 1, MAX_STAGE_LEVEL - 1);
-      void this.startGameAfterAd(nextIndex);
+      void this.startGameAfterAd(nextIndex, () => document.getElementById('modal-win')!.classList.add('hidden'));
     });
 
     // Game Over actions
