@@ -181,17 +181,68 @@ class InudokuGame {
     // under the ad, then again once it closes
     if (this.advancingPastAd) return;
     this.advancingPastAd = true;
+    let musicStopped = false;
+    let adShown = false;
     try {
-      await maybeShowInterstitial({
-        onOpen: () => bgm.stop(),
-        onClose: () => {
-          if (this.settings.bgmEnabled && !document.hidden) bgm.start();
+      adShown = await maybeShowInterstitial({
+        onOpen: () => {
+          bgm.stop();
+          musicStopped = true;
         },
       });
     } finally {
       this.advancingPastAd = false;
     }
+    const resumeMusic = () => {
+      if (musicStopped && this.settings.bgmEnabled && !document.hidden) bgm.start();
+    };
     this.startGame(index);
+    // Coming straight out of an ad, give the player a beat to see which stage
+    // this is before the clock runs
+    if (adShown) this.showStageIntro(resumeMusic);
+    else resumeMusic();
+  }
+
+  /**
+   * Shows "Level n / difficulty" over the board for a moment with the timer
+   * held, then starts the clock. Any tap, key (see the keydown handler) or
+   * button skips it.
+   */
+  private showStageIntro(onEnd: () => void) {
+    const el = document.getElementById('stage-intro');
+    if (!el || !this.currentPuzzle) {
+      onEnd();
+      return;
+    }
+    this.stopTimer();
+    el.querySelector('.stage-intro-level')!.textContent = `${t('game.header.level')} ${this.currentStageIndex + 1}`;
+    el.querySelector('.stage-intro-diff')!.textContent = this.getDifficultyLabel(this.currentPuzzle.difficulty, this.currentPuzzle.size);
+    el.classList.remove('hidden');
+    // Cover the grid itself, which can run a few px past its frame on some phones
+    const frame = el.parentElement!.getBoundingClientRect();
+    const grid = this.gridBoardEl.getBoundingClientRect();
+    el.style.inset = `${grid.top - frame.top}px ${frame.right - grid.right}px ${frame.bottom - grid.bottom}px ${grid.left - frame.left}px`;
+
+    const end = () => {
+      if (this.stageIntroEnd !== end) return;
+      this.stageIntroEnd = null;
+      clearTimeout(timer);
+      el.classList.add('hidden');
+      el.removeEventListener('pointerdown', end);
+      // Not if the player left the stage, or opened the rules meanwhile: they
+      // pause the clock and restart it when closed
+      if (
+        !this.screenGameEl.classList.contains('hidden') &&
+        !this.isFinished &&
+        document.getElementById('modal-help')?.classList.contains('hidden') !== false
+      ) {
+        this.startTimer();
+      }
+      onEnd();
+    };
+    const timer = window.setTimeout(end, 1200);
+    el.addEventListener('pointerdown', end);
+    this.stageIntroEnd = end;
   }
 
   /**
@@ -1931,6 +1982,7 @@ class InudokuGame {
   /** Bumped per rank-up screen so stale climb timers know to stop. */
   private rankupRunId = 0;
   private advancingPastAd = false;
+  private stageIntroEnd: (() => void) | null = null;
 
   private getRankupConfetti(): (opts: confetti.Options) => void {
     if (!this.rankupConfetti) {
@@ -2796,6 +2848,13 @@ class InudokuGame {
       // A real key press means a physical keyboard is attached, so touch devices
       // should show the focus frame too
       document.body.classList.add('keyboard-active');
+
+      // A key during the stage intro only skips it, without moving the cursor
+      if (this.stageIntroEnd) {
+        e.preventDefault();
+        this.stageIntroEnd();
+        return;
+      }
 
       const up = e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W';
       const down = e.key === 'ArrowDown' || e.key === 's' || e.key === 'S';
@@ -4186,6 +4245,15 @@ class InudokuGame {
         }
         return;
       }
+    }
+
+    // The stage intro takes any button as "start now"
+    if (this.stageIntroEnd) {
+      if (gp.buttons.some((_, i) => justPressed(i))) this.stageIntroEnd();
+      for (let i = 0; i < gp.buttons.length; i++) {
+        this.prevGamepadButtons[i] = isBtnDown(gp.buttons[i]);
+      }
+      return;
     }
 
     // 2. Check Modals

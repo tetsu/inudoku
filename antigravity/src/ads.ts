@@ -101,18 +101,20 @@ export async function showAdPrivacyOptions(): Promise<void> {
 /**
  * Called between stages. Shows an interstitial when one is due and loaded and
  * resolves once it has been closed (or immediately when no ad is shown), so the
- * caller can start the next stage afterwards.
+ * caller can start the next stage afterwards. Resolves to whether an ad was
+ * actually on screen.
  */
-export async function maybeShowInterstitial(hooks: { onOpen?: () => void; onClose?: () => void } = {}): Promise<void> {
-  if (!ready) return;
+export async function maybeShowInterstitial(hooks: { onOpen?: () => void; onClose?: () => void } = {}): Promise<boolean> {
+  if (!ready) return false;
   clearsSinceAd++;
   const due = clearsSinceAd >= CLEARS_PER_AD && Date.now() - lastAdAt >= MIN_INTERVAL_MS;
   if (!due || !loaded) {
     void prepare();
-    return;
+    return false;
   }
 
   loaded = false;
+  let presented = false;
   hooks.onOpen?.();
   try {
     await new Promise<void>((resolve) => {
@@ -132,6 +134,7 @@ export async function maybeShowInterstitial(hooks: { onOpen?: () => void; onClos
       AdMob.showInterstitial().then(
         () => {
           clearTimeout(timer);
+          presented = true;
           clearsSinceAd = 0;
           lastAdAt = Date.now();
         },
@@ -142,4 +145,5 @@ export async function maybeShowInterstitial(hooks: { onOpen?: () => void; onClos
     hooks.onClose?.();
     void prepare();
   }
+  return presented;
 }
